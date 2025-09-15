@@ -1,6 +1,6 @@
 {
-  "name": "@hyperhttp/plugins",
-  "version": "1.0.0",
+  "name": "advanced-client-fetch-plugins",
+  "version": "1.0.15",
   "description": "🔌 Powerful HTTP plugins for HyperHTTP. Retry, cache, rate limiting, circuit breaker, deduplication, metrics, and more. Production-ready resilience features.",
   "type": "module",
   "private": false,
@@ -65,7 +65,7 @@
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
-    "@hyperhttp/core": "^1.0.0"
+    "advanced-client-fetch-core": "^1.0.15"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

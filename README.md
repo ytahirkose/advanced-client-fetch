@@ -28,10 +28,10 @@
 
 | Package | Description | Size |
 |---------|-------------|------|
-| `@hyperhttp/core` | Core HTTP client | ~3-4KB |
-| `@hyperhttp/plugins` | Plugin collection | ~8-12KB |
-| `@hyperhttp/axios-adapter` | Axios compatibility layer | ~12-15KB |
-| `@hyperhttp/presets` | Platform-specific presets | ~5-8KB |
+| `advanced-client-fetch-core` | Core HTTP client | ~3-4KB |
+| `advanced-client-fetch-plugins` | Plugin collection | ~8-12KB |
+| `advanced-client-fetch-axios-adapter` | Axios compatibility layer | ~12-15KB |
+| `advanced-client-fetch-presets` | Platform-specific presets | ~5-8KB |
 
 ## 🚀 Quick Start
 
@@ -39,23 +39,23 @@
 
 ```bash
 # Core package
-npm install @hyperhttp/core
+npm install advanced-client-fetch-core
 
 # Plugins
-npm install @hyperhttp/plugins
+npm install advanced-client-fetch-plugins
 
 # Axios adapter (optional)
-npm install @hyperhttp/axios-adapter
+npm install advanced-client-fetch-axios-adapter
 
 # Presets (optional)
-npm install @hyperhttp/presets
+npm install advanced-client-fetch-presets
 ```
 
 ### Basic Usage
 
 ```javascript
-import { createClient } from '@hyperhttp/core';
-import { retry, cache, rateLimit } from '@hyperhttp/plugins';
+import { createClient } from 'advanced-client-fetch-core';
+import { retry, cache, rateLimit } from 'advanced-client-fetch-plugins';
 
 const client = createClient({
   baseURL: 'https://api.example.com',
@@ -86,7 +86,7 @@ const response = await client.get('/profile', {
 ### Axios Compatible Usage
 
 ```javascript
-import { createAxiosAdapter } from '@hyperhttp/axios-adapter';
+import { createAxiosAdapter } from 'advanced-client-fetch-axios-adapter';
 
 const axios = createAxiosAdapter({
   baseURL: 'https://api.example.com',

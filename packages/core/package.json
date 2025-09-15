@@ -1,6 +1,6 @@
 {
-  "name": "@hyperhttp/core",
-  "version": "1.0.0",
+  "name": "advanced-client-fetch-core",
+  "version": "1.0.15",
   "description": "🚀 Core HTTP client with fetch-first design, plugin architecture, and security features. Works across all platforms with automatic cookie management and SSRF protection.",
   "type": "module",
   "private": false,

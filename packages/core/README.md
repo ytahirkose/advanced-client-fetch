@@ -1,9 +1,9 @@
-# @hyperhttp/core
+# advanced-client-fetch-core
 
 > **The Core HTTP Client** - Fetch-first, plugin-based, and platform-agnostic
 
-[![npm version](https://badge.fury.io/js/@hyperhttp/core.svg)](https://badge.fury.io/js/@hyperhttp/core)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@hyperhttp/core)](https://bundlephobia.com/package/@hyperhttp/core)
+[![npm version](https://badge.fury.io/js/advanced-client-fetch-core.svg)](https://badge.fury.io/js/advanced-client-fetch-core)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/advanced-client-fetch-core)](https://bundlephobia.com/package/advanced-client-fetch-core)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
 The core package of HyperHTTP - a modern, fetch-first HTTP client with plugin architecture that works across all platforms.
@@ -24,13 +24,13 @@ The core package of HyperHTTP - a modern, fetch-first HTTP client with plugin ar
 ## Installation
 
 ```bash
-npm install @hyperhttp/core
+npm install advanced-client-fetch-core
 ```
 
 ## Quick Start
 
 ```typescript
-import { createClient } from '@hyperhttp/core';
+import { createClient } from 'advanced-client-fetch-core';
 
 const client = createClient({
   baseURL: 'https://api.example.com',
@@ -49,8 +49,8 @@ const user = await client.post('/users', { name: 'John' });
 ### With Plugins
 
 ```typescript
-import { createClient } from '@hyperhttp/core';
-import { retry, cache, security } from '@hyperhttp/plugins';
+import { createClient } from 'advanced-client-fetch-core';
+import { retry, cache, security } from 'advanced-client-fetch-plugins';
 
 const client = createClient({
   baseURL: 'https://api.example.com',

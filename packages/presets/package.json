@@ -1,6 +1,6 @@
 {
-  "name": "@hyperhttp/presets",
-  "version": "1.0.0",
+  "name": "advanced-client-fetch-presets",
+  "version": "1.0.15",
   "description": "🌍 Platform-specific HTTP client presets for HyperHTTP. Optimized configurations for Node.js, Edge runtimes, Browsers, Deno, and Bun with real-world examples.",
   "type": "module",
   "private": false,
@@ -55,8 +55,8 @@
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
-    "@hyperhttp/core": "^1.0.0",
-    "@hyperhttp/plugins": "^1.0.0"
+    "advanced-client-fetch-core": "^1.0.15",
+    "advanced-client-fetch-plugins": "^1.0.15"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
