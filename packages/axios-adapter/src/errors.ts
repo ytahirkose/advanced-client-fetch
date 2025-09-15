@@ -1,5 +1,5 @@
 /**
- * Error classes for Axios compatibility
+ * Error classes for Advanced Client Fetch Axios compatibility
  */
 
 import type { AxiosError, AxiosRequestConfig, AxiosResponse } from './types';
@@ -24,6 +24,17 @@ export class BaseAxiosError extends Error implements AxiosError {
     this.code = code;
     this.request = request;
     this.response = response;
+  }
+
+  toJSON(): object {
+    return {
+      message: this.message,
+      name: this.name,
+      config: this.config,
+      code: this.code,
+      request: this.request,
+      response: this.response,
+    };
   }
 }
 

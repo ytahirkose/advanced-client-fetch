@@ -1,46 +1,34 @@
 /**
- * Rate limiting plugin for HyperHTTP
- * Implements token bucket and sliding window rate limiting
+ * Rate limiting plugin for Advanced Client Fetch
  */
 
-import type { Middleware, RequestOptions } from 'hyperhttp-core';
-import { RateLimitError, defaultKeyGenerator, createKeyGenerator } from 'hyperhttp-core';
-import { sleep } from 'hyperhttp-core';
+import type { Middleware, Request } from '@advanced-client-fetch/core';
+import { RateLimitError } from '@advanced-client-fetch/core';
+import { defaultKeyGenerator } from '@advanced-client-fetch/core';
 
 export interface RateLimitPluginOptions {
+  /** Number of requests allowed */
+  requests: number;
+  /** Time window in milliseconds */
+  window: number;
+  /** Key generator for rate limiting */
+  keyGenerator?: (req: Request) => string;
+  /** Callback when limit is reached */
+  onLimitReached?: (key: string, limit: number) => void;
   /** Enable rate limiting */
   enabled?: boolean;
-  /** Requests per window */
-  limit: number;
-  /** Window duration in milliseconds */
-  window: number;
-  /** Rate limit key generator */
-  keyGenerator?: (request: Request) => string;
-  /** Rate limit storage */
-  storage?: RateLimitStorage;
-  /** Skip successful requests */
-  skipSuccessful?: boolean;
-  /** Skip failed requests */
-  skipFailed?: boolean;
-  /** Custom error message */
-  message?: string;
-  /** Headers to include in response */
-  headers?: boolean;
-  /** Callback when rate limit is reached */
-  onLimitReached?: (key: string, count: number, limit: number) => void;
 }
 
 export interface RateLimitStorage {
   get(key: string): Promise<RateLimitInfo | undefined>;
-  set(key: string, info: RateLimitInfo, ttl: number): Promise<void>;
-  increment(key: string, window: number): Promise<RateLimitInfo>;
-  reset(key: string): Promise<void>;
+  set(key: string, info: RateLimitInfo): Promise<void>;
+  delete(key: string): Promise<void>;
+  clear(): Promise<void>;
 }
 
 export interface RateLimitInfo {
   count: number;
   resetTime: number;
-  remaining: number;
   limit: number;
 }
 
@@ -48,499 +36,243 @@ export interface RateLimitInfo {
  * In-memory rate limit storage
  */
 export class MemoryRateLimitStorage implements RateLimitStorage {
-  private store = new Map<string, RateLimitInfo>();
-  private timers = new Map<string, NodeJS.Timeout>();
+  private storage = new Map<string, RateLimitInfo>();
+  private cleanupInterval: NodeJS.Timeout | null = null;
+
+  constructor() {
+    this.startCleanup();
+  }
+
+  private startCleanup(): void {
+    this.cleanupInterval = setInterval(() => {
+      this.cleanup();
+    }, 60000); // Clean up every minute
+  }
+
+  private cleanup(): void {
+    const now = Date.now();
+    for (const [key, info] of this.storage.entries()) {
+      if (now >= info.resetTime) {
+        this.storage.delete(key);
+      }
+    }
+  }
 
   async get(key: string): Promise<RateLimitInfo | undefined> {
-    return this.store.get(key);
-  }
+    const info = this.storage.get(key);
+    if (!info) return undefined;
 
-  async set(key: string, info: RateLimitInfo, ttl: number): Promise<void> {
-    this.store.set(key, info);
-    
-    // Clear existing timer
-    const existingTimer = this.timers.get(key);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
-    
-    // Set new timer
-    const timer = setTimeout(() => {
-      this.store.delete(key);
-      this.timers.delete(key);
-    }, ttl);
-    
-    this.timers.set(key, timer);
-  }
-
-  async increment(key: string, window: number): Promise<RateLimitInfo> {
     const now = Date.now();
-    const existing = this.store.get(key);
-    
-    if (!existing || now >= existing.resetTime) {
-      // Create new window
-      const info: RateLimitInfo = {
-        count: 1,
-        resetTime: now + window,
-        remaining: 0, // Will be calculated
-        limit: 0, // Will be set by caller
-      };
-      
-      await this.set(key, info, window);
-      return info;
+    if (now >= info.resetTime) {
+      this.storage.delete(key);
+      return undefined;
     }
-    
-    // Increment existing window
-    const info: RateLimitInfo = {
-      ...existing,
-      count: existing.count + 1,
-    };
-    
-    await this.set(key, info, existing.resetTime - now);
+
     return info;
   }
 
-  async reset(key: string): Promise<void> {
-    this.store.delete(key);
-    const timer = this.timers.get(key);
-    if (timer) {
-      clearTimeout(timer);
-      this.timers.delete(key);
+  async set(key: string, info: RateLimitInfo): Promise<void> {
+    this.storage.set(key, info);
+  }
+
+  async delete(key: string): Promise<void> {
+    this.storage.delete(key);
+  }
+
+  async clear(): Promise<void> {
+    this.storage.clear();
+  }
+
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
     }
+    this.storage.clear();
   }
 }
 
-const DEFAULT_OPTIONS: Required<Omit<RateLimitPluginOptions, 'limit' | 'window'>> = {
-  enabled: true,
-  keyGenerator: defaultKeyGenerator,
-  storage: new MemoryRateLimitStorage(),
-  skipSuccessful: false,
-  skipFailed: false,
-  message: 'Too Many Requests',
-  headers: true,
-};
-
 /**
- * Create rate limit middleware
+ * Create rate limiting middleware
  */
 export function rateLimit(options: RateLimitPluginOptions): Middleware {
-  console.log('🎯 RATE LIMIT PLUGIN CREATED');
-  const config = { ...DEFAULT_OPTIONS, ...options };
-  
-  if (!config.enabled) {
-    console.log('❌ RATE LIMIT PLUGIN DISABLED');
+  const {
+    requests,
+    window,
+    keyGenerator = defaultKeyGenerator,
+    onLimitReached,
+    enabled = true,
+  } = options;
+
+  if (!enabled) {
     return async (ctx, next) => next();
   }
-  
-  console.log('✅ RATE LIMIT PLUGIN ENABLED');
+
+  const storage = new MemoryRateLimitStorage();
 
   return async (ctx, next) => {
-    console.log('🚀 RATE LIMIT MIDDLEWARE FUNCTION CALLED');
-    const request = ctx.req;
-    const key = config.keyGenerator(request);
-    
-    console.log(`🔑 Rate limit key: ${key}`);
-    
+    const key = keyGenerator(ctx.req);
+    const now = Date.now();
+    const resetTime = now + window;
+
     // Get current rate limit info
-    const info = await config.storage.increment(key, config.window);
+    let info = await storage.get(key);
     
-    // Debug logging
-    console.log(`📊 Rate limit check - key: ${key}, count: ${info.count}, limit: ${config.limit}`);
-    
-    // Calculate remaining requests
-    const remaining = Math.max(0, config.limit - info.count);
-    
-    // Set rate limit meta
-    ctx.meta.rateLimit = {
-      limit: config.limit,
-      remaining: remaining,
-      reset: info.resetTime,
-    };
-    
-    // Check if limit exceeded - correct logic
-    if (info.count > config.limit) {
-      const resetTime = info.resetTime;
-      const retryAfter = Math.ceil((resetTime - Date.now()) / 1000);
-      
-      // Add rate limit headers
-      if (config.headers) {
-        ctx.meta.rateLimitHeaders = {
-          'X-RateLimit-Limit': config.limit.toString(),
-          'X-RateLimit-Remaining': remaining.toString(),
-          'X-RateLimit-Reset': Math.ceil(resetTime / 1000).toString(),
-          'Retry-After': retryAfter.toString(),
-        };
-      }
-      
-      // Call callback if provided
-      if (config.onLimitReached) {
-        config.onLimitReached(key, info.count, config.limit);
-      }
-      
-      throw new RateLimitError(
-        config.message,
-        config.limit,
-        remaining,
+    if (!info) {
+      info = {
+        count: 0,
         resetTime,
-        retryAfter
-      );
-    }
-    
-    // Add rate limit headers
-    if (config.headers) {
-      ctx.meta.rateLimitHeaders = {
-        'X-RateLimit-Limit': (config.limit || 0).toString(),
-        'X-RateLimit-Remaining': remaining.toString(),
-        'X-RateLimit-Reset': Math.ceil(info.resetTime / 1000).toString(),
+        limit: requests,
       };
     }
-    
-    // Store rate limit info in context
-    ctx.meta.rateLimit = {
-      limit: config.limit || 0,
-      remaining,
-      resetTime: info.resetTime,
-      count: info.count,
-    };
-    
-    try {
-      await next();
+
+    // Check if limit is exceeded
+    if (info.count >= requests) {
+      const retryAfter = Math.ceil((info.resetTime - now) / 1000);
       
-      // Skip successful requests if configured
-      if (config.skipSuccessful && ctx.res?.ok) {
-        // Don't count successful requests
-        const currentInfo = await config.storage.get(key);
-        if (currentInfo) {
-          currentInfo.count = Math.max(0, currentInfo.count - 1);
-          await config.storage.set(key, currentInfo, currentInfo.resetTime - Date.now());
-        }
+      if (onLimitReached) {
+        onLimitReached(key, requests);
       }
-    } catch (error) {
-      // Skip failed requests if configured
-      if (config.skipFailed) {
-        const currentInfo = await config.storage.get(key);
-        if (currentInfo) {
-          currentInfo.count = Math.max(0, currentInfo.count - 1);
-          await config.storage.set(key, currentInfo, currentInfo.resetTime - Date.now());
-        }
-      }
-      throw error;
+
+      throw new RateLimitError(
+        `Rate limit exceeded for ${key}`,
+        ctx.req,
+        undefined,
+        retryAfter,
+        requests,
+        Math.max(0, requests - info.count)
+      );
     }
+
+    // Increment counter
+    info.count++;
+    await storage.set(key, info);
+
+    // Add rate limit headers to response
+    ctx.meta.rateLimit = {
+      limit: requests,
+      remaining: Math.max(0, requests - info.count),
+      reset: info.resetTime,
+    };
+
+    await next();
   };
 }
 
 /**
- * Create rate limit middleware with token bucket algorithm
+ * Token bucket rate limiting
  */
 export function tokenBucketRateLimit(
   capacity: number,
   refillRate: number, // tokens per second
-  options: Omit<RateLimitPluginOptions, 'limit' | 'window'> = {}
+  options: Omit<RateLimitPluginOptions, 'requests' | 'window'> = {}
 ): Middleware {
-  const config = { ...DEFAULT_OPTIONS, ...options };
-  
-  if (!config.enabled) {
-    return async (ctx, next) => next();
-  }
+  const keyGenerator = options.keyGenerator || defaultKeyGenerator;
+  const storage = new Map<string, { tokens: number; lastRefill: number }>();
 
   return async (ctx, next) => {
-    const request = ctx.req;
-    const key = config.keyGenerator(request);
+    const key = keyGenerator(ctx.req);
     const now = Date.now();
     
-    // Get or create bucket
-    let bucket = await config.storage.get(key);
+    let bucket = storage.get(key);
     if (!bucket) {
-      bucket = {
-        count: capacity,
-        resetTime: now + 1000, // 1 second
-        remaining: capacity,
-        limit: capacity,
-      };
-      await config.storage.set(key, bucket, 1000);
+      bucket = { tokens: capacity, lastRefill: now };
+      storage.set(key, bucket);
     }
-    
+
     // Refill tokens
-    const timePassed = now - (bucket.resetTime - 1000);
-    const tokensToAdd = Math.floor(timePassed * refillRate / 1000);
-    const newTokens = Math.min(capacity, bucket.count + tokensToAdd);
-    
-    if (newTokens < 1) {
-      const waitTime = Math.ceil(1000 / refillRate);
-      const retryAfter = Math.ceil(waitTime / 1000);
-      
-      if (config.headers) {
-        ctx.meta.rateLimitHeaders = {
-          'X-RateLimit-Limit': capacity.toString(),
-          'X-RateLimit-Remaining': '0',
-          'Retry-After': retryAfter.toString(),
-        };
-      }
-      
+    const timePassed = (now - bucket.lastRefill) / 1000;
+    const tokensToAdd = timePassed * refillRate;
+    bucket.tokens = Math.min(capacity, bucket.tokens + tokensToAdd);
+    bucket.lastRefill = now;
+
+    // Check if we have enough tokens
+    if (bucket.tokens < 1) {
       throw new RateLimitError(
-        config.message,
-        capacity,
-        0,
-        now + waitTime,
-        retryAfter
+        `Rate limit exceeded for ${key}`,
+        ctx.req
       );
     }
-    
+
     // Consume token
-    bucket.count = newTokens - 1;
-    bucket.remaining = bucket.count;
-    bucket.resetTime = now + 1000;
-    
-    await config.storage.set(key, bucket, 1000);
-    
-    // Add headers
-    if (config.headers) {
-      ctx.meta.rateLimitHeaders = {
-        'X-RateLimit-Limit': capacity.toString(),
-        'X-RateLimit-Remaining': bucket.remaining.toString(),
-        'X-RateLimit-Reset': Math.ceil(bucket.resetTime / 1000).toString(),
-      };
-    }
-    
-    ctx.meta.rateLimit = {
-      limit: capacity,
-      remaining: bucket.remaining,
-      resetTime: bucket.resetTime,
-      count: capacity - bucket.remaining,
-    };
-    
+    bucket.tokens--;
+    storage.set(key, bucket);
+
     await next();
   };
 }
 
 /**
- * Create rate limit middleware with sliding window
+ * Sliding window rate limiting
  */
 export function slidingWindowRateLimit(
-  limit: number,
+  requests: number,
   window: number,
-  options: Omit<RateLimitPluginOptions, 'limit' | 'window'> = {}
+  options: Omit<RateLimitPluginOptions, 'requests' | 'window'> = {}
 ): Middleware {
-  const config = { ...DEFAULT_OPTIONS, ...options };
-  
-  if (!config.enabled) {
-    return async (ctx, next) => next();
-  }
+  const keyGenerator = options.keyGenerator || defaultKeyGenerator;
+  const storage = new Map<string, number[]>();
 
   return async (ctx, next) => {
-    const request = ctx.req;
-    const key = config.keyGenerator(request);
+    const key = keyGenerator(ctx.req);
     const now = Date.now();
+    const windowStart = now - window;
+
+    let timestamps = storage.get(key) || [];
     
-    // Get current window
-    let windowInfo = await config.storage.get(key);
-    if (!windowInfo) {
-      windowInfo = {
-        count: 0,
-        resetTime: now + window,
-        remaining: limit,
-        limit,
-      };
-    }
+    // Remove old timestamps
+    timestamps = timestamps.filter(ts => ts > windowStart);
     
-    // Check if window expired
-    if (now >= windowInfo.resetTime) {
-      windowInfo = {
-        count: 0,
-        resetTime: now + window,
-        remaining: limit,
-        limit,
-      };
-    }
-    
-    // Check if limit exceeded
-    if (windowInfo.count >= limit) {
-      const retryAfter = Math.ceil((windowInfo.resetTime - now) / 1000);
-      
-      if (config.headers) {
-        ctx.meta.rateLimitHeaders = {
-          'X-RateLimit-Limit': limit.toString(),
-          'X-RateLimit-Remaining': '0',
-          'X-RateLimit-Reset': Math.ceil(windowInfo.resetTime / 1000).toString(),
-          'Retry-After': retryAfter.toString(),
-        };
-      }
-      
+    // Check if limit is exceeded
+    if (timestamps.length >= requests) {
       throw new RateLimitError(
-        config.message,
-        limit,
-        0,
-        windowInfo.resetTime,
-        retryAfter
+        `Rate limit exceeded for ${key}`,
+        ctx.req
       );
     }
-    
-    // Increment count
-    windowInfo.count++;
-    windowInfo.remaining = limit - windowInfo.count;
-    
-    await config.storage.set(key, windowInfo, windowInfo.resetTime - now);
-    
-    // Add headers
-    if (config.headers) {
-      ctx.meta.rateLimitHeaders = {
-        'X-RateLimit-Limit': limit.toString(),
-        'X-RateLimit-Remaining': windowInfo.remaining.toString(),
-        'X-RateLimit-Reset': Math.ceil(windowInfo.resetTime / 1000).toString(),
-      };
-    }
-    
-    ctx.meta.rateLimit = {
-      limit,
-      remaining: windowInfo.remaining,
-      resetTime: windowInfo.resetTime,
-      count: windowInfo.count,
-    };
-    
+
+    // Add current timestamp
+    timestamps.push(now);
+    storage.set(key, timestamps);
+
     await next();
   };
 }
 
 /**
- * Create rate limit middleware with different limits per endpoint
+ * Adaptive rate limiting
  */
 export function adaptiveRateLimit(
-  limits: Record<string, { limit: number; window: number }>,
-  options: Omit<RateLimitPluginOptions, 'limit' | 'window'> = {}
+  baseRequests: number,
+  window: number,
+  options: Omit<RateLimitPluginOptions, 'requests' | 'window'> = {}
 ): Middleware {
-  const config = { ...DEFAULT_OPTIONS, ...options };
-  
-  if (!config.enabled) {
-    return async (ctx, next) => next();
-  }
+  const keyGenerator = options.keyGenerator || defaultKeyGenerator;
+  const storage = new Map<string, { requests: number; lastAdjustment: number; multiplier: number }>();
 
   return async (ctx, next) => {
-    const request = ctx.req;
-    const url = new URL(request.url);
-    const pathname = url.pathname;
+    const key = keyGenerator(ctx.req);
+    const now = Date.now();
     
-    // Find matching limit
-    const limitConfig = Object.entries(limits).find(([pattern]) => {
-      if (pattern === '*') return true;
-      if (pattern.startsWith('/') && pathname.startsWith(pattern)) return true;
-      if (pattern.includes('*')) {
-        const regex = new RegExp(pattern.replace(/\*/g, '.*'));
-        return regex.test(pathname);
-      }
-      return pattern === pathname;
-    });
-    
-    if (!limitConfig) {
-      return next();
+    let info = storage.get(key);
+    if (!info) {
+      info = { requests: baseRequests, lastAdjustment: now, multiplier: 1 };
+      storage.set(key, info);
     }
-    
-    const [, { limit, window }] = limitConfig;
-    
+
+    // Adjust rate based on success/failure
+    if (now - info.lastAdjustment > window) {
+      // Reset adjustment period
+      info.lastAdjustment = now;
+      info.requests = Math.max(1, Math.floor(baseRequests * info.multiplier));
+    }
+
+    // Use adaptive rate limiting
     return rateLimit({
-      ...config,
-      limit,
+      ...options,
+      requests: info.requests,
       window,
+      keyGenerator,
     })(ctx, next);
   };
-}
-
-/**
- * Rate limit by endpoint
- */
-export function rateLimitByEndpoint(configs: Record<string, { maxRequests: number; windowMs: number }>): Middleware {
-  return async (ctx, next) => {
-    const url = new URL(ctx.req.url);
-    const pathname = url.pathname;
-    
-    const config = Object.entries(configs).find(([pattern]) => {
-      if (pattern === '*') return true;
-      if (pattern.startsWith('/') && pathname.startsWith(pattern)) return true;
-      if (pattern.includes('*')) {
-        const regex = new RegExp(pattern.replace(/\*/g, '.*'));
-        return regex.test(pathname);
-      }
-      return pattern === pathname;
-    });
-    
-    if (!config) {
-      return next();
-    }
-    
-    const [, { maxRequests, windowMs }] = config;
-    
-    return rateLimit({
-      limit: maxRequests,
-      window: windowMs,
-    })(ctx, next);
-  };
-}
-
-/**
- * Rate limit by user
- */
-export function rateLimitByUser(
-  config: { maxRequests: number; windowMs: number },
-  userExtractor: (request: Request) => string
-): Middleware {
-  return rateLimit({
-    ...config,
-    keyGenerator: userExtractor,
-  });
-}
-
-/**
- * Rate limit by IP
- */
-export function rateLimitByIP(config: { maxRequests: number; windowMs: number }): Middleware {
-  return rateLimit({
-    ...config,
-    keyGenerator: (request) => {
-      const forwarded = request.headers.get('x-forwarded-for');
-      const ip = forwarded ? forwarded.split(',')[0].trim() : 'unknown';
-      return ip;
-    },
-  });
-}
-
-/**
- * Rate limit by custom key
- */
-export function rateLimitByKey(
-  config: { maxRequests: number; windowMs: number },
-  keyExtractor: (request: Request) => string
-): Middleware {
-  return rateLimit({
-    ...config,
-    keyGenerator: keyExtractor,
-  });
-}
-
-/**
- * Rate limit with burst allowance
- */
-export function rateLimitWithBurst(
-  sustainedRate: number,
-  burstCapacity: number,
-  windowMs: number
-): Middleware {
-  return rateLimit({
-    limit: burstCapacity,
-    window: windowMs,
-    storage: new MemoryRateLimitStorage(),
-  });
-}
-
-/**
- * Rate limit with exponential backoff
- */
-export function rateLimitWithBackoff(
-  initialRate: number,
-  maxRate: number,
-  windowMs: number
-): Middleware {
-  return rateLimit({
-    limit: initialRate,
-    window: windowMs,
-    storage: new MemoryRateLimitStorage(),
-  });
 }

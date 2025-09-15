@@ -1,33 +1,17 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
+    "composite": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "composite": true,
+    "baseUrl": ".",
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": false,
-    "noEmit": false,
-    "baseUrl": ".",
-    "paths": {
-      "@hyperhttp/core": ["../core/src"],
-      "@hyperhttp/core/*": ["../core/src/*"],
-      "@hyperhttp/plugins": ["../plugins/src"],
-      "@hyperhttp/plugins/*": ["../plugins/src/*"]
-    },
-    "skipLibCheck": true,
-    "strict": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "forceConsistentCasingInFileNames": true
+    "declarationDir": "./dist",
+    "emitDeclarationOnly": false,
+    "preserveConstEnums": true,
+    "verbatimModuleSyntax": false
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
-  "files": ["src/index.ts", "src/adapter.ts", "src/errors.ts", "src/transformers.ts", "src/validation.ts", "src/performance.ts"],
-  "references": [
-    { "path": "../core" },
-    { "path": "../plugins" }
-  ]
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

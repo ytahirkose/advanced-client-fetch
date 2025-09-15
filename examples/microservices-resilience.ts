@@ -1,12 +1,12 @@
 /**
- * Microservices Resilience with HyperHTTP
+ * Microservices Resilience with Advanced Client Fetch
  * 
- * This example demonstrates how HyperHTTP provides production-ready
+ * This example demonstrates how Advanced Client Fetch provides production-ready
  * resilience features for microservices communication.
  */
 
-import { createNodeClient } from '@hyperhttp/presets/node';
-import { retry, cache, circuitBreaker, rateLimit, dedupe, metrics } from 'hyperhttp-plugins';
+import { createNodeClient } from '@advanced-client-fetch/presets/node';
+import { retry, cache, circuitBreaker, rateLimit, dedupe, metrics } from '@advanced-client-fetch/plugins';
 
 // ============================================================================
 // 1. USER SERVICE CLIENT

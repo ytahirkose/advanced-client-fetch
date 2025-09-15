@@ -1,12 +1,12 @@
 /**
  * Axios Migration Example
  * 
- * This example shows how to migrate from Axios to HyperHTTP
+ * This example shows how to migrate from Axios to Advanced Client Fetch
  * using the Axios adapter for a smooth transition.
  */
 
-import { createAxiosAdapter } from '@hyperhttp/axios-adapter';
-import { retry, cache, rateLimit } from '@hyperhttp/plugins';
+import { createAxiosAdapter } from '@advanced-client-fetch/axios-adapter';
+import { retry, cache, rateLimit } from '@advanced-client-fetch/plugins';
 
 // Create Axios-compatible client
 const axios = createAxiosAdapter({

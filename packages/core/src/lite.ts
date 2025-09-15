@@ -1,53 +1,21 @@
 /**
- * HyperHTTP Lite - Minimal HTTP client
- * Only includes core functionality without plugins
+ * Advanced Client Fetch Lite - Minimal client with essential features only
  */
 
-export { createClient, createDefaultClient, createClientFor } from './client.js';
-export { compose } from './compose.js';
-export { combineSignals, combineTimeoutAndSignal, createTimeoutSignal } from './signal.js';
+import { createClient } from './client';
+import type { Client, ClientOptions } from './types';
 
-export type {
-  Client,
-  ClientOptions,
-  RequestOptions,
-  ResponseType,
-  HttpMethod,
-  Transport,
-  Context,
-  Middleware,
-  HttpError,
-  AbortError,
-} from './types.js';
+/**
+ * Create a minimal client with only essential features
+ */
+export function createLiteClient(options: ClientOptions = {}): Client {
+  return createClient({
+    ...options,
+    plugins: [], // No plugins for lite version
+  });
+}
 
-export {
-  HyperHttpError,
-  HyperAbortError,
-  TimeoutError,
-  NetworkError,
-} from './errors.js';
-
-export {
-  isPlainObject,
-  isURL,
-  isHeaders,
-  isIdempotentMethod,
-  buildURL,
-  mergeHeaders,
-  normalizeBody,
-  generateRequestId,
-  deepMerge,
-  sleep,
-  calculateBackoffDelay,
-  parseRetryAfter,
-  isAbsoluteURL,
-  getContentType,
-  isJSONResponse,
-  isTextResponse,
-  safeJSONParse,
-  cloneRequest,
-  getRequestSize,
-  getResponseSize,
-  isRetryableError,
-  isRetryableResponse,
-} from './utils.js';
+/**
+ * Default lite client instance
+ */
+export const liteClient = createLiteClient();

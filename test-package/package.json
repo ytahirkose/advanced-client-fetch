@@ -1,7 +1,7 @@
 {
   "name": "test-package",
   "version": "1.0.0",
-  "description": "Integration tests for HyperHTTP",
+  "description": "Integration tests for Advanced Client Fetch",
   "main": "index.js",
   "scripts": {
     "test": "node test-integration.js",
@@ -13,14 +13,14 @@
     "test:axios": "node test-axios.js",
     "test:integration": "node test-integration.js"
   },
-  "keywords": ["hyperhttp", "http-client", "testing"],
-  "author": "HyperHTTP Team",
+  "keywords": ["advanced-client-fetch", "http-client", "testing"],
+  "author": "Advanced Client Fetch Team",
   "license": "MIT",
   "dependencies": {
-    "@hyperhttp/hyperhttp": "file:../packages/hyperhttp",
-    "@hyperhttp/core": "file:../packages/core",
-    "@hyperhttp/plugins": "file:../packages/plugins",
-    "@hyperhttp/axios-adapter": "file:../packages/axios-adapter",
-    "@hyperhttp/presets": "file:../packages/presets"
+    "@advanced-client-fetch/presets": "file:../packages/presets",
+    "@advanced-client-fetch/core": "file:../packages/core",
+    "@advanced-client-fetch/plugins": "file:../packages/plugins",
+    "@advanced-client-fetch/axios-adapter": "file:../packages/axios-adapter",
+    "@advanced-client-fetch/presets": "file:../packages/presets"
   }
 }

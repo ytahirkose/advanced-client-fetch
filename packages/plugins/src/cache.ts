@@ -1,10 +1,10 @@
 /**
- * Cache plugin for HyperHTTP
+ * Cache plugin for Advanced Client Fetch
  * Implements RFC 9111 compliant HTTP caching
  */
 
-import type { Middleware, CacheOptions, CacheStorage, RequestOptions } from 'hyperhttp-core';
-import { isJSONResponse, getContentType, MemoryStorage } from 'hyperhttp-core';
+import type { Middleware, CacheOptions, CacheStorage, Request, Response } from '@advanced-client-fetch/core';
+import { isJSONResponse, getContentType, defaultKeyGenerator } from '@advanced-client-fetch/core';
 
 export interface CachePluginOptions extends CacheOptions {
   /** Enable cache plugin */
@@ -22,12 +22,43 @@ export interface CachePluginOptions extends CacheOptions {
  */
 export class MemoryCacheStorage implements CacheStorage {
   private cache = new Map<string, { response: Response; expires: number }>();
+  private cleanupInterval: NodeJS.Timeout | null = null;
+  private maxSize = 1000; // Prevent memory leaks
+  
+  constructor(maxSize: number = 1000) {
+    this.maxSize = maxSize;
+    this.startCleanup();
+  }
+  
+  private startCleanup(): void {
+    // Clean up expired entries every 5 minutes
+    this.cleanupInterval = setInterval(() => {
+      this.cleanup();
+    }, 5 * 60 * 1000);
+  }
+  
+  private cleanup(): void {
+    const now = performance.now();
+    for (const [key, entry] of this.cache.entries()) {
+      if (now > entry.expires) {
+        this.cache.delete(key);
+      }
+    }
+    
+    // If cache is too large, remove oldest entries
+    if (this.cache.size > this.maxSize) {
+      const entries = Array.from(this.cache.entries());
+      entries.sort((a, b) => a[1].expires - b[1].expires);
+      const toRemove = entries.slice(0, this.cache.size - this.maxSize);
+      toRemove.forEach(([key]) => this.cache.delete(key));
+    }
+  }
   
   async get(key: string): Promise<Response | undefined> {
     const entry = this.cache.get(key);
     if (!entry) return undefined;
     
-    if (Date.now() > entry.expires) {
+    if (performance.now() > entry.expires) {
       this.cache.delete(key);
       return undefined;
     }
@@ -36,8 +67,13 @@ export class MemoryCacheStorage implements CacheStorage {
   }
   
   async set(key: string, response: Response, ttl: number = 300000): Promise<void> {
-    const expires = Date.now() + ttl;
+    const expires = performance.now() + ttl;
     this.cache.set(key, { response, expires });
+    
+    // Trigger cleanup if cache is getting large
+    if (this.cache.size > this.maxSize * 0.8) {
+      this.cleanup();
+    }
   }
   
   async delete(key: string): Promise<void> {
@@ -45,6 +81,14 @@ export class MemoryCacheStorage implements CacheStorage {
   }
   
   async clear(): Promise<void> {
+    this.cache.clear();
+  }
+  
+  destroy(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval);
+      this.cleanupInterval = null;
+    }
     this.cache.clear();
   }
   
@@ -62,7 +106,7 @@ export function cache(options: CachePluginOptions = {}): Middleware {
     ttl = 300000, // 5 minutes
     storage = new MemoryCacheStorage(),
     cacheOnlyGET = true,
-    keyGenerator = defaultKeyGenerator,
+    keyGenerator = createCacheKeyGenerator(),
     validateResponse = defaultValidateResponse,
   } = options;
   
@@ -120,33 +164,67 @@ export function cache(options: CachePluginOptions = {}): Middleware {
 }
 
 /**
- * Default cache key generator (optimized)
+ * Cache key generator with optimization and memory management
  */
-const keyCache = new Map<string, string>();
-function defaultKeyGenerator(request: Request): string {
-  // Normalize URL to handle trailing slashes consistently
-  const url = new URL(request.url);
-  const normalizedUrl = url.toString();
-  const method = request.method;
-  
-  // Use a simple hash for better performance
-  const key = `${method}:${normalizedUrl}`;
-  
-  
-  if (keyCache.has(key)) {
-    return keyCache.get(key)!;
+class KeyCacheManager {
+  private cache = new Map<string, string>();
+  private maxSize = 1000;
+  private accessOrder: string[] = [];
+
+  generateKey(request: Request): string {
+    // Normalize URL to handle trailing slashes consistently
+    const url = new URL(request.url);
+    const normalizedUrl = url.toString();
+    const method = request.method;
+    
+    // Use a simple hash for better performance
+    const key = `${method}:${normalizedUrl}`;
+    
+    if (this.cache.has(key)) {
+      // Move to end (most recently used)
+      this.moveToEnd(key);
+      return this.cache.get(key)!;
+    }
+    
+    const hashedKey = btoa(key);
+    this.cache.set(key, hashedKey);
+    this.accessOrder.push(key);
+    
+    // LRU eviction if cache is too large
+    if (this.cache.size > this.maxSize) {
+      const lruKey = this.accessOrder.shift();
+      if (lruKey) {
+        this.cache.delete(lruKey);
+      }
+    }
+    
+    return hashedKey;
   }
-  
-  const hashedKey = btoa(key);
-  keyCache.set(key, hashedKey);
-  
-  // Limit cache size
-  if (keyCache.size > 1000) {
-    const firstKey = keyCache.keys().next().value;
-    keyCache.delete(firstKey);
+
+  private moveToEnd(key: string): void {
+    const index = this.accessOrder.indexOf(key);
+    if (index > -1) {
+      this.accessOrder.splice(index, 1);
+      this.accessOrder.push(key);
+    }
   }
-  
-  return hashedKey;
+
+  clear(): void {
+    this.cache.clear();
+    this.accessOrder = [];
+  }
+
+  size(): number {
+    return this.cache.size;
+  }
+}
+
+const keyCacheManager = new KeyCacheManager();
+
+function createCacheKeyGenerator(): (request: Request) => string {
+  return (request: Request): string => {
+    return keyCacheManager.generateKey(request);
+  };
 }
 
 /**
@@ -237,7 +315,7 @@ export function cacheWithSWR(options: CachePluginOptions = {}): Middleware {
       return next();
     }
     
-    const cacheKey = defaultKeyGenerator(request);
+    const cacheKey = createCacheKeyGenerator()(request);
     const cachedResponse = await storage.get(cacheKey);
     
     if (cachedResponse) {
@@ -348,7 +426,7 @@ export function cacheWithCustomTTL(
       return next();
     }
     
-    const cacheKey = defaultKeyGenerator(request);
+    const cacheKey = createCacheKeyGenerator()(request);
     const cachedResponse = await options.storage?.get(cacheKey);
     
     if (cachedResponse) {

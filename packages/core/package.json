@@ -1,6 +1,6 @@
 {
-  "name": "advanced-client-fetch-core",
-  "version": "1.0.15",
+  "name": "@advanced-client-fetch/core",
+  "version": "1.0.0",
   "description": "🚀 Core HTTP client with fetch-first design, plugin architecture, and security features. Works across all platforms with automatic cookie management and SSRF protection.",
   "type": "module",
   "private": false,
@@ -18,12 +18,12 @@
       "import": "./dist/lite.js",
       "require": "./dist/lite.cjs"
     },
-    "./presets/edge": {
+    "./edge": {
       "types": "./dist/edge.d.ts",
       "import": "./dist/edge.js",
       "require": "./dist/edge.cjs"
     },
-    "./presets/node": {
+    "./node": {
       "types": "./dist/node.d.ts",
       "import": "./dist/node.js",
       "require": "./dist/node.cjs"
@@ -34,13 +34,14 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
-    "build:prod": "cross-env NODE_ENV=production tsup",
+    "build": "tsup && npm run build:dts",
+    "build:dts": "tsc --project tsconfig.dts.json",
+    "build:prod": "cross-env NODE_ENV=production tsup && npm run build:dts",
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "lint": "eslint .",
+    "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint . --fix",
     "clean": "rm -rf dist"
   },
@@ -78,13 +79,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ytahirkose/hyperhttp.git",
+    "url": "https://github.com/ytahirkose/advanced-client-fetch.git",
     "directory": "packages/core"
   },
   "bugs": {
-    "url": "https://github.com/ytahirkose/hyperhttp/issues"
+    "url": "https://github.com/ytahirkose/advanced-client-fetch/issues"
   },
-  "homepage": "https://github.com/ytahirkose/hyperhttp#readme",
-  "author": "HyperHTTP Team",
+  "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
+  "author": "Advanced Client Fetch Team",
   "license": "MIT"
 }

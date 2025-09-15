@@ -1,9 +1,9 @@
 /**
- * Middleware composition for HyperHTTP
+ * Middleware composition for Advanced Client Fetch
  * Based on Koa's compose function
  */
 
-import type { Middleware, Context } from './types.js';
+import type { Middleware, Context } from './types';
 
 /**
  * Compose middleware functions into a single function
@@ -75,7 +75,7 @@ export function conditional(
  */
 export function once(middleware: Middleware): Middleware {
   return async (context: Context, next: () => Promise<void>): Promise<void> => {
-    const key = '__hyperhttp_once_' + middleware.name;
+    const key = '__advanced_client_fetch_once_' + middleware.name;
     
     if (context.state[key]) {
       return next();
@@ -144,10 +144,10 @@ export function withLogging(middleware: Middleware): Middleware {
       await middleware(context, next);
       
       const duration = Date.now() - start;
-      console.log(`[HyperHTTP] ${context.req.method} ${context.req.url} - ${context.res?.status} (${duration}ms)`);
+      console.log(`[Advanced Client Fetch] ${context.req.method} ${context.req.url} - ${context.res?.status} (${duration}ms)`);
     } catch (error) {
       const duration = Date.now() - start;
-      console.error(`[HyperHTTP] ${context.req.method} ${context.req.url} - ERROR (${duration}ms)`, error);
+      console.error(`[Advanced Client Fetch] ${context.req.method} ${context.req.url} - ERROR (${duration}ms)`, error);
       throw error;
     }
   };

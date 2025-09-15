@@ -1,11 +1,11 @@
 /**
- * Node.js Preset for HyperHTTP
+ * Node.js Preset for Advanced Client Fetch
  * Includes agent support and Node.js specific optimizations
  */
 
-import { createClient } from '../client.js';
-import { createNodeTransport, createHttpAgent, createHttpsAgent } from '../node-agent.js';
-import type { ClientOptions, NodeAgentOptions } from '../types.js';
+import { createClient } from '../client';
+import { createNodeTransport, createHttpAgent, createHttpsAgent } from '../node-agent';
+import type { ClientOptions, NodeAgentOptions } from '../types';
 
 /**
  * Create client optimized for Node.js

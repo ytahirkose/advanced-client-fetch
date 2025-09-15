@@ -1,18 +1,18 @@
 /**
- * Basic usage test for HyperHTTP
+ * Basic usage test for Advanced Client Fetch
  */
 
-import { createClient } from '@hyperhttp/core';
-import { retry, timeout, cache } from 'hyperhttp-plugins';
+import { createClient } from '@advanced-client-fetch/core';
+import { retry, timeout, cache } from '@advanced-client-fetch/plugins';
 
 async function testBasicUsage() {
-  console.log('🚀 Testing HyperHTTP Basic Usage...\n');
+  console.log('🚀 Testing Advanced Client Fetch Basic Usage...\n');
 
   // Create client with basic configuration
   const client = createClient({
     baseURL: 'https://httpbin.org',
     headers: {
-      'User-Agent': 'hyperhttp-test/1.0',
+      'User-Agent': 'advanced-client-fetch-test/1.0',
     },
   });
 
@@ -26,7 +26,7 @@ async function testBasicUsage() {
 
     // Test POST request
     console.log('\n2. Testing POST request...');
-    const postData = { name: 'HyperHTTP', version: '0.1.0' };
+    const postData = { name: 'Advanced Client Fetch', version: '0.1.0' };
     const postResponse = await client.post('/post', postData);
     console.log('✅ POST request successful');
     console.log('Response status:', postResponse.status);
@@ -52,7 +52,7 @@ async function testBasicUsage() {
 }
 
 async function testWithPlugins() {
-  console.log('\n🔌 Testing HyperHTTP with Plugins...\n');
+  console.log('\n🔌 Testing Advanced Client Fetch with Plugins...\n');
 
   // Create client with plugins
   const client = createClient({
@@ -129,7 +129,7 @@ async function testErrorHandling() {
 }
 
 async function runTests() {
-  console.log('🧪 HyperHTTP Test Suite\n');
+  console.log('🧪 Advanced Client Fetch Test Suite\n');
   console.log('=' .repeat(50));
 
   await testBasicUsage();

@@ -1,12 +1,12 @@
 /**
- * Edge Runtime API Gateway with HyperHTTP
+ * Edge Runtime API Gateway with Advanced Client Fetch
  * 
- * This example demonstrates how HyperHTTP works in edge runtimes
+ * This example demonstrates how Advanced Client Fetch works in edge runtimes
  * like Cloudflare Workers, Vercel Edge Functions, and Deno Deploy.
  */
 
-import { createEdgeClient } from '@hyperhttp/presets/edge';
-import { retry, cache, dedupe, rateLimit } from 'hyperhttp-plugins';
+import { createEdgeClient } from '@advanced-client-fetch/presets/edge';
+import { retry, cache, dedupe, rateLimit } from '@advanced-client-fetch/plugins';
 
 // ============================================================================
 // 1. CLOUDFLARE WORKERS

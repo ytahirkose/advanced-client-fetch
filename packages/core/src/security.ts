@@ -1,9 +1,25 @@
 /**
- * Security utilities for HyperHTTP
+ * Security utilities for Advanced Client Fetch
  * Provides SSRF protection, header sanitization, and request validation
  */
 
-import type { Middleware, Context, SecurityOptions } from './types.js';
+import type { Middleware, Context } from './types';
+
+/**
+ * Security options interface
+ */
+export interface SecurityOptions {
+  enableRateLimiting?: boolean;
+  rateLimitWindow?: number;
+  rateLimitMax?: number;
+  onSecurityViolation?: (violation: SecurityViolation) => void;
+  allowPrivateIPs?: boolean;
+  maxRedirects?: number;
+  maxBodySize?: number;
+  allowedProtocols?: string[];
+  blockedHeaders?: string[];
+  customValidators?: Array<(ctx: Context) => Promise<boolean>>;
+}
 
 /**
  * Check if an IP address is private
@@ -301,4 +317,77 @@ export interface SecurityOptions {
   maxResponseSize?: number;
   allowPrivateIPs?: boolean;
   allowLocalhost?: boolean;
+  enableRateLimiting?: boolean;
+  rateLimitWindow?: number;
+  rateLimitMax?: number;
+  onSecurityViolation?: (violation: SecurityViolation) => void;
+}
+
+/**
+ * Security violation interface
+ */
+export interface SecurityViolation {
+  type: 'ssrf' | 'redirect' | 'header' | 'size' | 'rate_limit';
+  message: string;
+  url?: string;
+  headers?: Record<string, string>;
+  size?: number;
+  maxSize?: number;
+  timestamp: number;
+}
+
+/**
+ * Enhanced security validation with rate limiting
+ */
+export function createEnhancedSecurity(options: SecurityOptions = {}): Middleware {
+  const {
+    enableRateLimiting = true,
+    rateLimitWindow = 60000, // 1 minute
+    rateLimitMax = 100, // 100 requests per minute
+    onSecurityViolation,
+    ...securityOptions
+  } = options;
+
+  return async (ctx: Context, next: () => Promise<void>) => {
+    // Call comprehensive security first
+    await createComprehensiveSecurity(securityOptions)(ctx, next);
+
+    // Add rate limiting if enabled
+    if (enableRateLimiting) {
+      // This would integrate with the rate-limit plugin
+      // For now, we'll add a basic implementation
+      const clientId = ctx.req.headers.get('x-forwarded-for') || 'unknown';
+      const now = Date.now();
+      
+      // Simple in-memory rate limiting (in production, use Redis or similar)
+      if (typeof globalThis !== 'undefined') {
+        const rateLimitStore = (globalThis as any).__rateLimitStore || new Map();
+        (globalThis as any).__rateLimitStore = rateLimitStore;
+        
+        const key = `rate_limit:${clientId}`;
+        const requests = rateLimitStore.get(key) || [];
+        
+        // Remove old requests outside the window
+        const validRequests = requests.filter((time: number) => now - time < rateLimitWindow);
+        
+        if (validRequests.length >= rateLimitMax) {
+          const violation: SecurityViolation = {
+            type: 'rate_limit',
+            message: `Rate limit exceeded: ${validRequests.length}/${rateLimitMax} requests in ${rateLimitWindow}ms`,
+            timestamp: now
+          };
+          
+          if (onSecurityViolation) {
+            onSecurityViolation(violation);
+          }
+          
+          throw new Error(`Rate limit exceeded: ${validRequests.length}/${rateLimitMax} requests in ${rateLimitWindow}ms`);
+        }
+        
+        // Add current request
+        validRequests.push(now);
+        rateLimitStore.set(key, validRequests);
+      }
+    }
+  };
 }

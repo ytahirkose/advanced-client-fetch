@@ -1,10 +1,10 @@
 /**
- * Edge Runtime Preset for HyperHTTP
+ * Edge Runtime Preset for Advanced Client Fetch
  * Optimized for Cloudflare Workers, Vercel Edge, Deno Deploy
  */
 
-import { createClient } from '../client.js';
-import type { ClientOptions } from '../types.js';
+import { createClient } from '../client';
+import type { ClientOptions } from '../types';
 
 /**
  * Create client optimized for Edge runtimes

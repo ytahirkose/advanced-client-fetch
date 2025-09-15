@@ -1,9 +1,9 @@
 /**
- * Node.js preset for HyperHTTP
+ * Node.js preset for Advanced Client Fetch
  * Optimized for Node.js runtime with full feature set
  */
 
-import { createClient, Client, ClientOptions } from 'hyperhttp-core';
+import { createClient, type Client, type ClientOptions } from '@advanced-client-fetch/core';
 import { 
   retry, 
   timeout, 
@@ -12,29 +12,38 @@ import {
   circuitBreaker, 
   dedupe, 
   metrics 
-} from 'hyperhttp-plugins';
+} from '@advanced-client-fetch/plugins';
+import type { 
+  Middleware, 
+  RetryPluginOptions, 
+  CachePluginOptions,
+  RateLimitPluginOptions,
+  CircuitBreakerPluginOptions,
+  DedupePluginOptions, 
+  MetricsPluginOptions 
+} from '@advanced-client-fetch/core';
 
 export interface NodePresetOptions extends ClientOptions {
   /** Enable retry middleware */
-  retry?: boolean | any;
+  retry?: boolean | RetryPluginOptions;
   /** Enable timeout middleware */
   timeout?: boolean | number;
   /** Enable cache middleware */
-  cache?: boolean | any;
+  cache?: boolean | CachePluginOptions;
   /** Enable rate limiting middleware */
-  rateLimit?: boolean | any;
+  rateLimit?: boolean | RateLimitPluginOptions;
   /** Enable circuit breaker middleware */
-  circuitBreaker?: boolean | any;
+  circuitBreaker?: boolean | CircuitBreakerPluginOptions;
   /** Enable deduplication middleware */
-  dedupe?: boolean | any;
+  dedupe?: boolean | DedupePluginOptions;
   /** Enable metrics middleware */
-  metrics?: boolean | any;
+  metrics?: boolean | MetricsPluginOptions;
   /** Custom middleware */
-  middleware?: any[];
+  middleware?: Middleware[];
 }
 
 /**
- * Create HyperHTTP client optimized for Node.js
+ * Create Advanced Client Fetch client optimized for Node.js
  */
 export function createNodeClient(options: NodePresetOptions = {}): Client {
   const {
@@ -51,11 +60,11 @@ export function createNodeClient(options: NodePresetOptions = {}): Client {
 
   // Set default headers
   const defaultHeaders = {
-    'User-Agent': 'hyperhttp-node/0.1.0',
+    'User-Agent': 'advanced-client-fetch-node/1.0.0',
     ...clientOptions.headers,
   };
 
-  const nodeMiddleware: any[] = [];
+  const nodeMiddleware: Middleware[] = [];
 
   // Add retry middleware
   if (retryOptions) {
@@ -84,7 +93,7 @@ export function createNodeClient(options: NodePresetOptions = {}): Client {
   // Add rate limiting middleware
   if (rateLimitOptions) {
     const rateLimitConfig = typeof rateLimitOptions === 'boolean'
-      ? { limit: 100, window: 60000 }
+      ? { requests: 100, window: 60000 }
       : rateLimitOptions;
     nodeMiddleware.push(rateLimit(rateLimitConfig));
   }
@@ -119,7 +128,7 @@ export function createNodeClient(options: NodePresetOptions = {}): Client {
   return createClient({
     ...clientOptions,
     headers: defaultHeaders,
-    middleware: nodeMiddleware,
+    plugins: nodeMiddleware,
   });
 }
 
@@ -149,7 +158,7 @@ export function createAPIServerClient(options: NodePresetOptions = {}): Client {
     retry: true,
     timeout: 5000,
     cache: true,
-    rateLimit: { limit: 1000, window: 60000 },
+    rateLimit: { requests: 1000, window: 60000 },
     circuitBreaker: true,
     dedupe: true,
     metrics: true,
@@ -162,11 +171,11 @@ export function createAPIServerClient(options: NodePresetOptions = {}): Client {
 export function createDatabaseClient(options: NodePresetOptions = {}): Client {
   return createNodeClient({
     ...options,
-    retry: { retries: 3, backoff: 'exponential' },
+    retry: { retries: 3, minDelay: 100, maxDelay: 2000 },
     timeout: 30000,
     cache: false,
     rateLimit: false,
-    circuitBreaker: { failureThreshold: 3 },
+    circuitBreaker: { failureThreshold: 3, window: 60000, resetTimeout: 30000 },
     dedupe: false,
     metrics: true,
   });
@@ -194,10 +203,10 @@ export function createMicroserviceClient(options: NodePresetOptions = {}): Clien
 export function createBatchClient(options: NodePresetOptions = {}): Client {
   return createNodeClient({
     ...options,
-    retry: { retries: 5, backoff: 'linear' },
+    retry: { retries: 5, minDelay: 1000, maxDelay: 10000 },
     timeout: 60000,
     cache: false,
-    rateLimit: { limit: 10, window: 1000 },
+    rateLimit: { requests: 10, window: 1000 },
     circuitBreaker: false,
     dedupe: false,
     metrics: true,
@@ -258,7 +267,7 @@ export function createWebSocketClient(options: NodePresetOptions = {}): Client {
 export function createServerlessClient(options: NodePresetOptions = {}): Client {
   return createNodeClient({
     ...options,
-    retry: { retries: 2, backoff: 'fixed' },
+    retry: { retries: 2, minDelay: 100, maxDelay: 1000 },
     timeout: 15000,
     cache: true,
     rateLimit: false,
@@ -279,7 +288,7 @@ export function createFullNodeClient(
     retry: true,
     timeout: 30000,
     cache: true,
-    rateLimit: { limit: 100, window: 60000 },
+    rateLimit: { requests: 100, window: 60000 },
     circuitBreaker: { failureThreshold: 5, window: 60000, resetTimeout: 30000 },
     dedupe: true,
     metrics: true,
@@ -308,7 +317,7 @@ export function createProductionNodeClient(
       staleWhileRevalidate: true,
     },
     rateLimit: {
-      limit: 50,
+      requests: 50,
       window: 60000,
     },
     circuitBreaker: {
@@ -321,9 +330,6 @@ export function createProductionNodeClient(
     },
     metrics: {
       enabled: true,
-      includeTiming: true,
-      includeRequestBodySize: true,
-      includeResponseBodySize: true,
     },
   });
 }
@@ -349,9 +355,6 @@ export function createDevelopmentNodeClient(
     dedupe: true,
     metrics: {
       enabled: true,
-      onMetrics: (metrics) => {
-        console.log(`[HyperHTTP] ${metrics.method} ${metrics.url} - ${metrics.status} (${metrics.duration.toFixed(2)}ms)`);
-      },
     },
   });
 }
@@ -379,13 +382,13 @@ export function createTestNodeClient(
  */
 export function createNodeClientWithFeatures(
   features: {
-    retry?: boolean | any;
+    retry?: boolean | RetryPluginOptions;
     timeout?: boolean | number;
-    cache?: boolean | any;
-    rateLimit?: boolean | any;
-    circuitBreaker?: boolean | any;
-    dedupe?: boolean | any;
-    metrics?: boolean | any;
+    cache?: boolean | CachePluginOptions;
+    rateLimit?: boolean | RateLimitPluginOptions;
+    circuitBreaker?: boolean | CircuitBreakerPluginOptions;
+    dedupe?: boolean | DedupePluginOptions;
+    metrics?: boolean | MetricsPluginOptions;
   },
   clientOptions: Omit<NodePresetOptions, 'retry' | 'timeout' | 'cache' | 'rateLimit' | 'circuitBreaker' | 'dedupe' | 'metrics'> = {}
 ): Client {
@@ -405,7 +408,7 @@ export function createMicroserviceNodeClient(
   return createNodeClient({
     ...options,
     headers: {
-      'User-Agent': `hyperhttp-node/${serviceName}/0.1.0`,
+      'User-Agent': `advanced-client-fetch-node/${serviceName}/1.0.0`,
       'X-Service-Name': serviceName,
       ...options.headers,
     },
@@ -421,7 +424,7 @@ export function createMicroserviceNodeClient(
       cacheOnlyGET: true,
     },
     rateLimit: {
-      limit: 100,
+      requests: 100,
       window: 60000,
     },
     circuitBreaker: {
@@ -432,7 +435,6 @@ export function createMicroserviceNodeClient(
     dedupe: true,
     metrics: {
       enabled: true,
-      keyGenerator: (req) => `${serviceName}:${req.method}:${new URL(req.url).pathname}`,
     },
   });
 }
@@ -446,7 +448,7 @@ export function createAPIGatewayNodeClient(
   return createNodeClient({
     ...options,
     headers: {
-      'User-Agent': 'hyperhttp-node/api-gateway/0.1.0',
+      'User-Agent': 'advanced-client-fetch-node/api-gateway/1.0.0',
       ...options.headers,
     },
     retry: {
@@ -461,7 +463,7 @@ export function createAPIGatewayNodeClient(
       cacheOnlyGET: true,
     },
     rateLimit: {
-      limit: 1000,
+      requests: 1000,
       window: 60000,
     },
     circuitBreaker: {
@@ -472,9 +474,6 @@ export function createAPIGatewayNodeClient(
     dedupe: true,
     metrics: {
       enabled: true,
-      includeTiming: true,
-      includeRequestBodySize: true,
-      includeResponseBodySize: true,
     },
   });
 }
@@ -487,4 +486,3 @@ export const nodeClient = createNodeClient();
 /**
  * Export for convenience
  */
-export default nodeClient;

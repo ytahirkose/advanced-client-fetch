@@ -1,17 +1,17 @@
-# Migration Guide: From Axios to HyperHTTP
+# Migration Guide: From Axios to Advanced Client Fetch
 
-This guide helps you migrate from Axios to HyperHTTP with minimal code changes and maximum benefits.
+This guide helps you migrate from Axios to Advanced Client Fetch with minimal code changes and maximum benefits.
 
 ## 🚀 Quick Migration (5 minutes)
 
-### 1. Install HyperHTTP
+### 1. Install Advanced Client Fetch
 
 ```bash
 # Remove Axios
 npm uninstall axios
 
-# Install HyperHTTP with Axios compatibility
-npm install @hyperhttp/axios-adapter
+# Install Advanced Client Fetch with Axios compatibility
+npm install @advanced-client-fetch/axios-adapter
 ```
 
 ### 2. Update Imports
@@ -20,14 +20,14 @@ npm install @hyperhttp/axios-adapter
 // Before (Axios)
 import axios from 'axios';
 
-// After (HyperHTTP with Axios compatibility)
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
+// After (Advanced Client Fetch with Axios compatibility)
+import { createAxiosInstance } from '@advanced-client-fetch/axios-adapter';
 const axios = createAxiosInstance();
 ```
 
 ### 3. That's it! 🎉
 
-Your existing Axios code will work exactly the same, but now with HyperHTTP's power under the hood.
+Your existing Axios code will work exactly the same, but now with Advanced Client Fetch's power under the hood.
 
 ## 🔄 Step-by-Step Migration
 
@@ -46,7 +46,7 @@ const api = axios.create({
 });
 
 // After
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
+import { createAxiosInstance } from '@advanced-client-fetch/axios-adapter';
 
 const api = createAxiosInstance({
   baseURL: 'https://api.example.com',
@@ -79,7 +79,7 @@ axios.interceptors.response.use(
   }
 );
 
-// After (HyperHTTP with Axios compatibility)
+// After (Advanced Client Fetch with Axios compatibility)
 // Same code! Interceptors work exactly the same
 api.interceptors.request.use(
   (config) => {
@@ -109,7 +109,7 @@ const user = await axios.post('/users', { name: 'John' });
 const updated = await axios.put('/users/1', { name: 'Jane' });
 await axios.delete('/users/1');
 
-// After (HyperHTTP with Axios compatibility)
+// After (Advanced Client Fetch with Axios compatibility)
 // Same code! All methods work exactly the same
 const users = await api.get('/users');
 const user = await api.post('/users', { name: 'John' });
@@ -133,7 +133,7 @@ try {
   }
 }
 
-// After (HyperHTTP with Axios compatibility)
+// After (Advanced Client Fetch with Axios compatibility)
 // Same code! Error handling works exactly the same
 try {
   const response = await api.get('/users');
@@ -148,9 +148,9 @@ try {
 }
 ```
 
-## 🌟 Advanced Migration (Get HyperHTTP Benefits)
+## 🌟 Advanced Migration (Get Advanced Client Fetch Benefits)
 
-### Step 1: Use Native HyperHTTP API
+### Step 1: Use Native Advanced Client Fetch API
 
 ```typescript
 // Before (Axios)
@@ -161,8 +161,8 @@ const api = axios.create({
   timeout: 10000
 });
 
-// After (HyperHTTP native)
-import { createClient } from '@hyperhttp/core';
+// After (Advanced Client Fetch native)
+import { createClient } from '@advanced-client-fetch/core';
 
 const api = createClient({
   baseURL: 'https://api.example.com',
@@ -174,7 +174,7 @@ const api = createClient({
 
 ```typescript
 // Node.js
-import { createNodeClient } from '@hyperhttp/presets/node';
+import { createNodeClient } from '@advanced-client-fetch/presets/node';
 
 const api = createNodeClient({
   baseURL: 'https://api.example.com',
@@ -184,7 +184,7 @@ const api = createNodeClient({
 });
 
 // Edge Runtime
-import { createEdgeClient } from '@hyperhttp/presets/edge';
+import { createEdgeClient } from '@advanced-client-fetch/presets/edge';
 
 const api = createEdgeClient({
   baseURL: 'https://api.example.com',
@@ -193,7 +193,7 @@ const api = createEdgeClient({
 });
 
 // Browser
-import { createBrowserClient } from '@hyperhttp/presets/browser';
+import { createBrowserClient } from '@advanced-client-fetch/presets/browser';
 
 const api = createBrowserClient({
   baseURL: 'https://api.example.com',
@@ -206,8 +206,8 @@ const api = createBrowserClient({
 ### Step 3: Add Resilience Features
 
 ```typescript
-import { createClient } from '@hyperhttp/core';
-import { retry, cache, circuitBreaker, rateLimit } from '@hyperhttp/plugins';
+import { createClient } from '@advanced-client-fetch/core';
+import { retry, cache, circuitBreaker, rateLimit } from '@advanced-client-fetch/plugins';
 
 const api = createClient({
   baseURL: 'https://api.example.com',
@@ -242,7 +242,7 @@ const api = createClient({
 const users = await axios.get('/users');
 const user = await axios.post('/users', { name: 'John' });
 
-// After (HyperHTTP native)
+// After (Advanced Client Fetch native)
 const users = await api.get('/users');
 const user = await api.post('/users', { name: 'John' });
 
@@ -276,8 +276,8 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// After (HyperHTTP with automatic cookie management)
-import { createBrowserClient } from '@hyperhttp/presets/browser';
+// After (Advanced Client Fetch with automatic cookie management)
+import { createBrowserClient } from '@advanced-client-fetch/presets/browser';
 
 const api = createBrowserClient({
   baseURL: 'https://api.example.com',
@@ -304,9 +304,9 @@ axiosRetry(api, {
   retryDelay: axiosRetry.exponentialDelay
 });
 
-// After (HyperHTTP with built-in retry)
-import { createClient } from '@hyperhttp/core';
-import { retry } from '@hyperhttp/plugins';
+// After (Advanced Client Fetch with built-in retry)
+import { createClient } from '@advanced-client-fetch/core';
+import { retry } from '@advanced-client-fetch/plugins';
 
 const api = createClient({
   baseURL: 'https://api.example.com',
@@ -347,9 +347,9 @@ api.interceptors.response.use((response) => {
   return response;
 });
 
-// After (HyperHTTP with built-in caching)
-import { createClient } from '@hyperhttp/core';
-import { cache } from '@hyperhttp/plugins';
+// After (Advanced Client Fetch with built-in caching)
+import { createClient } from '@advanced-client-fetch/core';
+import { cache } from '@advanced-client-fetch/plugins';
 
 const api = createClient({
   baseURL: 'https://api.example.com',
@@ -389,8 +389,8 @@ api.interceptors.response.use(
   }
 );
 
-// After (HyperHTTP error handling)
-import { createClient } from '@hyperhttp/core';
+// After (Advanced Client Fetch error handling)
+import { createClient } from '@advanced-client-fetch/core';
 
 const api = createClient({
   baseURL: 'https://api.example.com',
@@ -422,7 +422,7 @@ const api = createClient({
 - ✅ **Smaller Bundle**: Tree-shakeable
 - ✅ **Platform Support**: Works in Edge runtimes
 
-### Advanced Benefits (Native HyperHTTP)
+### Advanced Benefits (Native Advanced Client Fetch)
 
 - 🚀 **Automatic Cookie Management**: No manual cookie handling
 - 🛡️ **Security Features**: SSRF protection, header sanitization
@@ -446,8 +446,8 @@ mock.onGet('/users').reply(200, { users: [] });
 const response = await axios.get('/users');
 expect(response.data).toEqual({ users: [] });
 
-// After (HyperHTTP tests)
-import { createClient } from '@hyperhttp/core';
+// After (Advanced Client Fetch tests)
+import { createClient } from '@advanced-client-fetch/core';
 
 const client = createClient();
 // Mock fetch globally
@@ -463,7 +463,7 @@ expect(response.data).toEqual({ users: [] });
 
 ```typescript
 // Test with real server
-import { createClient } from '@hyperhttp/core';
+import { createClient } from '@advanced-client-fetch/core';
 
 const client = createClient({
   baseURL: 'https://httpbin.org'
@@ -488,7 +488,7 @@ test('POST request', async () => {
 // Problem: CORS errors in browser
 // Solution: Use browser preset with CORS support
 
-import { createBrowserClient } from '@hyperhttp/presets/browser';
+import { createBrowserClient } from '@advanced-client-fetch/presets/browser';
 
 const client = createBrowserClient({
   baseURL: 'https://api.example.com',
@@ -503,7 +503,7 @@ const client = createBrowserClient({
 // Problem: Cookies not being sent
 // Solution: Enable automatic cookie management
 
-import { createBrowserClient } from '@hyperhttp/presets/browser';
+import { createBrowserClient } from '@advanced-client-fetch/presets/browser';
 
 const client = createBrowserClient({
   baseURL: 'https://api.example.com',
@@ -518,7 +518,7 @@ const client = createBrowserClient({
 // Problem: Code doesn't work in Edge runtime
 // Solution: Use edge preset
 
-import { createEdgeClient } from '@hyperhttp/presets/edge';
+import { createEdgeClient } from '@advanced-client-fetch/presets/edge';
 
 const client = createEdgeClient({
   baseURL: 'https://api.example.com',
@@ -534,27 +534,27 @@ const client = createEdgeClient({
 // Solution: Use tree-shaking and specific imports
 
 // Instead of importing everything
-import * as hyperhttp from '@hyperhttp/core';
+import * as advancedClientFetch from '@advanced-client-fetch/core';
 
 // Import only what you need
-import { createClient } from '@hyperhttp/core';
-import { retry } from '@hyperhttp/plugins/retry';
+import { createClient } from '@advanced-client-fetch/core';
+import { retry } from '@advanced-client-fetch/plugins/retry';
 ```
 
 ## 📚 Additional Resources
 
-- [HyperHTTP Documentation](https://hyperhttp.dev)
-- [Examples Repository](https://github.com/hyperhttp/examples)
-- [Community Discord](https://discord.gg/hyperhttp)
-- [GitHub Issues](https://github.com/hyperhttp/hyperhttp/issues)
+- [Advanced Client Fetch Documentation](https://advanced-client-fetch.dev)
+- [Examples Repository](https://github.com/advanced-client-fetch/examples)
+- [Community Discord](https://discord.gg/advanced-client-fetch)
+- [GitHub Issues](https://github.com/advanced-client-fetch/advanced-client-fetch/issues)
 
 ## 🤝 Need Help?
 
 If you encounter any issues during migration:
 
 1. Check the [Common Issues](#-common-issues-and-solutions) section
-2. Search [GitHub Issues](https://github.com/hyperhttp/hyperhttp/issues)
-3. Ask in [Discord](https://discord.gg/hyperhttp)
+2. Search [GitHub Issues](https://github.com/advanced-client-fetch/advanced-client-fetch/issues)
+3. Ask in [Discord](https://discord.gg/advanced-client-fetch)
 4. Create a new issue with your specific problem
 
 Happy migrating! 🚀

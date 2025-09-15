@@ -1,7 +1,7 @@
 {
-  "name": "advanced-client-fetch-plugins",
-  "version": "1.0.15",
-  "description": "🔌 Powerful HTTP plugins for HyperHTTP. Retry, cache, rate limiting, circuit breaker, deduplication, metrics, and more. Production-ready resilience features.",
+  "name": "@advanced-client-fetch/plugins",
+  "version": "1.0.0",
+  "description": "🔌 Powerful HTTP plugins for Advanced Client Fetch. Retry, cache, rate limiting, circuit breaker, deduplication, metrics, and more. Production-ready resilience features.",
   "type": "module",
   "private": false,
   "main": "./dist/index.cjs",
@@ -65,7 +65,7 @@
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
-    "advanced-client-fetch-core": "^1.0.15"
+    "@advanced-client-fetch/core": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
@@ -100,13 +100,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ytahirkose/hyperhttp.git",
+    "url": "https://github.com/ytahirkose/advanced-client-fetch.git",
     "directory": "packages/plugins"
   },
   "bugs": {
-    "url": "https://github.com/ytahirkose/hyperhttp/issues"
+    "url": "https://github.com/ytahirkose/advanced-client-fetch/issues"
   },
-  "homepage": "https://github.com/ytahirkose/hyperhttp#readme",
-  "author": "HyperHTTP Team",
+  "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
+  "author": "Advanced Client Fetch Team",
   "license": "MIT"
 }

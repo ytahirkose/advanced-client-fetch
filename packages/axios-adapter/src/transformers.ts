@@ -2,13 +2,14 @@
  * Request/Response transformers for Axios compatibility
  */
 
-import type { Headers } from 'hyperhttp-core';
+// Headers type - using Record<string, string> for compatibility
+type Headers = Record<string, string>;
 
-export function applyRequestTransformers(
-  data: any,
+export function applyRequestTransformers<T = unknown>(
+  data: T,
   headers: Headers,
-  transformers: Array<(data: any, headers: Headers) => any>
-): any {
+  transformers: Array<(data: unknown, headers: Headers) => unknown>
+): unknown {
   let result = data;
   for (const transformer of transformers) {
     result = transformer(result, headers);
@@ -16,11 +17,11 @@ export function applyRequestTransformers(
   return result;
 }
 
-export function applyResponseTransformers(
-  data: any,
+export function applyResponseTransformers<T = unknown>(
+  data: T,
   headers: Headers,
-  transformers: Array<(data: any, headers: Headers) => any>
-): any {
+  transformers: Array<(data: unknown, headers: Headers) => unknown>
+): unknown {
   let result = data;
   for (const transformer of transformers) {
     result = transformer(result, headers);
@@ -28,13 +29,13 @@ export function applyResponseTransformers(
   return result;
 }
 
-export const defaultRequestTransformers: Array<(data: any, headers: Headers) => any> = [
+export const defaultRequestTransformers: Array<(data: unknown, headers: Headers) => unknown> = [
   createContentTypeTransformer(),
   createFormDataTransformer(),
   createURLSearchParamsTransformer(),
 ];
 
-export const defaultResponseTransformers: Array<(data: any, headers: Headers) => any> = [
+export const defaultResponseTransformers: Array<(data: unknown, headers: Headers) => unknown> = [
   createContentTypeResponseTransformer(),
   createXMLResponseTransformer(),
   createTextResponseTransformer(),
@@ -52,11 +53,12 @@ export const defaultResponseTransformers: Array<(data: any, headers: Headers) =>
   createLoggingResponseTransformer(),
 ];
 
+// Request Transformers
 export function createContentTypeTransformer() {
-  return (data: any, headers: Headers) => {
+  return (data: unknown, headers: Headers) => {
     if (data && typeof data === 'object' && !(data instanceof FormData) && !(data instanceof URLSearchParams)) {
-      if (!headers.has('content-type')) {
-        headers.set('content-type', 'application/json; charset=utf-8');
+      if (!headers['content-type']) {
+        headers['content-type'] = 'application/json; charset=utf-8';
       }
       return JSON.stringify(data);
     }
@@ -65,7 +67,7 @@ export function createContentTypeTransformer() {
 }
 
 export function createFormDataTransformer() {
-  return (data: any, headers: Headers) => {
+  return (data: any, _headers: Headers) => {
     if (data && typeof data === 'object' && !(data instanceof FormData)) {
       const formData = new FormData();
       Object.entries(data).forEach(([key, value]) => {
@@ -92,8 +94,8 @@ export function createURLSearchParamsTransformer() {
           params.append(key, String(value));
         }
       });
-      if (!headers.has('content-type')) {
-        headers.set('content-type', 'application/x-www-form-urlencoded; charset=utf-8');
+      if (!headers['content-type']) {
+        headers['content-type'] = 'application/x-www-form-urlencoded; charset=utf-8';
       }
       return params.toString();
     }
@@ -101,25 +103,34 @@ export function createURLSearchParamsTransformer() {
   };
 }
 
+// Response Transformers
 export function createContentTypeResponseTransformer() {
   return (data: any, headers: Headers) => {
-    const contentType = headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      try {
-        return JSON.parse(data);
-      } catch {
-        return data;
+    const contentType = headers['content-type'] || '';
+    
+    if (contentType.includes('application/json')) {
+      if (typeof data === 'string') {
+        try {
+          return JSON.parse(data);
+        } catch {
+          return data;
+        }
       }
+    } else if (contentType.includes('application/xml') || contentType.includes('text/xml')) {
+      return data; // XML parsing would need additional library
+    } else if (contentType.includes('text/')) {
+      return data;
     }
+    
     return data;
   };
 }
 
 export function createXMLResponseTransformer() {
   return (data: any, headers: Headers) => {
-    const contentType = headers.get('content-type');
-    if (contentType?.includes('application/xml') || contentType?.includes('text/xml')) {
-      // Return as string for XML parsing
+    const contentType = headers['content-type'] || '';
+    if (contentType.includes('xml') && typeof data === 'string') {
+      // Basic XML parsing - for full support, use DOMParser or xml2js
       return data;
     }
     return data;
@@ -128,9 +139,9 @@ export function createXMLResponseTransformer() {
 
 export function createTextResponseTransformer() {
   return (data: any, headers: Headers) => {
-    const contentType = headers.get('content-type');
-    if (contentType?.startsWith('text/')) {
-      return data;
+    const contentType = headers['content-type'] || '';
+    if (contentType.includes('text/') && data instanceof ArrayBuffer) {
+      return new TextDecoder().decode(data);
     }
     return data;
   };
@@ -138,45 +149,48 @@ export function createTextResponseTransformer() {
 
 export function createBinaryResponseTransformer() {
   return (data: any, headers: Headers) => {
-    const contentType = headers.get('content-type');
-    if (contentType?.includes('application/octet-stream') || 
-        contentType?.includes('image/') ||
-        contentType?.includes('video/') ||
-        contentType?.includes('audio/')) {
-      return data;
+    const contentType = headers['content-type'] || '';
+    if (contentType.includes('application/octet-stream') || contentType.includes('image/')) {
+      if (data instanceof ArrayBuffer) {
+        return new Blob([data]);
+      }
     }
     return data;
   };
 }
 
 export function createErrorResponseTransformer() {
-  return (data: any, _headers: Headers) => {
-    // Handle error responses
-    if (data && typeof data === 'object' && data.error) {
-      return data;
+  return (data: any, headers: Headers) => {
+    const status = parseInt(headers['status'] || '200');
+    if (status >= 400) {
+      const error = new Error(`HTTP ${status}`);
+      (error as any).status = status;
+      (error as any).data = data;
+      (error as any).headers = headers;
+      throw error;
     }
     return data;
   };
 }
 
 export function createStatusCodeResponseTransformer() {
-  return (data: any, _headers: Headers) => {
-    // Handle status code specific transformations
-    return data;
+  return (data: any, headers: Headers) => {
+    const status = parseInt(headers['status'] || '200');
+    return {
+      data,
+      status,
+      statusText: headers['status-text'] || '',
+      headers,
+      config: {}
+    };
   };
 }
 
 export function createPaginationResponseTransformer() {
   return (data: any, headers: Headers) => {
-    // Extract pagination info from headers
-    const pagination = {
-      page: parseInt(headers.get('x-page') || '1'),
-      perPage: parseInt(headers.get('x-per-page') || '10'),
-      total: parseInt(headers.get('x-total') || '0'),
-      totalPages: parseInt(headers.get('x-total-pages') || '1')
-    };
-
-    if (pagination.total > 0) {
+    const linkHeader = headers['link'];
+    if (linkHeader) {
+      const pagination = parseLinkHeader(linkHeader);
       return {
         data,
         pagination
@@ -188,16 +202,16 @@ export function createPaginationResponseTransformer() {
 
 export function createRateLimitResponseTransformer() {
   return (data: any, headers: Headers) => {
-    const rateLimit = {
-      limit: parseInt(headers.get('x-ratelimit-limit') || '0'),
-      remaining: parseInt(headers.get('x-ratelimit-remaining') || '0'),
-      reset: parseInt(headers.get('x-ratelimit-reset') || '0')
-    };
-
-    if (rateLimit.limit > 0) {
+    const rateLimitRemaining = headers['x-ratelimit-remaining'];
+    const rateLimitReset = headers['x-ratelimit-reset'];
+    
+    if (rateLimitRemaining !== undefined || rateLimitReset !== undefined) {
       return {
         data,
-        rateLimit
+        rateLimit: {
+          remaining: rateLimitRemaining ? parseInt(rateLimitRemaining) : undefined,
+          reset: rateLimitReset ? parseInt(rateLimitReset) : undefined
+        }
       };
     }
     return data;
@@ -206,18 +220,18 @@ export function createRateLimitResponseTransformer() {
 
 export function createCacheResponseTransformer() {
   return (data: any, headers: Headers) => {
-    const cache = {
-      hit: headers.get('x-cache') === 'HIT',
-      age: parseInt(headers.get('x-cache-age') || '0'),
-      expires: headers.get('cache-control')?.includes('max-age'),
-      etag: headers.get('etag'),
-      lastModified: headers.get('last-modified')
-    };
-
-    if (cache.hit || cache.etag || cache.lastModified) {
+    const cacheControl = headers['cache-control'];
+    const etag = headers['etag'];
+    const lastModified = headers['last-modified'];
+    
+    if (cacheControl || etag || lastModified) {
       return {
         data,
-        cache
+        cache: {
+          control: cacheControl,
+          etag,
+          lastModified
+        }
       };
     }
     return data;
@@ -226,17 +240,19 @@ export function createCacheResponseTransformer() {
 
 export function createCORSResponseTransformer() {
   return (data: any, headers: Headers) => {
-    const cors = {
-      allowOrigin: headers.get('access-control-allow-origin'),
-      allowMethods: headers.get('access-control-allow-methods'),
-      allowHeaders: headers.get('access-control-allow-headers'),
-      allowCredentials: headers.get('access-control-allow-credentials') === 'true'
-    };
-
-    if (cors.allowOrigin) {
+    const corsHeaders = ['access-control-allow-origin', 'access-control-allow-methods', 'access-control-allow-headers'];
+    const corsInfo: Record<string, string> = {};
+    
+    corsHeaders.forEach(header => {
+      if (headers[header]) {
+        corsInfo[header] = headers[header];
+      }
+    });
+    
+    if (Object.keys(corsInfo).length > 0) {
       return {
         data,
-        cors
+        cors: corsInfo
       };
     }
     return data;
@@ -245,37 +261,34 @@ export function createCORSResponseTransformer() {
 
 export function createSecurityResponseTransformer() {
   return (data: any, headers: Headers) => {
-    const security = {
-      contentSecurityPolicy: headers.get('content-security-policy'),
-      xFrameOptions: headers.get('x-frame-options'),
-      xContentTypeOptions: headers.get('x-content-type-options'),
-      strictTransportSecurity: headers.get('strict-transport-security'),
-      xXSSProtection: headers.get('x-xss-protection')
-    };
-
-    // Only add security info if any security headers are present
-    if (Object.values(security).some(value => value !== null)) {
+    const securityHeaders = ['strict-transport-security', 'x-content-type-options', 'x-frame-options'];
+    const securityInfo: Record<string, string> = {};
+    
+    securityHeaders.forEach(header => {
+      if (headers[header]) {
+        securityInfo[header] = headers[header];
+      }
+    });
+    
+    if (Object.keys(securityInfo).length > 0) {
       return {
         data,
-        security
+        security: securityInfo
       };
     }
     return data;
   };
 }
 
-export function createCustomHeadersResponseTransformer(headerNames: string[] = []) {
+export function createCustomHeadersResponseTransformer() {
   return (data: any, headers: Headers) => {
-    if (headerNames.length === 0) return data;
-    
     const customHeaders: Record<string, string> = {};
-    headerNames.forEach(name => {
-      const value = headers.get(name);
-      if (value) {
-        customHeaders[name] = value;
+    Object.entries(headers).forEach(([key, value]) => {
+      if (key.startsWith('x-') || key.startsWith('custom-')) {
+        customHeaders[key] = value;
       }
     });
-
+    
     if (Object.keys(customHeaders).length > 0) {
       return {
         data,
@@ -289,33 +302,26 @@ export function createCustomHeadersResponseTransformer(headerNames: string[] = [
 export function createMetadataResponseTransformer() {
   return (data: any, headers: Headers) => {
     const metadata = {
-      server: headers.get('server'),
-      date: headers.get('date'),
-      contentLength: headers.get('content-length'),
-      contentType: headers.get('content-type'),
-      lastModified: headers.get('last-modified'),
-      etag: headers.get('etag'),
-      expires: headers.get('expires'),
-      age: headers.get('age')
+      timestamp: new Date().toISOString(),
+      contentType: headers['content-type'],
+      contentLength: headers['content-length'],
+      server: headers['server'],
+      date: headers['date']
     };
-
-    // Only add metadata if any metadata headers are present
-    if (Object.values(metadata).some(value => value !== null)) {
-      return {
-        data,
-        metadata
-      };
-    }
-    return data;
+    
+    return {
+      data,
+      metadata
+    };
   };
 }
 
 export function createDebugResponseTransformer() {
   return (data: any, headers: Headers) => {
-    if (process.env.NODE_ENV === 'development' || process.env.DEBUG) {
+    if (process.env.NODE_ENV === 'development') {
       console.log('Response Debug:', {
         data,
-        headers: Object.fromEntries(headers.entries()),
+        headers,
         timestamp: new Date().toISOString()
       });
     }
@@ -325,8 +331,21 @@ export function createDebugResponseTransformer() {
 
 export function createLoggingResponseTransformer(logger?: (message: string) => void) {
   const log = logger || console.log;
-  return (data: any, headers: Headers) => {
+  return (data: any, _headers: Headers) => {
     log(`Response: ${JSON.stringify(data)}`);
     return data;
   };
+}
+
+// Utility functions
+function parseLinkHeader(linkHeader: string): Record<string, string> {
+  const links: Record<string, string> = {};
+  const linkRegex = /<([^>]+)>;\s*rel="([^"]+)"/g;
+  let match;
+  
+  while ((match = linkRegex.exec(linkHeader)) !== null) {
+    links[match[2]] = match[1];
+  }
+  
+  return links;
 }

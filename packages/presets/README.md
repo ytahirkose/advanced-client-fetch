@@ -1,9 +1,9 @@
-# @hyperhttp/presets
+# @advanced-client-fetch/presets
 
 > **Platform-Specific HTTP Clients** - Optimized configurations for different environments
 
-[![npm version](https://badge.fury.io/js/@hyperhttp/presets.svg)](https://badge.fury.io/js/@hyperhttp/presets)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@hyperhttp/presets)](https://bundlephobia.com/package/@hyperhttp/presets)
+[![npm version](https://badge.fury.io/js/@advanced-client-fetch/presets.svg)](https://badge.fury.io/js/@advanced-client-fetch/presets)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@advanced-client-fetch/presets)](https://bundlephobia.com/package/@advanced-client-fetch/presets)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
 Pre-configured HTTP clients optimized for specific platforms and use cases. Each preset includes the best practices and optimizations for its target environment.
@@ -11,7 +11,7 @@ Pre-configured HTTP clients optimized for specific platforms and use cases. Each
 ## Installation
 
 ```bash
-npm install @hyperhttp/presets
+npm install @advanced-client-fetch/presets
 ```
 
 ## Available Presets
@@ -21,7 +21,7 @@ npm install @hyperhttp/presets
 Optimized for browser environments with CORS, cookies, and credentials support.
 
 ```typescript
-import { createBrowserClient } from '@hyperhttp/presets/browser';
+import { createBrowserClient } from '@advanced-client-fetch/presets/browser';
 
 const client = createBrowserClient({
   baseURL: 'https://api.example.com',
@@ -42,7 +42,7 @@ const client = createBrowserClient({
 Full-featured client for Node.js with HTTP agents, proxy support, and security features.
 
 ```typescript
-import { createNodeClient } from '@hyperhttp/presets/node';
+import { createNodeClient } from '@advanced-client-fetch/presets/node';
 
 const client = createNodeClient({
   baseURL: 'https://api.example.com',
@@ -70,7 +70,7 @@ const client = createNodeClient({
 Optimized for edge runtimes like Cloudflare Workers, Vercel Edge Functions.
 
 ```typescript
-import { createEdgeClient } from '@hyperhttp/presets/edge';
+import { createEdgeClient } from '@advanced-client-fetch/presets/edge';
 
 const client = createEdgeClient({
   baseURL: 'https://api.example.com',
@@ -92,7 +92,7 @@ const client = createEdgeClient({
 Optimized for Deno runtime with native fetch support.
 
 ```typescript
-import { createDenoClient } from '@hyperhttp/presets/deno';
+import { createDenoClient } from '@advanced-client-fetch/presets/deno';
 
 const client = createDenoClient({
   baseURL: 'https://api.example.com',
@@ -106,7 +106,7 @@ const client = createDenoClient({
 Optimized for Bun runtime with native performance.
 
 ```typescript
-import { createBunClient } from '@hyperhttp/presets/bun';
+import { createBunClient } from '@advanced-client-fetch/presets/bun';
 
 const client = createBunClient({
   baseURL: 'https://api.example.com',
@@ -119,7 +119,7 @@ const client = createBunClient({
 ### API Gateway Client
 
 ```typescript
-import { createAPIGatewayClient } from '@hyperhttp/presets/edge';
+import { createAPIGatewayClient } from '@advanced-client-fetch/presets/edge';
 
 const client = createAPIGatewayClient({
   baseURL: 'https://api.example.com',
@@ -133,7 +133,7 @@ const client = createAPIGatewayClient({
 ### CDN Client
 
 ```typescript
-import { createCDNClient } from '@hyperhttp/presets/edge';
+import { createCDNClient } from '@advanced-client-fetch/presets/edge';
 
 const client = createCDNClient({
   baseURL: 'https://cdn.example.com',
@@ -147,7 +147,7 @@ const client = createCDNClient({
 ### Microservice Client
 
 ```typescript
-import { createMicroserviceClient } from '@hyperhttp/presets/node';
+import { createMicroserviceClient } from '@advanced-client-fetch/presets/node';
 
 const client = createMicroserviceClient({
   baseURL: 'https://service.example.com',
@@ -164,7 +164,7 @@ const client = createMicroserviceClient({
 ### Real-time Client
 
 ```typescript
-import { createRealTimeClient } from '@hyperhttp/presets/browser';
+import { createRealTimeClient } from '@advanced-client-fetch/presets/browser';
 
 const client = createRealTimeClient({
   baseURL: 'https://realtime.example.com',
@@ -178,7 +178,7 @@ const client = createRealTimeClient({
 ### WebSocket Client
 
 ```typescript
-import { createWebSocketClient } from '@hyperhttp/presets/browser';
+import { createWebSocketClient } from '@advanced-client-fetch/presets/browser';
 
 const client = createWebSocketClient({
   baseURL: 'wss://ws.example.com',
@@ -190,7 +190,7 @@ const client = createWebSocketClient({
 ### Streaming Client
 
 ```typescript
-import { createStreamingClient } from '@hyperhttp/presets/node';
+import { createStreamingClient } from '@advanced-client-fetch/presets/node';
 
 const client = createStreamingClient({
   baseURL: 'https://stream.example.com',
@@ -202,7 +202,7 @@ const client = createStreamingClient({
 ### Batch Client
 
 ```typescript
-import { createBatchClient } from '@hyperhttp/presets/node';
+import { createBatchClient } from '@advanced-client-fetch/presets/node';
 
 const client = createBatchClient({
   baseURL: 'https://batch.example.com',
@@ -215,7 +215,7 @@ const client = createBatchClient({
 ### Serverless Client
 
 ```typescript
-import { createServerlessClient } from '@hyperhttp/presets/edge';
+import { createServerlessClient } from '@advanced-client-fetch/presets/edge';
 
 const client = createServerlessClient({
   baseURL: 'https://api.example.com',
@@ -246,7 +246,7 @@ export default defineConfig({
 });
 
 // Frontend
-import { createBrowserClient } from '@hyperhttp/presets/browser';
+import { createBrowserClient } from '@advanced-client-fetch/presets/browser';
 
 const client = createBrowserClient({
   baseURL: '/api', // Proxy through same origin
@@ -264,7 +264,7 @@ const profile = await client.get('/auth/profile');
 
 **Solution**:
 ```typescript
-import { createMicroserviceClient } from '@hyperhttp/presets/node';
+import { createMicroserviceClient } from '@advanced-client-fetch/presets/node';
 
 const client = createMicroserviceClient({
   circuitBreaker: {
@@ -285,7 +285,7 @@ const data = await client.get('/unreliable-service');
 **Solution**:
 ```typescript
 // cloudflare-worker.js
-import { createEdgeClient } from '@hyperhttp/presets/edge';
+import { createEdgeClient } from '@advanced-client-fetch/presets/edge';
 
 const client = createEdgeClient({
   retry: { retries: 2 },
@@ -307,7 +307,7 @@ export default {
 
 **Solution**:
 ```typescript
-import { createAPIGatewayClient } from '@hyperhttp/presets/edge';
+import { createAPIGatewayClient } from '@advanced-client-fetch/presets/edge';
 
 const client = createAPIGatewayClient({
   rateLimit: {
@@ -406,7 +406,7 @@ const client = axios.create({
 });
 
 // After
-import { createNodeClient } from '@hyperhttp/presets/node';
+import { createNodeClient } from '@advanced-client-fetch/presets/node';
 
 const client = createNodeClient({
   baseURL: 'https://api.example.com',
@@ -422,7 +422,7 @@ const response = await fetch('https://api.example.com/users');
 const users = await response.json();
 
 // After
-import { createBrowserClient } from '@hyperhttp/presets/browser';
+import { createBrowserClient } from '@advanced-client-fetch/presets/browser';
 
 const client = createBrowserClient();
 const users = await client.get('/users');

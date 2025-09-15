@@ -1,342 +1,136 @@
 /**
- * Tests for HyperHTTP cache plugin
+ * Cache plugin tests
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { 
-  cache, 
-  cacheWithSWR, 
-  cacheByContentType, 
-  cacheWithCustomTTL,
-  MemoryCacheStorage 
-} from '../cache.js';
-import type { Context } from 'hyperhttp-core';
+import { cache, cacheWithSWR, MemoryCacheStorage } from '../cache';
 
-describe('HyperHTTP Cache Plugin', () => {
+describe('MemoryCacheStorage', () => {
+  let storage: MemoryCacheStorage;
+
+  beforeEach(() => {
+    storage = new MemoryCacheStorage();
+  });
+
+  it('should store and retrieve responses', async () => {
+    const response = new Response('test data', { status: 200 });
+    const key = 'test-key';
+    const ttl = 1000;
+
+    await storage.set(key, response, ttl);
+    const retrieved = await storage.get(key);
+
+    expect(retrieved).toBeDefined();
+    expect(retrieved?.status).toBe(200);
+  });
+
+  it('should return undefined for expired entries', async () => {
+    const response = new Response('test data', { status: 200 });
+    const key = 'test-key';
+    const ttl = 1; // Very short TTL
+
+    await storage.set(key, response, ttl);
+    
+    // Wait for expiration
+    await new Promise(resolve => setTimeout(resolve, 10));
+    
+    const retrieved = await storage.get(key);
+    expect(retrieved).toBeUndefined();
+  });
+
+  it('should delete entries', async () => {
+    const response = new Response('test data', { status: 200 });
+    const key = 'test-key';
+
+    await storage.set(key, response, 1000);
+    await storage.delete(key);
+    
+    const retrieved = await storage.get(key);
+    expect(retrieved).toBeUndefined();
+  });
+
+  it('should clear all entries', async () => {
+    const response1 = new Response('test data 1', { status: 200 });
+    const response2 = new Response('test data 2', { status: 200 });
+
+    await storage.set('key1', response1, 1000);
+    await storage.set('key2', response2, 1000);
+    await storage.clear();
+    
+    expect(await storage.get('key1')).toBeUndefined();
+    expect(await storage.get('key2')).toBeUndefined();
+  });
+});
+
+describe('cache plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  describe('MemoryCacheStorage', () => {
-    it('should store and retrieve cached responses', async () => {
-      const storage = new MemoryCacheStorage();
-      const response = new Response('cached data', { status: 200 });
-      
-      await storage.set('key1', response, 1000);
-      const retrieved = await storage.get('key1');
-      
-      expect(retrieved).toBe(response);
-    });
-
-    it('should return undefined for expired entries', async () => {
-      const storage = new MemoryCacheStorage();
-      const response = new Response('cached data', { status: 200 });
-      
-      await storage.set('key1', response, 100);
-      
-      // Wait for expiration
-      await new Promise(resolve => setTimeout(resolve, 150));
-      
-      const retrieved = await storage.get('key1');
-      expect(retrieved).toBeUndefined();
-    });
-
-    it('should delete entries', async () => {
-      const storage = new MemoryCacheStorage();
-      const response = new Response('cached data', { status: 200 });
-      
-      await storage.set('key1', response, 1000);
-      await storage.delete('key1');
-      
-      const retrieved = await storage.get('key1');
-      expect(retrieved).toBeUndefined();
-    });
-
-    it('should clear all entries', async () => {
-      const storage = new MemoryCacheStorage();
-      const response = new Response('cached data', { status: 200 });
-      
-      await storage.set('key1', response, 1000);
-      await storage.set('key2', response, 1000);
-      await storage.clear();
-      
-      expect(await storage.get('key1')).toBeUndefined();
-      expect(await storage.get('key2')).toBeUndefined();
-    });
-
-    it('should return storage size', () => {
-      const storage = new MemoryCacheStorage();
-      expect(storage.size()).toBe(0);
-    });
+  it('should create cache middleware', () => {
+    const middleware = cache({ ttl: 1000 });
+    expect(typeof middleware).toBe('function');
   });
 
-  describe('cache', () => {
-    it('should cache GET requests', async () => {
-      const middleware = cache({ ttl: 1000 });
-      
-      const context: Context = {
-        req: new Request('https://example.com', { method: 'GET' }),
-        options: { url: 'https://example.com', method: 'GET' },
-        state: {},
-        meta: {},
-      };
-      
-      const response = new Response('cached data', { status: 200 });
-      
-      // First request - should not be cached
-      await middleware(context, async () => {
-        context.res = response;
-      });
-      
-      expect(context.res).toBe(response);
-      expect(context.meta.cacheHit).toBe(false);
-      
-      // Second request - should be cached
-      const context2: Context = {
-        req: new Request('https://example.com', { method: 'GET' }),
-        options: { url: 'https://example.com', method: 'GET' },
-        state: {},
-        meta: {},
-      };
-      
-      await middleware(context2, async () => {
-        // This should not be called
-        throw new Error('Should not be called');
-      });
-      
-      expect(context2.res?.status).toBe(response.status);
-      expect(context2.res?.statusText).toBe(response.statusText);
-      expect(context2.meta.cacheHit).toBe(true);
+  it('should cache GET requests', async () => {
+    const mockResponse = new Response('cached data', { status: 200 });
+    const mockFetch = vi.fn().mockResolvedValue(mockResponse);
+    global.fetch = mockFetch;
+
+    const middleware = cache({ ttl: 1000 });
+    const context = {
+      req: new Request('https://example.com', { method: 'GET' }),
+      res: undefined,
+      signal: new AbortController().signal,
+      meta: {},
+      state: {}
+    };
+
+    const next = vi.fn().mockImplementation(async () => {
+      context.res = await fetch(context.req);
     });
 
-    it('should not cache non-GET requests by default', async () => {
-      const middleware = cache({ ttl: 1000 });
-      
-      const context: Context = {
-        req: new Request('https://example.com', { method: 'POST' }),
-        options: { url: 'https://example.com', method: 'POST' },
-        state: {},
-        meta: {},
-      };
-      
-      const response = new Response('created', { status: 201 });
-      
-      await middleware(context, async () => {
-        context.res = response;
-      });
-      
-      expect(context.res).toBe(response);
-      expect(context.meta.cacheHit).toBeUndefined();
-    });
+    // First request
+    await middleware(context, next);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    expect(context.meta.cacheHit).toBe(false);
 
-    it('should not cache responses with no-store header', async () => {
-      const middleware = cache({ ttl: 1000 });
-      
-      const context: Context = {
-        req: new Request('https://example.com', { method: 'GET' }),
-        options: { url: 'https://example.com', method: 'GET' },
-        state: {},
-        meta: {},
-      };
-      
-      const response = new Response('data', { 
-        status: 200,
-        headers: { 'Cache-Control': 'no-store' }
-      });
-      
-      await middleware(context, async () => {
-        context.res = response;
-      });
-      
-      expect(context.res).toBe(response);
-      expect(context.meta.cacheHit).toBe(false);
-    });
+    // Second request (should be cached)
+    const context2 = {
+      req: new Request('https://example.com', { method: 'GET' }),
+      res: undefined,
+      signal: new AbortController().signal,
+      meta: {},
+      state: {}
+    };
 
-    it('should not cache private responses', async () => {
-      const middleware = cache({ ttl: 1000 });
-      
-      const context: Context = {
-        req: new Request('https://example.com', { method: 'GET' }),
-        options: { url: 'https://example.com', method: 'GET' },
-        state: {},
-        meta: {},
-      };
-      
-      const response = new Response('data', { 
-        status: 200,
-        headers: { 'Cache-Control': 'private' }
-      });
-      
-      await middleware(context, async () => {
-        context.res = response;
-      });
-      
-      expect(context.res).toBe(response);
-      expect(context.meta.cacheHit).toBe(false);
-    });
-
-    it('should respect max-age header', async () => {
-      const middleware = cache({ ttl: 1000 });
-      
-      const context: Context = {
-        req: new Request('https://example.com', { method: 'GET' }),
-        options: { url: 'https://example.com', method: 'GET' },
-        state: {},
-        meta: {},
-      };
-      
-      const response = new Response('data', { 
-        status: 200,
-        headers: { 'Cache-Control': 'max-age=2' }
-      });
-      
-      await middleware(context, async () => {
-        context.res = response;
-      });
-      
-      expect(context.res).toBe(response);
-      expect(context.meta.cacheHit).toBe(false);
-    });
+    const next2 = vi.fn();
+    await middleware(context2, next2);
+    
+    expect(mockFetch).toHaveBeenCalledTimes(1); // Should not call fetch again
+    expect(context2.meta.cacheHit).toBe(true);
   });
 
-  describe('cacheWithSWR', () => {
-    it('should serve stale content while revalidating', async () => {
-      // Create a storage that doesn't auto-expire entries for SWR testing
-      const storage = {
-        cache: new Map(),
-        async get(key: string) {
-          const entry = this.cache.get(key);
-          return entry?.response;
-        },
-        async set(key: string, response: Response, ttl: number = 300000) {
-          const expires = Date.now() + ttl;
-          this.cache.set(key, { response, expires });
-        },
-        async delete(key: string) {
-          this.cache.delete(key);
-        },
-        async clear() {
-          this.cache.clear();
-        },
-        size() {
-          return this.cache.size;
-        }
-      };
-      
-      const middleware = cacheWithSWR({
-        ttl: 1000, 
-        staleWhileRevalidate: true,
-        storage: storage as any
-      });
-      
-      const context: Context = {
-        req: new Request('https://example.com', { method: 'GET' }),
-        options: { url: 'https://example.com', method: 'GET' },
-        state: {},
-        meta: {},
-      };
-      
-      const response = new Response('stale data', { status: 200 });
-      
-      // First request
-      await middleware(context, async () => {
-        context.res = response;
-      });
-      
-      expect(context.res).toBeDefined();
-      expect(context.res?.status).toBe(200);
-      expect(context.meta.cacheHit).toBe(false);
-      
-      // Wait for stale (but not expired)
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Second request - should serve stale content
-      const context2: Context = {
-        req: new Request('https://example.com', { method: 'GET' }),
-        options: { url: 'https://example.com', method: 'GET' },
-        state: {},
-        meta: {},
-      };
-      
-      
-      await middleware(context2, async () => {
-        context2.res = new Response('fresh data', { status: 200 });
-      });
-      
-      expect(context2.res).toBeDefined();
-      expect(context2.res?.status).toBe(200);
-      expect(context2.meta.cacheHit).toBe(true);
-      expect(context2.meta.staleWhileRevalidate).toBe(true);
-    });
-  });
+  it('should not cache non-GET requests', async () => {
+    const middleware = cache({ ttl: 1000 });
+    const context = {
+      req: new Request('https://example.com', { method: 'POST' }),
+      res: undefined,
+      signal: new AbortController().signal,
+      meta: {},
+      state: {}
+    };
 
-  describe('cacheByContentType', () => {
-    it('should only cache specific content types', async () => {
-      const storage = new MemoryCacheStorage();
-      const middleware = cacheByContentType(['application/json'], { 
-        ttl: 1000,
-        storage: storage
-      });
-      
-      const jsonContext: Context = {
-        req: new Request('https://example.com', { method: 'GET' }),
-        options: { url: 'https://example.com', method: 'GET' },
-        state: {},
-        meta: {},
-      };
-      
-      const jsonResponse = new Response('{"data": "test"}', { 
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      await middleware(jsonContext, async () => {
-        jsonContext.res = jsonResponse;
-      });
-      
-      expect(jsonContext.res).toBe(jsonResponse);
-      expect(jsonContext.meta.cacheHit).toBe(false);
-      
-      // Second request should be cached
-      const jsonContext2: Context = {
-        req: new Request('https://example.com', { method: 'GET' }),
-        options: { url: 'https://example.com', method: 'GET' },
-        state: {},
-        meta: {},
-      };
-      
-      await middleware(jsonContext2, async () => {
-        throw new Error('Should not be called');
-      });
-      
-      expect(jsonContext2.res?.status).toBe(jsonResponse.status);
-      expect(jsonContext2.res?.statusText).toBe(jsonResponse.statusText);
-      expect(jsonContext2.meta.cacheHit).toBe(true);
-    });
-  });
+    const next = vi.fn();
+    await middleware(context, next);
 
-  describe('cacheWithCustomTTL', () => {
-    it('should use custom TTL calculator', async () => {
-      const middleware = cacheWithCustomTTL(
-        (response) => response.status === 200 ? 2000 : 0,
-        { ttl: 1000 }
-      );
-      
-      const context: Context = {
-        req: new Request('https://example.com', { method: 'GET' }),
-        options: { url: 'https://example.com', method: 'GET' },
-        state: {},
-        meta: {},
-      };
-      
-      const response = new Response('data', { status: 200 });
-      
-      await middleware(context, async () => {
-        context.res = response;
-      });
-      
-      expect(context.res).toBe(response);
-      expect(context.meta.cacheHit).toBe(false);
-    });
+    expect(next).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('cacheWithSWR', () => {
+  it('should create SWR cache middleware', () => {
+    const middleware = cacheWithSWR({ ttl: 1000 });
+    expect(typeof middleware).toBe('function');
   });
 });

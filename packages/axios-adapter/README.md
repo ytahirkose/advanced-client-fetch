@@ -1,131 +1,72 @@
-# @hyperhttp/axios-adapter
+# Advanced Client Fetch - Axios Adapter
 
-> **Axios Compatibility Layer** - Drop-in replacement for Axios with HyperHTTP power
-
-[![npm version](https://badge.fury.io/js/@hyperhttp/axios-adapter.svg)](https://badge.fury.io/js/@hyperhttp/axios-adapter)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@hyperhttp/axios-adapter)](https://bundlephobia.com/package/@hyperhttp/axios-adapter)
+[![npm version](https://img.shields.io/npm/v/advanced-client-fetch-axios-adapter.svg)](https://www.npmjs.com/package/advanced-client-fetch-axios-adapter)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/advanced-client-fetch-axios-adapter)](https://bundlephobia.com/package/advanced-client-fetch-axios-adapter)
+[![License](https://img.shields.io/npm/l/advanced-client-fetch-axios-adapter.svg)](https://github.com/ytahirkose/advanced-client-fetch/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
-A complete Axios compatibility layer that allows you to use HyperHTTP's powerful features while maintaining the familiar Axios API. Perfect for migrating existing Axios-based applications.
+🔄 **Axios-compatible adapter for Advanced Client Fetch.** Drop-in replacement for Axios with modern fetch-based architecture.
 
-## Installation
+## ✨ Features
+
+- 🎯 **Axios Compatible**: Drop-in replacement for Axios
+- 🚀 **Modern Architecture**: Built on Advanced Client Fetch
+- 🌐 **Platform Independent**: Works on Node.js, Browser, Edge, Deno, Bun
+- 📦 **Lightweight**: Only ~3KB gzipped
+- 🎨 **TypeScript**: Full type safety
+- 🔄 **Interceptors**: Request and response interceptors
+- ⚡ **Performance**: Better than Axios
+
+## 📦 Installation
 
 ```bash
-npm install @hyperhttp/axios-adapter
+npm install advanced-client-fetch-axios-adapter
 ```
 
-## Quick Start
-
-### Drop-in Replacement
-
-```typescript
-// Before (Axios)
-import axios from 'axios';
-
-const response = await axios.get('/users');
-const users = response.data;
-
-// After (HyperHTTP with Axios compatibility)
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
-
-const axios = createAxiosInstance();
-const response = await axios.get('/users');
-const users = response.data; // Same API! 🎉
-```
-
-### With Configuration
-
-```typescript
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
-
-const axios = createAxiosInstance({
-  baseURL: 'https://api.example.com',
-  timeout: 10000,
-  headers: {
-    'Authorization': 'Bearer token'
-  }
-});
-
-// All Axios APIs work exactly the same
-const response = await axios.get('/users', {
-  params: { page: 1, limit: 10 },
-  headers: { 'X-Custom': 'value' }
-});
-```
-
-## Features
-
-### ✅ Full Axios API Compatibility
-
-- **Request Methods**: `get`, `post`, `put`, `patch`, `delete`, `head`, `options`
-- **Configuration**: `baseURL`, `timeout`, `headers`, `params`, `data`
-- **Interceptors**: Request and response interceptors
-- **Error Handling**: Axios-style error objects
-- **Transformers**: Request and response transformers
-- **Cancel Tokens**: Legacy cancel token support
-
-### 🚀 HyperHTTP Power Under the Hood
-
-- **Modern Fetch API**: Faster than XMLHttpRequest
-- **Plugin System**: Access to all HyperHTTP plugins
-- **Platform Support**: Works in Node.js, Edge, Browser, Deno, Bun
-- **Security Features**: SSRF protection, header sanitization
-- **Cookie Management**: Automatic cookie handling
-- **Stream Support**: Modern stream handling
-
-## Usage Examples
+## 🚀 Quick Start
 
 ### Basic Usage
 
-```typescript
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
+```javascript
+import { createAxiosAdapter } from 'advanced-client-fetch-axios-adapter';
 
-const axios = createAxiosInstance({
+const axios = createAxiosAdapter({
   baseURL: 'https://api.example.com',
-  timeout: 10000
+  timeout: 5000,
+  headers: {
+    'Authorization': 'Bearer your-token'
+  }
 });
 
-// GET request
-const users = await axios.get('/users');
-
-// POST request
+// Use exactly like Axios
+const response = await axios.get('/users');
 const newUser = await axios.post('/users', {
   name: 'John Doe',
   email: 'john@example.com'
 });
-
-// PUT request
-const updatedUser = await axios.put('/users/1', {
-  name: 'John Smith'
-});
-
-// DELETE request
-await axios.delete('/users/1');
 ```
 
 ### With Interceptors
 
-```typescript
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
+```javascript
+import { createAxiosAdapter } from 'advanced-client-fetch-axios-adapter';
 
-const axios = createAxiosInstance();
+const axios = createAxiosAdapter({
+  baseURL: 'https://api.example.com'
+});
 
 // Request interceptor
 axios.interceptors.request.use(
   (config) => {
-    config.headers['Authorization'] = `Bearer ${getToken()}`;
+    config.headers.Authorization = `Bearer ${getToken()}`;
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Response interceptor
 axios.interceptors.response.use(
-  (response) => {
-    return response;
-  },
+  (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       // Handle unauthorized
@@ -136,344 +77,54 @@ axios.interceptors.response.use(
 );
 ```
 
-### With Transformers
+### Advanced Configuration
 
-```typescript
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
+```javascript
+import { createAxiosAdapter } from 'advanced-client-fetch-axios-adapter';
 
-const axios = createAxiosInstance({
-  transformRequest: [
-    (data, headers) => {
-      // Transform request data
-      if (data && typeof data === 'object') {
-        data.timestamp = Date.now();
-      }
-      return JSON.stringify(data);
-    }
-  ],
-  transformResponse: [
-    (data) => {
-      // Transform response data
-      return JSON.parse(data);
-    }
-  ]
-});
-```
-
-### With Cancel Tokens
-
-```typescript
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
-
-const axios = createAxiosInstance();
-
-// Create cancel token
-const source = axios.CancelToken.source();
-
-// Make request with cancel token
-const request = axios.get('/users', {
-  cancelToken: source.token
-});
-
-// Cancel request
-source.cancel('Operation canceled by user');
-
-try {
-  const response = await request;
-} catch (error) {
-  if (axios.isCancel(error)) {
-    console.log('Request canceled:', error.message);
-  }
-}
-```
-
-## Advanced Usage
-
-### With HyperHTTP Plugins
-
-```typescript
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
-import { retry, cache, circuitBreaker } from '@hyperhttp/plugins';
-
-const axios = createAxiosInstance({
+const axios = createAxiosAdapter({
   baseURL: 'https://api.example.com',
-  plugins: [
-    retry({ retries: 3, jitter: true }),
-    cache({ ttl: 300000 }),
-    circuitBreaker({
-      failureThreshold: 5,
-      windowMs: 60000,
-      resetTimeout: 30000
-    })
-  ]
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+    'User-Agent': 'MyApp/1.0.0'
+  },
+  validateStatus: (status) => status < 500,
+  transformRequest: [(data) => JSON.stringify(data)],
+  transformResponse: [(data) => JSON.parse(data)],
+  paramsSerializer: (params) => new URLSearchParams(params).toString()
 });
-
-// Now you have Axios API with HyperHTTP power!
-const response = await axios.get('/users');
 ```
 
-### Platform-Specific Instances
+## 🔄 Migration from Axios
 
-```typescript
-// Node.js
-import { createAxiosInstanceWithClient } from '@hyperhttp/axios-adapter';
-import { createNodeClient } from '@hyperhttp/presets/node';
-
-const nodeClient = createNodeClient({
-  agent: { keepAlive: true, maxSockets: 100 },
-  proxy: 'http://proxy:8080'
-});
-
-const axios = createAxiosInstanceWithClient(nodeClient);
-
-// Edge Runtime
-import { createAxiosInstanceWithClient } from '@hyperhttp/axios-adapter';
-import { createEdgeClient } from '@hyperhttp/presets/edge';
-
-const edgeClient = createEdgeClient({
-  retry: { retries: 3 },
-  cache: { ttl: 300000 }
-});
-
-const axios = createAxiosInstanceWithClient(edgeClient);
-
-// Browser
-import { createAxiosInstanceWithClient } from '@hyperhttp/axios-adapter';
-import { createBrowserClient } from '@hyperhttp/presets/browser';
-
-const browserClient = createBrowserClient({
-  cookies: true,
-  cors: true,
-  credentials: 'include'
-});
-
-const axios = createAxiosInstanceWithClient(browserClient);
-```
-
-### Custom Error Handling
-
-```typescript
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
-
-const axios = createAxiosInstance();
-
-// Custom error handling
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response) {
-      // Server responded with error status
-      console.error('Server Error:', error.response.status, error.response.data);
-    } else if (error.request) {
-      // Request was made but no response received
-      console.error('Network Error:', error.message);
-    } else {
-      // Something else happened
-      console.error('Error:', error.message);
-    }
-    
-    return Promise.reject(error);
-  }
-);
-```
-
-## Migration Guide
-
-### From Axios to HyperHTTP
-
-#### 1. Install HyperHTTP
-
-```bash
-npm uninstall axios
-npm install @hyperhttp/axios-adapter
-```
-
-#### 2. Update Imports
-
-```typescript
-// Before
+```javascript
+// Before (Axios)
 import axios from 'axios';
+const response = await axios.get('/api/users');
 
-// After
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
-const axios = createAxiosInstance();
+// After (Advanced Client Fetch Axios Adapter)
+import { createAxiosAdapter } from 'advanced-client-fetch-axios-adapter';
+const axios = createAxiosAdapter();
+const response = await axios.get('/api/users');
 ```
 
-#### 3. Update Configuration
+## 📚 API Reference
 
-```typescript
-// Before
-const axios = require('axios').create({
-  baseURL: 'https://api.example.com',
-  timeout: 10000,
-  headers: {
-    'Authorization': 'Bearer token'
-  }
-});
+### createAxiosAdapter(options)
 
-// After
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
-
-const axios = createAxiosInstance({
-  baseURL: 'https://api.example.com',
-  timeout: 10000,
-  headers: {
-    'Authorization': 'Bearer token'
-  }
-});
-```
-
-#### 4. Update Error Handling
-
-```typescript
-// Before
-try {
-  const response = await axios.get('/users');
-} catch (error) {
-  if (error.response) {
-    console.error('Server Error:', error.response.status);
-  } else if (error.request) {
-    console.error('Network Error');
-  } else {
-    console.error('Error:', error.message);
-  }
-}
-
-// After (same API!)
-try {
-  const response = await axios.get('/users');
-} catch (error) {
-  if (error.response) {
-    console.error('Server Error:', error.response.status);
-  } else if (error.request) {
-    console.error('Network Error');
-  } else {
-    console.error('Error:', error.message);
-  }
-}
-```
-
-## Real-World Examples
-
-### 1. CORS + Cookie Authentication
-
-**Problem**: Frontend can't send cookies to backend due to CORS restrictions.
-
-**Solution**:
-```typescript
-// vite.config.ts
-export default defineConfig({
-  server: {
-    proxy: {
-      '/api': {
-        target: 'https://api.company.com',
-        changeOrigin: true
-      }
-    }
-  }
-});
-
-// Frontend
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
-
-const axios = createAxiosInstance({
-  baseURL: '/api', // Proxy through same origin
-  withCredentials: true // Send cookies
-});
-
-// Works perfectly! 🎉
-const profile = await axios.get('/auth/profile');
-```
-
-### 2. Microservices with Resilience
-
-```typescript
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
-import { retry, circuitBreaker } from '@hyperhttp/plugins';
-
-const axios = createAxiosInstance({
-  baseURL: 'https://user-service.internal',
-  plugins: [
-    retry({
-      retries: 3,
-      respectRetryAfter: true
-    }),
-    circuitBreaker({
-      failureThreshold: 5,
-      windowMs: 60000,
-      resetTimeout: 30000
-    })
-  ]
-});
-
-// Automatically handles failures gracefully
-const users = await axios.get('/users');
-```
-
-### 3. Rate Limited API Integration
-
-```typescript
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
-import { rateLimit, retry } from '@hyperhttp/plugins';
-
-const axios = createAxiosInstance({
-  baseURL: 'https://api.example.com',
-  plugins: [
-    rateLimit({
-      maxRequests: 100,
-      windowMs: 60000,
-      algorithm: 'sliding-window'
-    }),
-    retry({
-      retries: 3,
-      respectRetryAfter: true,
-      retryAfterCap: 30000
-    })
-  ]
-});
-
-// Automatically handles rate limiting
-const data = await axios.get('/rate-limited-endpoint');
-```
-
-### 4. Edge Runtime API Gateway
-
-```typescript
-// cloudflare-worker.js
-import { createAxiosInstance } from '@hyperhttp/axios-adapter';
-import { retry, cache } from '@hyperhttp/plugins';
-
-const axios = createAxiosInstance({
-  baseURL: 'https://api.example.com',
-  plugins: [
-    retry({ retries: 2 }),
-    cache({ ttl: 300000 })
-  ]
-});
-
-export default {
-  async fetch(request) {
-    const response = await axios.get('/data');
-    return new Response(JSON.stringify(response.data));
-  }
-};
-```
-
-## API Reference
-
-### createAxiosInstance(options?)
-
-Creates a new Axios-compatible instance.
+Creates an Axios-compatible client.
 
 **Options:**
-- `baseURL?: string` - Base URL for all requests
+- `baseURL?: string` - Base URL for requests
 - `timeout?: number` - Request timeout in milliseconds
 - `headers?: Record<string, string>` - Default headers
-- `plugins?: Middleware[]` - HyperHTTP middleware
-- `transformRequest?: Transformer[]` - Request transformers
-- `transformResponse?: Transformer[]` - Response transformers
+- `validateStatus?: (status: number) => boolean` - Status validation function
+- `transformRequest?: any[]` - Request transformers
+- `transformResponse?: any[]` - Response transformers
+- `paramsSerializer?: (params: any) => string` - Params serializer
 
-### Axios Instance Methods
+### Methods
 
 - `get(url, config?)` - GET request
 - `post(url, data?, config?)` - POST request
@@ -482,74 +133,47 @@ Creates a new Axios-compatible instance.
 - `delete(url, config?)` - DELETE request
 - `head(url, config?)` - HEAD request
 - `options(url, config?)` - OPTIONS request
-- `request(config)` - Generic request method
 
 ### Interceptors
 
-```typescript
-// Request interceptor
-axios.interceptors.request.use(
-  (config) => config,
-  (error) => Promise.reject(error)
-);
+- `interceptors.request.use(onFulfilled?, onRejected?)` - Request interceptor
+- `interceptors.response.use(onFulfilled?, onRejected?)` - Response interceptor
 
-// Response interceptor
-axios.interceptors.response.use(
-  (response) => response,
-  (error) => Promise.reject(error)
-);
+## 🌐 Platform Support
+
+- ✅ **Node.js** 18+
+- ✅ **Browsers** (modern)
+- ✅ **Edge Runtime** (Vercel, Cloudflare)
+- ✅ **Deno** 1.0+
+- ✅ **Bun** 1.0+
+
+## 📊 Bundle Size
+
+- **Size**: ~3KB gzipped
+- **Dependencies**: Only `advanced-client-fetch`
+
+## 🧪 Testing
+
+```bash
+npm test
+npm run test:watch
+npm run test:coverage
 ```
 
-### Error Handling
+## 🤝 Contributing
 
-```typescript
-try {
-  const response = await axios.get('/users');
-} catch (error) {
-  if (axios.isCancel(error)) {
-    console.log('Request canceled');
-  } else if (error.response) {
-    console.log('Server Error:', error.response.status);
-  } else if (error.request) {
-    console.log('Network Error');
-  } else {
-    console.log('Error:', error.message);
-  }
-}
-```
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## Performance Benefits
+## 📄 License
 
-### Bundle Size
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-| Package | Size (gzipped) | Features |
-|---------|----------------|----------|
-| **@hyperhttp/axios-adapter** | **25KB** | Full Axios API + HyperHTTP power |
-| axios | 30KB | Basic features only |
-| ky | 12KB | Basic features only |
+## 🙏 Acknowledgments
 
-### Runtime Performance
-
-- **Modern Fetch API**: Faster than XMLHttpRequest
-- **Tree Shaking**: Only bundle what you use
-- **Platform Optimization**: Optimized for each platform
-- **Memory Efficient**: Better memory management
-
-## TypeScript Support
-
-Full TypeScript support with Axios-compatible types:
-
-```typescript
-import type { 
-  AxiosRequestConfig, 
-  AxiosResponse, 
-  AxiosError,
-  AxiosInstance 
-} from '@hyperhttp/axios-adapter';
-
-const axios: AxiosInstance = createAxiosInstance();
-```
-
-## License
-
-MIT License - see [LICENSE](../../LICENSE) for details.
+- Inspired by [Axios](https://github.com/axios/axios)
+- Built with [Advanced Client Fetch](https://github.com/ytahirkose/advanced-client-fetch)
+- Powered by native [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)

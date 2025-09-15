@@ -1,9 +1,9 @@
 /**
- * Cookie management for HyperHTTP
+ * Cookie management for Advanced Client Fetch
  * Provides cookie parsing, formatting, and middleware
  */
 
-import type { Middleware, Context, Cookie, CookieOptions, CookieJar } from './types.js';
+import type { Middleware, Context, Cookie, CookieOptions, CookieJar } from './types';
 
 /**
  * Parse cookies from a cookie string

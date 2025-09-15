@@ -19,15 +19,19 @@
     "declarationMap": true,
     "sourceMap": true,
     "composite": true,
+    "declarationDir": "./dist",
+    "emitDeclarationOnly": false,
+    "preserveConstEnums": true,
+    "verbatimModuleSyntax": false,
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
-      "@hyperhttp/core": ["../core/src"],
-      "@hyperhttp/core/*": ["../core/src/*"]
+      "@advanced-client-fetch/core": ["../core/src"],
+      "@advanced-client-fetch/core/*": ["../core/src/*"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"],
   "references": [
     { "path": "../core" }

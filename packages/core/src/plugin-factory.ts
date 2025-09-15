@@ -1,9 +1,9 @@
 /**
- * Plugin Factory for HyperHTTP
+ * Plugin Factory for Advanced Client Fetch
  * Provides utilities for creating and composing plugins
  */
 
-import type { Middleware, Context, BasePluginOptions, PluginImplementation } from './types.js';
+import type { Middleware, Context, BasePluginOptions, PluginImplementation } from './types';
 
 /**
  * Create a plugin with standard configuration

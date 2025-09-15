@@ -1,17 +1,17 @@
-# @hyperhttp/plugins
+# @advanced-client-fetch/plugins
 
 > **Powerful HTTP Plugins** - Retry, cache, rate limiting, circuit breaker, and more
 
-[![npm version](https://badge.fury.io/js/@hyperhttp/plugins.svg)](https://badge.fury.io/js/@hyperhttp/plugins)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@hyperhttp/plugins)](https://bundlephobia.com/package/@hyperhttp/plugins)
+[![npm version](https://badge.fury.io/js/@advanced-client-fetch/plugins.svg)](https://badge.fury.io/js/@advanced-client-fetch/plugins)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@advanced-client-fetch/plugins)](https://bundlephobia.com/package/@advanced-client-fetch/plugins)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
-A comprehensive collection of plugins for HyperHTTP that add powerful features like retry logic, caching, rate limiting, circuit breakers, and more.
+A comprehensive collection of plugins for Advanced Client Fetch that add powerful features like retry logic, caching, rate limiting, circuit breakers, and more.
 
 ## Installation
 
 ```bash
-npm install @hyperhttp/plugins
+npm install @advanced-client-fetch/plugins
 ```
 
 ## Available Plugins
@@ -21,7 +21,7 @@ npm install @hyperhttp/plugins
 Intelligent retry logic with exponential backoff, jitter, and Retry-After header support.
 
 ```typescript
-import { retry } from '@hyperhttp/plugins';
+import { retry } from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   plugins: [
@@ -50,7 +50,7 @@ const client = createClient({
 RFC 9111 compliant HTTP caching with stale-while-revalidate support.
 
 ```typescript
-import { cache } from '@hyperhttp/plugins';
+import { cache } from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   plugins: [
@@ -75,7 +75,7 @@ const client = createClient({
 Sliding window and token bucket rate limiting algorithms.
 
 ```typescript
-import { rateLimit } from '@hyperhttp/plugins';
+import { rateLimit } from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   plugins: [
@@ -100,7 +100,7 @@ const client = createClient({
 Fault tolerance with circuit breaker pattern.
 
 ```typescript
-import { circuitBreaker } from '@hyperhttp/plugins';
+import { circuitBreaker } from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   plugins: [
@@ -125,7 +125,7 @@ const client = createClient({
 Prevent duplicate requests from being made simultaneously.
 
 ```typescript
-import { dedupe } from '@hyperhttp/plugins';
+import { dedupe } from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   plugins: [
@@ -149,7 +149,7 @@ const client = createClient({
 Collect detailed metrics about requests and responses.
 
 ```typescript
-import { metrics } from '@hyperhttp/plugins';
+import { metrics } from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   plugins: [
@@ -175,7 +175,7 @@ const client = createClient({
 Per-request and per-attempt timeout support.
 
 ```typescript
-import { timeout } from '@hyperhttp/plugins';
+import { timeout } from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   plugins: [
@@ -199,14 +199,14 @@ const client = createClient({
 ### 1. Production API Client
 
 ```typescript
-import { createClient } from '@hyperhttp/core';
+import { createClient } from '@advanced-client-fetch/core';
 import { 
   retry, 
   cache, 
   rateLimit, 
   circuitBreaker, 
   metrics 
-} from '@hyperhttp/plugins';
+} from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   baseURL: 'https://api.example.com',
@@ -255,8 +255,8 @@ const client = createClient({
 ### 2. Microservice Communication
 
 ```typescript
-import { createClient } from '@hyperhttp/core';
-import { retry, circuitBreaker, dedupe } from '@hyperhttp/plugins';
+import { createClient } from '@advanced-client-fetch/core';
+import { retry, circuitBreaker, dedupe } from '@advanced-client-fetch/plugins';
 
 const userService = createClient({
   baseURL: 'https://user-service.internal',
@@ -282,8 +282,8 @@ const userService = createClient({
 ### 3. CDN Integration
 
 ```typescript
-import { createClient } from '@hyperhttp/core';
-import { cache, retry, rateLimit } from '@hyperhttp/plugins';
+import { createClient } from '@advanced-client-fetch/core';
+import { cache, retry, rateLimit } from '@advanced-client-fetch/plugins';
 
 const cdnClient = createClient({
   baseURL: 'https://cdn.example.com',
@@ -310,8 +310,8 @@ const cdnClient = createClient({
 ### 4. Real-time Data Fetching
 
 ```typescript
-import { createClient } from '@hyperhttp/core';
-import { retry, dedupe, timeout } from '@hyperhttp/plugins';
+import { createClient } from '@advanced-client-fetch/core';
+import { retry, dedupe, timeout } from '@advanced-client-fetch/plugins';
 
 const realtimeClient = createClient({
   baseURL: 'https://realtime.example.com',
@@ -338,7 +338,7 @@ const realtimeClient = createClient({
 ### Custom Retry Conditions
 
 ```typescript
-import { retry } from '@hyperhttp/plugins';
+import { retry } from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   plugins: [
@@ -361,7 +361,7 @@ const client = createClient({
 ### Custom Cache Storage
 
 ```typescript
-import { cache } from '@hyperhttp/plugins';
+import { cache } from '@advanced-client-fetch/plugins';
 
 class RedisCacheStorage {
   async get(key: string) {
@@ -394,7 +394,7 @@ const client = createClient({
 ### Custom Rate Limiting
 
 ```typescript
-import { rateLimit } from '@hyperhttp/plugins';
+import { rateLimit } from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   plugins: [
@@ -414,7 +414,7 @@ const client = createClient({
 ### Custom Circuit Breaker
 
 ```typescript
-import { circuitBreaker } from '@hyperhttp/plugins';
+import { circuitBreaker } from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   plugins: [
@@ -437,8 +437,8 @@ const client = createClient({
 ### Conditional Plugins
 
 ```typescript
-import { createConditionalPlugin } from '@hyperhttp/core';
-import { retry, cache } from '@hyperhttp/plugins';
+import { createConditionalPlugin } from '@advanced-client-fetch/core';
+import { retry, cache } from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   plugins: [
@@ -460,8 +460,8 @@ const client = createClient({
 ### Plugin Chaining
 
 ```typescript
-import { compose } from '@hyperhttp/core';
-import { retry, cache, metrics } from '@hyperhttp/plugins';
+import { compose } from '@advanced-client-fetch/core';
+import { retry, cache, metrics } from '@advanced-client-fetch/plugins';
 
 const apiMiddleware = compose([
   retry({ retries: 3 }),
@@ -482,10 +482,10 @@ Each plugin is tree-shakeable, so you only bundle what you use:
 
 ```typescript
 // Only bundles retry plugin
-import { retry } from '@hyperhttp/plugins';
+import { retry } from '@advanced-client-fetch/plugins';
 
 // Bundles all plugins
-import * as plugins from '@hyperhttp/plugins';
+import * as plugins from '@advanced-client-fetch/plugins';
 ```
 
 ### Memory Usage
@@ -524,7 +524,7 @@ const client = createClient({
 ### Plugin Testing
 
 ```typescript
-import { retry } from '@hyperhttp/plugins';
+import { retry } from '@advanced-client-fetch/plugins';
 
 describe('Retry Plugin', () => {
   it('should retry on failure', async () => {

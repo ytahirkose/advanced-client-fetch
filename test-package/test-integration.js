@@ -1,11 +1,11 @@
 /**
- * Integration tests for HyperHTTP
+ * Integration tests for Advanced Client Fetch
  * Tests the complete functionality across all packages
  */
 
-const { createClient } = require('@hyperhttp/core');
-const { retry, timeout, cache, rateLimit, circuitBreaker, dedupe, metrics } = require('@hyperhttp/plugins');
-const { createAxiosInstance } = require('@hyperhttp/axios-adapter');
+const { createClient } = require('@advanced-client-fetch/core');
+const { retry, timeout, cache, rateLimit, circuitBreaker, dedupe, metrics } = require('@advanced-client-fetch/plugins');
+const { createAxiosInstance } = require('@advanced-client-fetch/axios-adapter');
 
 // Test server setup
 const TEST_SERVER_URL = 'https://jsonplaceholder.typicode.com';
@@ -16,7 +16,7 @@ async function testBasicClient() {
   const client = createClient({
     baseURL: TEST_SERVER_URL,
     headers: {
-      'User-Agent': 'hyperhttp-integration-test/1.0'
+      'User-Agent': 'advanced-client-fetch-integration-test/1.0'
     }
   });
 
@@ -419,7 +419,7 @@ async function testPluginCombination() {
 }
 
 async function runAllTests() {
-  console.log('🚀 Starting HyperHTTP Integration Tests\n');
+  console.log('🚀 Starting Advanced Client Fetch Integration Tests\n');
   
   const tests = [
     { name: 'Basic Client', fn: testBasicClient },
@@ -460,7 +460,7 @@ async function runAllTests() {
   console.log(`📈 Success Rate: ${Math.round((passed / (passed + failed)) * 100)}%`);
   
   if (failed === 0) {
-    console.log('\n🎉 All tests passed! HyperHTTP is working correctly.');
+    console.log('\n🎉 All tests passed! Advanced Client Fetch is working correctly.');
     process.exit(0);
   } else {
     console.log('\n⚠️  Some tests failed. Please check the implementation.');

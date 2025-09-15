@@ -1,7 +1,7 @@
 {
-  "name": "advanced-client-fetch-presets",
-  "version": "1.0.15",
-  "description": "🌍 Platform-specific HTTP client presets for HyperHTTP. Optimized configurations for Node.js, Edge runtimes, Browsers, Deno, and Bun with real-world examples.",
+  "name": "@advanced-client-fetch/presets",
+  "version": "1.0.0",
+  "description": "🌍 Platform-specific HTTP client presets for Advanced Client Fetch. Optimized configurations for Node.js, Edge runtimes, Browsers, Deno, and Bun with real-world examples.",
   "type": "module",
   "private": false,
   "main": "./dist/index.cjs",
@@ -55,8 +55,8 @@
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
-    "advanced-client-fetch-core": "^1.0.15",
-    "advanced-client-fetch-plugins": "^1.0.15"
+    "@advanced-client-fetch/core": "^1.0.0",
+    "@advanced-client-fetch/plugins": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
@@ -85,13 +85,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ytahirkose/hyperhttp.git",
+    "url": "https://github.com/ytahirkose/advanced-client-fetch.git",
     "directory": "packages/presets"
   },
   "bugs": {
-    "url": "https://github.com/ytahirkose/hyperhttp/issues"
+    "url": "https://github.com/ytahirkose/advanced-client-fetch/issues"
   },
-  "homepage": "https://github.com/ytahirkose/hyperhttp#readme",
-  "author": "HyperHTTP Team",
+  "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
+  "author": "Advanced Client Fetch Team",
   "license": "MIT"
 }

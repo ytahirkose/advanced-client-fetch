@@ -1,220 +1,167 @@
 /**
- * Tests for HyperHTTP signal utilities
+ * Signal utilities tests
  */
 
 import { describe, it, expect, vi } from 'vitest';
 import {
   combineSignals,
-  createTimeoutSignal,
   combineTimeoutAndSignal,
+  createTimeoutSignal,
   isAborted,
-  waitForAbort,
-  createDelaySignal,
-  raceWithSignal,
-  withTimeoutAndSignal,
+  createDelayedSignal,
+  createNextTickSignal,
+  createNeverAbortSignal,
+  createAbortedSignal
 } from '../signal.js';
 
-describe('HyperHTTP Signal Utils', () => {
-  describe('combineSignals', () => {
-    it('should return undefined for empty array', () => {
-      expect(combineSignals()).toBeUndefined();
-    });
-
-    it('should return single signal when only one provided', () => {
-      const signal = new AbortController().signal;
-      expect(combineSignals(signal)).toBe(signal);
-    });
-
-    it('should combine multiple signals', () => {
-      const signal1 = new AbortController().signal;
-      const signal2 = new AbortController().signal;
-      const combined = combineSignals(signal1, signal2);
-      
-      expect(combined).toBeDefined();
-      expect(combined).not.toBe(signal1);
-      expect(combined).not.toBe(signal2);
-    });
-
-    it('should handle undefined signals', () => {
-      const signal = new AbortController().signal;
-      const combined = combineSignals(undefined, signal, undefined);
-      
-      expect(combined).toBe(signal);
-    });
+describe('combineSignals', () => {
+  it('should return single signal when only one provided', () => {
+    const signal = new AbortController().signal;
+    const combined = combineSignals(signal);
+    
+    expect(combined).toBe(signal);
   });
 
-  describe('createTimeoutSignal', () => {
-    it('should create timeout signal with cleanup', () => {
-      const { signal, cleanup } = createTimeoutSignal(100);
-      
-      expect(signal).toBeDefined();
-      expect(typeof cleanup).toBe('function');
-    });
-
-    it('should abort signal after timeout', async () => {
-      const { signal } = createTimeoutSignal(50);
-      
-      await new Promise(resolve => setTimeout(resolve, 60));
-      expect(signal.aborted).toBe(true);
-    });
-
-    it('should not abort signal before timeout', async () => {
-      const { signal } = createTimeoutSignal(100);
-      
-      await new Promise(resolve => setTimeout(resolve, 50));
-      expect(signal.aborted).toBe(false);
-    });
+  it('should return new signal when multiple signals provided', () => {
+    const signal1 = new AbortController().signal;
+    const signal2 = new AbortController().signal;
+    const combined = combineSignals(signal1, signal2);
+    
+    expect(combined).not.toBe(signal1);
+    expect(combined).not.toBe(signal2);
   });
 
-  describe('combineTimeoutAndSignal', () => {
-    it('should combine timeout with existing signal', () => {
-      const signal = new AbortController().signal;
-      const { signal: combined, cleanup } = combineTimeoutAndSignal(signal, 100);
-      
-      expect(combined).toBeDefined();
-      expect(typeof cleanup).toBe('function');
-    });
-
-    it('should create timeout signal when no existing signal', () => {
-      const { signal, cleanup } = combineTimeoutAndSignal(undefined, 100);
-      
-      expect(signal).toBeDefined();
-      expect(typeof cleanup).toBe('function');
-    });
-
-    it('should return existing signal when no timeout', () => {
-      const signal = new AbortController().signal;
-      const { signal: combined, cleanup } = combineTimeoutAndSignal(signal);
-      
-      expect(combined).toBe(signal);
-      expect(cleanup).toBeDefined();
-    });
-
-    it('should return undefined when no signal and no timeout', () => {
-      const { signal, cleanup } = combineTimeoutAndSignal();
-      
-      expect(signal).toBeUndefined();
-      expect(cleanup).toBeDefined();
-    });
+  it('should return new signal when no signals provided', () => {
+    const combined = combineSignals();
+    
+    expect(combined).toBeDefined();
+    expect(combined.aborted).toBe(false);
   });
 
-  describe('isAborted', () => {
-    it('should return true for aborted signal', () => {
-      const controller = new AbortController();
-      controller.abort();
-      
-      expect(isAborted(controller.signal)).toBe(true);
-    });
+  it('should abort when any signal aborts', () => {
+    const controller1 = new AbortController();
+    const controller2 = new AbortController();
+    const combined = combineSignals(controller1.signal, controller2.signal);
+    
+    expect(combined.aborted).toBe(false);
+    
+    controller1.abort();
+    
+    expect(combined.aborted).toBe(true);
+  });
+});
 
-    it('should return false for non-aborted signal', () => {
-      const signal = new AbortController().signal;
-      
-      expect(isAborted(signal)).toBe(false);
-    });
-
-    it('should return false for undefined signal', () => {
-      expect(isAborted(undefined)).toBe(false);
-    });
+describe('combineTimeoutAndSignal', () => {
+  it('should return original signal when no timeout', () => {
+    const signal = new AbortController().signal;
+    const { signal: combined, cleanup } = combineTimeoutAndSignal(signal);
+    
+    expect(combined).toBe(signal);
+    expect(cleanup).toBeUndefined();
   });
 
-  describe('waitForAbort', () => {
-    it('should reject when signal is already aborted', async () => {
-      const controller = new AbortController();
-      controller.abort();
-      
-      await expect(waitForAbort(controller.signal)).rejects.toThrow('Signal already aborted');
-    });
-
-    it('should reject when signal is aborted', async () => {
-      const controller = new AbortController();
-      const promise = waitForAbort(controller.signal);
-      
-      setTimeout(() => controller.abort(), 50);
-      
-      await expect(promise).rejects.toThrow('Signal aborted');
-    });
+  it('should return new signal with timeout', () => {
+    const signal = new AbortController().signal;
+    const { signal: combined, cleanup } = combineTimeoutAndSignal(signal, 1000);
+    
+    expect(combined).not.toBe(signal);
+    expect(cleanup).toBeDefined();
+    expect(typeof cleanup).toBe('function');
   });
 
-  describe('createDelaySignal', () => {
-    it('should create delay signal with cleanup', () => {
-      const { signal, cleanup } = createDelaySignal(100);
-      
-      expect(signal).toBeDefined();
-      expect(typeof cleanup).toBe('function');
-    });
-
-    it('should abort signal after delay', async () => {
-      const { signal } = createDelaySignal(50);
-      
-      await new Promise(resolve => setTimeout(resolve, 60));
-      expect(signal.aborted).toBe(true);
-    });
+  it('should abort after timeout', async () => {
+    const { signal, cleanup } = combineTimeoutAndSignal(undefined, 100);
+    
+    expect(signal.aborted).toBe(false);
+    
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
+    expect(signal.aborted).toBe(true);
+    
+    cleanup?.();
   });
 
-  describe('raceWithSignal', () => {
-    it('should return promise result when signal is not provided', async () => {
-      const promise = Promise.resolve('success');
-      const result = await raceWithSignal(promise);
-      
-      expect(result).toBe('success');
-    });
+  it('should abort when original signal aborts', () => {
+    const controller = new AbortController();
+    const { signal, cleanup } = combineTimeoutAndSignal(controller.signal, 1000);
+    
+    expect(signal.aborted).toBe(false);
+    
+    controller.abort();
+    
+    expect(signal.aborted).toBe(true);
+    
+    cleanup?.();
+  });
+});
 
-    it('should return promise result when signal is not aborted', async () => {
-      const promise = Promise.resolve('success');
-      const signal = new AbortController().signal;
-      const result = await raceWithSignal(promise, signal);
-      
-      expect(result).toBe('success');
-    });
+describe('createTimeoutSignal', () => {
+  it('should create signal that aborts after timeout', async () => {
+    const signal = createTimeoutSignal(100);
+    
+    expect(signal.aborted).toBe(false);
+    
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
+    expect(signal.aborted).toBe(true);
+  });
+});
 
-    it('should reject when signal is already aborted', async () => {
-      const promise = Promise.resolve('success');
-      const controller = new AbortController();
-      controller.abort();
-      
-      await expect(raceWithSignal(promise, controller.signal)).rejects.toThrow('Signal already aborted');
-    });
-
-    it('should reject when signal is aborted during execution', async () => {
-      const promise = new Promise(resolve => setTimeout(() => resolve('success'), 100));
-      const controller = new AbortController();
-      
-      const racePromise = raceWithSignal(promise, controller.signal);
-      setTimeout(() => controller.abort(), 50);
-      
-      await expect(racePromise).rejects.toThrow('Signal aborted');
-    });
+describe('isAborted', () => {
+  it('should return true for aborted signal', () => {
+    const controller = new AbortController();
+    controller.abort();
+    
+    expect(isAborted(controller.signal)).toBe(true);
   });
 
-  describe('withTimeoutAndSignal', () => {
-    it('should return promise result when no timeout and no signal', async () => {
-      const promise = Promise.resolve('success');
-      const result = await withTimeoutAndSignal(promise);
-      
-      expect(result).toBe('success');
-    });
+  it('should return false for non-aborted signal', () => {
+    const controller = new AbortController();
+    
+    expect(isAborted(controller.signal)).toBe(false);
+  });
 
-    it('should return promise result when timeout is not exceeded', async () => {
-      const promise = new Promise(resolve => setTimeout(() => resolve('success'), 50));
-      const result = await withTimeoutAndSignal(promise, 100);
-      
-      expect(result).toBe('success');
-    });
+  it('should return false for undefined signal', () => {
+    expect(isAborted(undefined)).toBe(false);
+  });
+});
 
-    it('should reject when timeout is exceeded', async () => {
-      const promise = new Promise(resolve => setTimeout(() => resolve('success'), 100));
-      
-      await expect(withTimeoutAndSignal(promise, 50)).rejects.toThrow();
-    });
+describe('createDelayedSignal', () => {
+  it('should create signal that aborts after delay', async () => {
+    const signal = createDelayedSignal(100);
+    
+    expect(signal.aborted).toBe(false);
+    
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
+    expect(signal.aborted).toBe(true);
+  });
+});
 
-    it('should reject when signal is aborted', async () => {
-      const promise = new Promise(resolve => setTimeout(() => resolve('success'), 100));
-      const controller = new AbortController();
-      
-      const timeoutPromise = withTimeoutAndSignal(promise, 200, controller.signal);
-      setTimeout(() => controller.abort(), 50);
-      
-      await expect(timeoutPromise).rejects.toThrow();
-    });
+describe('createNextTickSignal', () => {
+  it('should create signal that aborts on next tick', async () => {
+    const signal = createNextTickSignal();
+    
+    expect(signal.aborted).toBe(false);
+    
+    await new Promise(resolve => setImmediate(resolve));
+    
+    expect(signal.aborted).toBe(true);
+  });
+});
+
+describe('createNeverAbortSignal', () => {
+  it('should create signal that never aborts', () => {
+    const signal = createNeverAbortSignal();
+    
+    expect(signal.aborted).toBe(false);
+  });
+});
+
+describe('createAbortedSignal', () => {
+  it('should create signal that is already aborted', () => {
+    const signal = createAbortedSignal();
+    
+    expect(signal.aborted).toBe(true);
   });
 });

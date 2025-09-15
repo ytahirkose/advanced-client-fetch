@@ -1,5 +1,5 @@
 /**
- * Performance test for HyperHTTP
+ * Performance test for Advanced Client Fetch
  */
 
 import { createClient } from '../packages/core/dist/index.js';
@@ -83,7 +83,7 @@ async function testRetryPerformance() {
 
 async function main() {
   try {
-    console.log('🚀 HyperHTTP Performance Test\n');
+    console.log('🚀 Advanced Client Fetch Performance Test\n');
     
     // Test basic performance
     await measureTime('Basic GET', () => client.get('/json'));

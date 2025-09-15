@@ -1,5 +1,5 @@
 /**
- * Axios compatibility example for HyperHTTP
+ * Axios compatibility example for Advanced Client Fetch
  */
 
 import { createAxiosInstance } from '../packages/axios-adapter/dist/index.js';
@@ -10,7 +10,7 @@ const axios = createAxiosInstance({
   baseURL: 'https://jsonplaceholder.typicode.com',
   timeout: 10000,
   headers: {
-    'User-Agent': 'hyperhttp-axios/0.1.0',
+    'User-Agent': 'advanced-client-fetch-axios/0.1.0',
   },
   middleware: [
     retry({ retries: 3 }),
@@ -31,7 +31,7 @@ async function main() {
     
     // POST request (axios style)
     const postResponse = await axios.post('/posts', {
-      title: 'HyperHTTP Axios Test',
+      title: 'Advanced Client Fetch Axios Test',
       body: 'This is a test post using axios API',
       userId: 1,
     });

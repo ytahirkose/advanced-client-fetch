@@ -1,13 +1,13 @@
-# Contributing to HyperHTTP
+# Contributing to Advanced Client Fetch
 
-Thank you for your interest in contributing to HyperHTTP! 🚀
+Thank you for your interest in contributing to Advanced Client Fetch! 🚀
 
 ## 🎯 How to Contribute
 
 ### 1. Fork and Clone
 ```bash
-git clone https://github.com/your-username/hyperhttp.git
-cd hyperhttp
+git clone https://github.com/your-username/advanced-client-fetch.git
+cd advanced-client-fetch
 ```
 
 ### 2. Install Dependencies
@@ -31,7 +31,7 @@ git checkout -b feature/amazing-feature
 pnpm test
 
 # Run tests for specific package
-pnpm --filter @hyperhttp/core test
+pnpm --filter @advanced-client-fetch/core test
 
 # Run tests in watch mode
 pnpm test:watch
@@ -81,7 +81,7 @@ Create a pull request on GitHub with a clear description of your changes.
 ## 🏗️ Project Structure
 
 ```
-hyperhttp/
+advanced-client-fetch/
 ├── packages/
 │   ├── core/           # Core HTTP client
 │   ├── plugins/        # Plugin collection
@@ -145,20 +145,20 @@ pnpm type-check
 ### Package-specific Commands
 ```bash
 # Core package
-pnpm --filter @hyperhttp/core build
-pnpm --filter @hyperhttp/core test
+pnpm --filter @advanced-client-fetch/core build
+pnpm --filter @advanced-client-fetch/core test
 
 # Plugins package
-pnpm --filter @hyperhttp/plugins build
-pnpm --filter @hyperhttp/plugins test
+pnpm --filter @advanced-client-fetch/plugins build
+pnpm --filter @advanced-client-fetch/plugins test
 
 # Axios adapter
-pnpm --filter @hyperhttp/axios-adapter build
-pnpm --filter @hyperhttp/axios-adapter test
+pnpm --filter @advanced-client-fetch/axios-adapter build
+pnpm --filter @advanced-client-fetch/axios-adapter test
 
 # Presets package
-pnpm --filter @hyperhttp/presets build
-pnpm --filter @hyperhttp/presets test
+pnpm --filter @advanced-client-fetch/presets build
+pnpm --filter @advanced-client-fetch/presets test
 ```
 
 ## 📝 Commit Convention
@@ -190,14 +190,14 @@ git commit -m "docs: update README with new examples"
 
 ## 🤝 Community
 
-- [GitHub Discussions](https://github.com/hyperhttp/hyperhttp/discussions) - General discussions
-- [GitHub Issues](https://github.com/hyperhttp/hyperhttp/issues) - Bug reports and feature requests
-- [Discord](https://discord.gg/hyperhttp) - Real-time chat (coming soon)
+- [GitHub Discussions](https://github.com/advanced-client-fetch/advanced-client-fetch/discussions) - General discussions
+- [GitHub Issues](https://github.com/advanced-client-fetch/advanced-client-fetch/issues) - Bug reports and feature requests
+- [Discord](https://discord.gg/advanced-client-fetch) - Real-time chat (coming soon)
 
 ## 📄 License
 
-By contributing to HyperHTTP, you agree that your contributions will be licensed under the MIT License.
+By contributing to Advanced Client Fetch, you agree that your contributions will be licensed under the MIT License.
 
 ---
 
-Thank you for contributing to HyperHTTP! 🎉
+Thank you for contributing to Advanced Client Fetch! 🎉

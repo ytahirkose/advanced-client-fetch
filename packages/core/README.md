@@ -6,7 +6,7 @@
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/advanced-client-fetch-core)](https://bundlephobia.com/package/advanced-client-fetch-core)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
-The core package of HyperHTTP - a modern, fetch-first HTTP client with plugin architecture that works across all platforms.
+The core package of Advanced Client Fetch - a modern, fetch-first HTTP client with plugin architecture that works across all platforms.
 
 ## Features
 
@@ -65,7 +65,7 @@ const client = createClient({
 ### Cookie Management
 
 ```typescript
-import { createClient, createCookieMiddleware, createCookieJar } from '@hyperhttp/core';
+import { createClient, createCookieMiddleware, createCookieJar } from '@advanced-client-fetch/core';
 
 const cookieJar = createCookieJar();
 const client = createClient({
@@ -79,7 +79,7 @@ const response = await client.get('/auth/profile');
 ### Security Features
 
 ```typescript
-import { createClient, createSecurityMiddleware } from '@hyperhttp/core';
+import { createClient, createSecurityMiddleware } from '@advanced-client-fetch/core';
 
 const client = createClient({
   plugins: [
@@ -127,7 +127,7 @@ Creates a new HTTP client instance.
 ### SSRF Protection
 
 ```typescript
-import { validateUrlForSSRF } from '@hyperhttp/core';
+import { validateUrlForSSRF } from '@advanced-client-fetch/core';
 
 // Block private IPs and localhost
 const isValid = validateUrlForSSRF('https://api.example.com', {
@@ -139,7 +139,7 @@ const isValid = validateUrlForSSRF('https://api.example.com', {
 ### Header Sanitization
 
 ```typescript
-import { cleanHopByHopHeaders, blockDangerousHeaders } from '@hyperhttp/core';
+import { cleanHopByHopHeaders, blockDangerousHeaders } from '@advanced-client-fetch/core';
 
 // Remove hop-by-hop headers
 const cleaned = cleanHopByHopHeaders(request);
@@ -151,7 +151,7 @@ const safe = blockDangerousHeaders(request);
 ### Request Validation
 
 ```typescript
-import { validateRequestSize, createRequestSizeValidation } from '@hyperhttp/core';
+import { validateRequestSize, createRequestSizeValidation } from '@advanced-client-fetch/core';
 
 // Validate request size
 const isValid = validateRequestSize(request, 10 * 1024 * 1024); // 10MB
@@ -165,7 +165,7 @@ const middleware = createRequestSizeValidation(10 * 1024 * 1024);
 ### Basic Usage
 
 ```typescript
-import { createCookieJar, createCookieMiddleware } from '@hyperhttp/core';
+import { createCookieJar, createCookieMiddleware } from '@advanced-client-fetch/core';
 
 const cookieJar = createCookieJar();
 
@@ -182,7 +182,7 @@ cookieJar.delete('https://example.com', 'auth_token');
 ### Advanced Cookie Management
 
 ```typescript
-import { parseCookies, formatCookies } from '@hyperhttp/core';
+import { parseCookies, formatCookies } from '@advanced-client-fetch/core';
 
 // Parse cookie header
 const cookies = parseCookies('name=value; path=/; domain=example.com');
@@ -200,7 +200,7 @@ import {
   streamToNodeReadable, 
   nodeReadableToStream,
   createTransformStream
-} from '@hyperhttp/core';
+} from '@advanced-client-fetch/core';
 
 // Convert Web Stream to Node.js Readable
 const nodeStream = streamToNodeReadable(webStream);
@@ -219,7 +219,7 @@ const transform = createTransformStream(chunk => {
 ### Memory Storage
 
 ```typescript
-import { createMemoryStorage, createTimedStorage, createCountableStorage } from '@hyperhttp/core';
+import { createMemoryStorage, createTimedStorage, createCountableStorage } from '@advanced-client-fetch/core';
 
 // Basic memory storage
 const storage = createMemoryStorage();
@@ -236,7 +236,7 @@ const countableStorage = createCountableStorage(1000); // Max 1000 items
 ### Built-in Metrics
 
 ```typescript
-import { createClient, createPerformanceMonitor } from '@hyperhttp/core';
+import { createClient, createPerformanceMonitor } from '@advanced-client-fetch/core';
 
 const monitor = createPerformanceMonitor();
 const client = createClient({
@@ -262,7 +262,7 @@ import type {
   CookieOptions,
   SecurityOptions,
   PerformanceMetrics
-} from '@hyperhttp/core';
+} from '@advanced-client-fetch/core';
 ```
 
 ## License

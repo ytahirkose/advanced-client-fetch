@@ -1,7 +1,7 @@
 /**
  * CORS + Cookie Authentication Solution
  * 
- * This example demonstrates how HyperHTTP solves the common CORS + cookie
+ * This example demonstrates how Advanced Client Fetch solves the common CORS + cookie
  * authentication problem in frontend development.
  */
 
@@ -17,7 +17,7 @@ export const viteConfig = {
         target: 'https://api.company.com',
         changeOrigin: true,
         configure: (proxy, options) => {
-          // HyperHTTP handles cookie forwarding automatically
+          // Advanced Client Fetch handles cookie forwarding automatically
           proxy.on('proxyRes', (proxyRes, req, res) => {
             // Rewrite Set-Cookie headers for localhost
             const setCookieHeaders = proxyRes.headers['set-cookie'];
@@ -41,7 +41,7 @@ export const viteConfig = {
 // 2. FRONTEND CLIENT SETUP
 // ============================================================================
 
-import { createBrowserClient } from '@hyperhttp/presets/browser';
+import { createBrowserClient } from '@advanced-client-fetch/presets/browser';
 
 // Create client with automatic cookie management
 const apiClient = createBrowserClient({
@@ -69,7 +69,7 @@ class AuthService {
         password
       });
 
-      // HyperHTTP automatically handles:
+      // Advanced Client Fetch automatically handles:
       // - Set-Cookie header parsing
       // - Cookie storage
       // - Cookie sending on subsequent requests
@@ -87,7 +87,7 @@ class AuthService {
       const response = await this.client.get('/auth/profile');
       
       // No need to manually handle cookies!
-      // HyperHTTP does it automatically
+      // Advanced Client Fetch does it automatically
       
       return response.data;
     } catch (error) {
@@ -101,7 +101,7 @@ class AuthService {
       // Logout request
       await this.client.post('/auth/logout');
       
-      // HyperHTTP will automatically clear cookies
+      // Advanced Client Fetch will automatically clear cookies
       // when the server responds with Set-Cookie: auth_token=; Max-Age=0
       
     } catch (error) {
@@ -163,7 +163,7 @@ export function useAuth() {
 // 5. ADVANCED COOKIE MANAGEMENT
 // ============================================================================
 
-import { createCookieJar, createCookieMiddleware } from '@hyperhttp/core';
+import { createCookieJar, createCookieMiddleware } from '@advanced-client-fetch/core';
 
 class AdvancedAuthService {
   private client = apiClient;

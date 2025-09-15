@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# HyperHTTP Publish Script
+# Advanced Client Fetch Publish Script
 # This script publishes all packages to NPM
 
 set -e
 
-echo "🚀 Starting HyperHTTP publish process..."
+echo "🚀 Starting Advanced Client Fetch publish process..."
 
 # Check if user is logged in to NPM
 if ! npm whoami > /dev/null 2>&1; then
@@ -22,25 +22,25 @@ pnpm build
 # Publish packages in dependency order
 echo "📤 Publishing packages..."
 
-echo "1️⃣ Publishing @hyperhttp/core..."
+echo "1️⃣ Publishing @advanced-client-fetch/core..."
 cd packages/core
 npm publish
-echo "✅ @hyperhttp/core published successfully"
+echo "✅ @advanced-client-fetch/core published successfully"
 
-echo "2️⃣ Publishing @hyperhttp/plugins..."
+echo "2️⃣ Publishing @advanced-client-fetch/plugins..."
 cd ../plugins
 npm publish
-echo "✅ @hyperhttp/plugins published successfully"
+echo "✅ @advanced-client-fetch/plugins published successfully"
 
-echo "3️⃣ Publishing @hyperhttp/presets..."
+echo "3️⃣ Publishing @advanced-client-fetch/presets..."
 cd ../presets
 npm publish
-echo "✅ @hyperhttp/presets published successfully"
+echo "✅ @advanced-client-fetch/presets published successfully"
 
-echo "4️⃣ Publishing @hyperhttp/axios-adapter..."
+echo "4️⃣ Publishing @advanced-client-fetch/axios-adapter..."
 cd ../axios-adapter
 npm publish
-echo "✅ @hyperhttp/axios-adapter published successfully"
+echo "✅ @advanced-client-fetch/axios-adapter published successfully"
 
 cd ../..
 
@@ -48,15 +48,15 @@ echo ""
 echo "🎉 All packages published successfully!"
 echo ""
 echo "📦 Published packages:"
-echo "  - @hyperhttp/core@1.0.0"
-echo "  - @hyperhttp/plugins@1.0.0"
-echo "  - @hyperhttp/presets@1.0.0"
-echo "  - @hyperhttp/axios-adapter@1.0.0"
+echo "  - @advanced-client-fetch/core@1.0.0"
+echo "  - @advanced-client-fetch/plugins@1.0.0"
+echo "  - @advanced-client-fetch/presets@1.0.0"
+echo "  - @advanced-client-fetch/axios-adapter@1.0.0"
 echo ""
 echo "🔗 NPM links:"
-echo "  - https://www.npmjs.com/package/@hyperhttp/core"
-echo "  - https://www.npmjs.com/package/@hyperhttp/plugins"
-echo "  - https://www.npmjs.com/package/@hyperhttp/presets"
-echo "  - https://www.npmjs.com/package/@hyperhttp/axios-adapter"
+echo "  - https://www.npmjs.com/package/@advanced-client-fetch/core"
+echo "  - https://www.npmjs.com/package/@advanced-client-fetch/plugins"
+echo "  - https://www.npmjs.com/package/@advanced-client-fetch/presets"
+echo "  - https://www.npmjs.com/package/@advanced-client-fetch/axios-adapter"
 echo ""
-echo "🚀 HyperHTTP v1.0.0 is now live!"
+echo "🚀 Advanced Client Fetch v1.0.0 is now live!"

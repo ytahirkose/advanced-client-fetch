@@ -1,9 +1,9 @@
 /**
- * Storage implementations for HyperHTTP
+ * Storage implementations for Advanced Client Fetch
  * Provides base storage classes and utilities
  */
 
-import type { BaseStorage, TimedStorage, CountableStorage } from './types.js';
+import type { BaseStorage, TimedStorage, CountableStorage } from './types';
 
 /**
  * Base memory storage implementation
@@ -27,6 +27,10 @@ export abstract class BaseMemoryStorage<T> implements BaseStorage<T> {
   async delete(key: string): Promise<void> {
     this.store.delete(key);
     this.clearTimer(key);
+  }
+
+  async has(key: string): Promise<boolean> {
+    return this.store.has(key);
   }
 
   async clear(): Promise<void> {
@@ -227,7 +231,7 @@ export class StorageUtils {
     };
     
     storage.set = async (key: string, value: T, ttl?: number) => {
-      if (storage.size() >= maxSize && !storage.store.has(key)) {
+      if (storage.size() >= maxSize && !(await storage.has(key))) {
         // Remove least recently used
         const lruKey = accessOrder.shift();
         if (lruKey) {

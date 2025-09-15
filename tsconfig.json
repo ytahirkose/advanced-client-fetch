@@ -21,16 +21,14 @@
     "composite": true,
     "baseUrl": ".",
     "paths": {
-      "@hyperhttp/core": ["./packages/core/src"],
-      "@hyperhttp/core/*": ["./packages/core/src/*"],
-      "@hyperhttp/plugins": ["./packages/plugins/src"],
-      "@hyperhttp/plugins/*": ["./packages/plugins/src/*"],
-      "@hyperhttp/node": ["./packages/node/src"],
-      "@hyperhttp/node/*": ["./packages/node/src/*"],
-      "@hyperhttp/axios-adapter": ["./packages/axios-adapter/src"],
-      "@hyperhttp/axios-adapter/*": ["./packages/axios-adapter/src/*"],
-      "@hyperhttp/presets": ["./packages/presets/src"],
-      "@hyperhttp/presets/*": ["./packages/presets/src/*"]
+      "@advanced-client-fetch/core": ["./packages/core/src"],
+      "@advanced-client-fetch/core/*": ["./packages/core/src/*"],
+      "@advanced-client-fetch/plugins": ["./packages/plugins/src"],
+      "@advanced-client-fetch/plugins/*": ["./packages/plugins/src/*"],
+      "@advanced-client-fetch/axios-adapter": ["./packages/axios-adapter/src"],
+      "@advanced-client-fetch/axios-adapter/*": ["./packages/axios-adapter/src/*"],
+      "@advanced-client-fetch/presets": ["./packages/presets/src"],
+      "@advanced-client-fetch/presets/*": ["./packages/presets/src/*"]
     }
   },
   "include": ["packages/*/src/**/*"],

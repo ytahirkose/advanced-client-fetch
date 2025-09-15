@@ -1,33 +1,20 @@
 /**
- * HyperHTTP Presets - Platform-specific client configurations
+ * Advanced Client Fetch Presets - Platform-specific client configurations
  */
 
-// Edge preset
-export {
-  createEdgeClient,
-  createEdgeClientWithRetry,
-  createEdgeClientWithTimeout,
-  createEdgeClientWithDedupe,
-  createEdgeClientWithMetrics,
-  createMinimalEdgeClient,
-  createFullEdgeClient,
-  createAPIGatewayClient,
-  createCDNClient,
-  createCloudflareWorkersClient,
-  createVercelEdgeClient,
-  createDenoDeployClient,
-  createBunEdgeClient,
-  edgeClient,
-  type EdgePresetOptions,
-} from './edge.js';
-
-// Node preset
+// Node.js preset
 export {
   createNodeClient,
   createMinimalNodeClient,
-  createFullNodeClient,
   createAPIServerClient,
   createDatabaseClient,
+  createMicroserviceClient,
+  createBatchClient,
+  createRealTimeClient,
+  createStreamingClient,
+  createWebSocketClient,
+  createServerlessClient,
+  createFullNodeClient,
   createProductionNodeClient,
   createDevelopmentNodeClient,
   createTestNodeClient,
@@ -37,6 +24,29 @@ export {
   nodeClient,
   type NodePresetOptions,
 } from './node.js';
+
+// Edge runtime preset
+export {
+  createEdgeClient,
+  createEdgeClientWithRetry,
+  createEdgeClientWithTimeout,
+  createEdgeClientWithDedupe,
+  createEdgeClientWithMetrics,
+  createCloudflareWorkersClient,
+  createVercelEdgeClient,
+  createMinimalEdgeClient,
+  createFullEdgeClient,
+  createAPIGatewayClient,
+  createCDNClient,
+  createWebSocketClient as createEdgeWebSocketClient,
+  createRealTimeClient as createEdgeRealTimeClient,
+  createStreamingClient as createEdgeStreamingClient,
+  createBatchClient as createEdgeBatchClient,
+  createMicroserviceClient as createEdgeMicroserviceClient,
+  createServerlessClient as createEdgeServerlessClient,
+  edgeClient,
+  type EdgePresetOptions,
+} from './edge.js';
 
 // Browser preset
 export {
@@ -65,8 +75,26 @@ export {
   createDenoClient,
   createMinimalDenoClient,
   createFullDenoClient,
+  createDenoDeployClient,
   createDenoCLIClient,
-  createDenoServerClient,
+  createDenoFreshClient,
+  createDenoOakClient,
+  createDenoHonoClient,
+  createDenoClientWithRetry,
+  createDenoClientWithTimeout,
+  createDenoClientWithDedupe,
+  createDenoClientWithMetrics,
+  createDevelopmentDenoClient,
+  createProductionDenoClient,
+  createTestDenoClient,
+  createServerlessDenoClient,
+  createMicroserviceDenoClient,
+  createAPIGatewayDenoClient,
+  createCDNDenoClient,
+  createWebSocketDenoClient,
+  createRealTimeDenoClient,
+  createStreamingDenoClient,
+  createBatchDenoClient,
   denoClient,
   type DenoPresetOptions,
 } from './deno.js';
@@ -77,21 +105,27 @@ export {
   createMinimalBunClient,
   createFullBunClient,
   createBunCLIClient,
-  createBunServerClient,
+  createBunFreshClient,
+  createBunHonoClient,
+  createBunElysiaClient,
+  createBunClientWithRetry,
+  createBunClientWithTimeout,
+  createBunClientWithDedupe,
+  createBunClientWithMetrics,
+  createDevelopmentBunClient,
+  createProductionBunClient,
+  createTestBunClient,
+  createServerlessBunClient,
+  createMicroserviceBunClient,
+  createAPIGatewayBunClient,
+  createCDNBunClient,
+  createWebSocketBunClient,
+  createRealTimeBunClient,
+  createStreamingBunClient,
+  createBatchBunClient,
   bunClient,
   type BunPresetOptions,
 } from './bun.js';
 
-
-// Common functions (available in multiple presets)
-export {
-  createMicroserviceClient,
-  createRealTimeClient,
-  createStreamingClient,
-  createWebSocketClient,
-  createBatchClient,
-  createServerlessClient,
-} from './node.js';
-
 // Re-export core types for convenience
-export type { Client, ClientOptions, RequestOptions } from 'hyperhttp-core';
+export type { Client, ClientOptions } from '@advanced-client-fetch/core';

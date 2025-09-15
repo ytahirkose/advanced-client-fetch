@@ -1,12 +1,12 @@
 /**
  * Basic Usage Example
  * 
- * This example shows how to use HyperHTTP for basic HTTP requests
+ * This example shows how to use Advanced Client Fetch for basic HTTP requests
  * with different methods and options.
  */
 
-import { createClient } from '@hyperhttp/core';
-import { retry, cache, rateLimit } from '@hyperhttp/plugins';
+import { createClient } from '@advanced-client-fetch/core';
+import { retry, cache, rateLimit } from '@advanced-client-fetch/plugins';
 
 // Create a client with plugins
 const client = createClient({

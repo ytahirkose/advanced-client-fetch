@@ -1,83 +1,147 @@
 {
-  "name": "hyperhttp",
+  "name": "advanced-client-fetch",
   "version": "1.0.0",
-  "description": "🚀 The Modern HTTP Client for Every Platform - Fetch-first, plugin-based, and more powerful than Axios. Solves CORS+cookie issues, works in Edge runtimes, and provides production-ready resilience.",
+  "description": "🚀 Modern HTTP client with fetch-first design, plugin architecture, and security features. Works across all platforms with automatic cookie management and SSRF protection.",
   "type": "module",
-  "private": true,
-  "workspaces": [
-    "packages/*"
+  "private": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./core": {
+      "types": "./packages/core/dist/index.d.ts",
+      "import": "./packages/core/dist/index.js",
+      "require": "./packages/core/dist/index.cjs"
+    },
+    "./plugins": {
+      "types": "./packages/plugins/dist/index.d.ts",
+      "import": "./packages/plugins/dist/index.js",
+      "require": "./packages/plugins/dist/index.cjs"
+    },
+    "./presets": {
+      "types": "./packages/presets/dist/index.d.ts",
+      "import": "./packages/presets/dist/index.js",
+      "require": "./packages/presets/dist/index.cjs"
+    },
+    "./axios-adapter": {
+      "types": "./packages/axios-adapter/dist/index.d.ts",
+      "import": "./packages/axios-adapter/dist/index.js",
+      "require": "./packages/axios-adapter/dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "packages/*/dist",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "pnpm -r build",
+    "build:core": "pnpm --filter @advanced-client-fetch/core build",
+    "build:plugins": "pnpm --filter @advanced-client-fetch/plugins build",
+    "build:presets": "pnpm --filter @advanced-client-fetch/presets build",
+    "build:axios-adapter": "pnpm --filter @advanced-client-fetch/axios-adapter build",
+    "dev": "pnpm -r dev",
     "test": "pnpm -r test",
     "test:watch": "pnpm -r test:watch",
-    "test:integration": "cd test-package && npm run test:integration",
+    "test:integration": "pnpm -r test:integration",
+    "test:coverage": "pnpm -r test:coverage",
     "lint": "pnpm -r lint",
     "lint:fix": "pnpm -r lint:fix",
-    "type-check": "pnpm -r type-check",
     "clean": "pnpm -r clean",
+    "typecheck": "pnpm -r typecheck",
+    "analyze": "node scripts/analyze-bundle.js",
+    "analyze:size": "pnpm build && pnpm analyze",
+    "prepublishOnly": "pnpm build",
+    "release": "pnpm build && pnpm -r publish --access public",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "changeset publish",
-    "publish:packages": "pnpm -r publish --access public",
-    "publish:dry-run": "pnpm -r publish --access public --dry-run",
-    "publish:all": "./scripts/publish.sh",
-    "publish:core": "cd packages/core && npm publish",
-    "publish:plugins": "cd packages/plugins && npm publish",
-    "publish:presets": "cd packages/presets && npm publish",
-    "publish:axios-adapter": "cd packages/axios-adapter && npm publish"
+    "release-packages": "changeset publish"
   },
-  "devDependencies": {
-    "@changesets/cli": "^2.27.1",
-    "@types/node": "^20.10.0",
-    "@typescript-eslint/eslint-plugin": "^6.21.0",
-    "@typescript-eslint/parser": "^6.21.0",
-    "cross-env": "^7.0.3",
-    "eslint": "^8.57.1",
-    "eslint-config-prettier": "^9.0.0",
-    "eslint-plugin-prettier": "^5.0.1",
-    "prettier": "^3.1.0",
-    "tsup": "^8.0.0",
-    "typescript": "^5.3.0",
-    "vitest": "^1.0.0"
-  },
-  "engines": {
-    "node": ">=18",
-    "pnpm": ">=8"
-  },
-  "packageManager": "pnpm@8.12.0",
   "keywords": [
     "http",
     "client",
     "fetch",
     "axios",
+    "request",
+    "api",
+    "rest",
+    "graphql",
     "retry",
-    "timeout",
     "cache",
+    "timeout",
     "rate-limit",
     "circuit-breaker",
     "dedupe",
     "metrics",
-    "plugin",
     "middleware",
+    "plugin",
+    "typescript",
     "node",
+    "browser",
     "edge",
     "deno",
     "bun",
-    "browser",
-    "cors",
-    "cookies",
-    "ssrf",
-    "security",
-    "microservices",
+    "cloudflare",
+    "vercel",
+    "serverless",
+    "microservice",
     "api-gateway",
-    "resilience",
-    "fault-tolerance",
-    "performance",
-    "typescript",
-    "esm",
-    "tree-shaking",
-    "modern",
-    "platform-agnostic"
-  ]
+    "cdn",
+    "websocket",
+    "streaming",
+    "real-time",
+    "batch",
+    "production",
+    "development",
+    "testing"
+  ],
+  "author": {
+    "name": "Yasar Tahir Kose",
+    "email": "ytahirkose@gmail.com",
+    "url": "https://github.com/ytahirkose"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ytahirkose/advanced-client-fetch.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ytahirkose/advanced-client-fetch/issues"
+  },
+  "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@changesets/cli": "^2.27.1",
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.44.0",
+    "@typescript-eslint/parser": "^8.44.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0",
+    "terser": "^5.44.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "peerDependencies": {
+    "typescript": ">=5.0.0"
+  },
+  "peerDependenciesMeta": {
+    "typescript": {
+      "optional": true
+    }
+  }
 }

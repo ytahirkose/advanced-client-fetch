@@ -1,71 +1,86 @@
 /**
- * Signal utilities for HyperHTTP
- * Handles AbortSignal combination and timeout management
+ * Signal utilities for Advanced Client Fetch
  */
 
-import type { AbortSignal } from './types.js';
+import type { AbortSignal } from './types';
 
 /**
- * Combine multiple AbortSignals into one
+ * Combine multiple abort signals into one
  */
-export function combineSignals(...signals: (AbortSignal | undefined)[]): AbortSignal | undefined {
-  const validSignals = signals.filter((s): s is AbortSignal => s !== undefined);
+export function combineSignals(...signals: (AbortSignal | undefined)[]): AbortSignal {
+  const validSignals = signals.filter((signal): signal is AbortSignal => !!signal);
   
-  if (validSignals.length === 0) return undefined;
-  if (validSignals.length === 1) return validSignals[0];
-  
-  // Use AbortSignal.any if available (Node.js 20+)
-  if (typeof AbortSignal !== 'undefined' && 'any' in AbortSignal) {
-    return (AbortSignal as any).any(validSignals);
+  if (validSignals.length === 0) {
+    return new AbortController().signal;
   }
   
-  // Fallback: create a combined signal
-  const controller = new AbortController();
+  if (validSignals.length === 1) {
+    return validSignals[0];
+  }
   
-  const onAbort = () => {
-    controller.abort();
-  };
+  const controller = new AbortController();
   
   for (const signal of validSignals) {
     if (signal.aborted) {
       controller.abort();
       break;
     }
-    signal.addEventListener('abort', onAbort, { once: true });
+    
+    signal.addEventListener('abort', () => {
+      controller.abort();
+    }, { once: true });
   }
   
   return controller.signal;
 }
 
 /**
- * Create a timeout signal
+ * Combine timeout and abort signal
  */
-export function createTimeoutSignal(timeoutMs: number): { signal: AbortSignal; cleanup: () => void } {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+export function combineTimeoutAndSignal(
+  signal?: AbortSignal,
+  timeout?: number
+): { signal: AbortSignal; cleanup: (() => void) | undefined } {
+  if (!timeout || timeout <= 0) {
+    return { signal: signal || new AbortController().signal, cleanup: undefined };
+  }
   
-  const cleanup = () => {
-    clearTimeout(timeoutId);
-  };
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  let cleanup: (() => void) | undefined;
+  
+  if (signal) {
+    if (signal.aborted) {
+      clearTimeout(timeoutId);
+      controller.abort();
+    } else {
+      const onAbort = () => {
+        clearTimeout(timeoutId);
+        controller.abort();
+      };
+      
+      signal.addEventListener('abort', onAbort, { once: true });
+      
+      cleanup = () => {
+        clearTimeout(timeoutId);
+        signal.removeEventListener('abort', onAbort);
+      };
+    }
+  } else {
+    cleanup = () => clearTimeout(timeoutId);
+  }
   
   return { signal: controller.signal, cleanup };
 }
 
 /**
- * Combine timeout and existing signal
+ * Create a timeout signal
  */
-export function combineTimeoutAndSignal(
-  signal?: AbortSignal, 
-  timeout?: number
-): { signal?: AbortSignal; cleanup?: () => void } {
-  if (!timeout || timeout <= 0) {
-    return { signal, cleanup: () => {} };
-  }
-  
-  const { signal: timeoutSignal, cleanup } = createTimeoutSignal(timeout);
-  const combinedSignal = combineSignals(signal, timeoutSignal);
-  
-  return { signal: combinedSignal, cleanup };
+export function createTimeoutSignal(timeout: number): AbortSignal {
+  const controller = new AbortController();
+  setTimeout(() => controller.abort(), timeout);
+  return controller.signal;
 }
 
 /**
@@ -76,76 +91,35 @@ export function isAborted(signal?: AbortSignal): boolean {
 }
 
 /**
- * Wait for signal to be aborted
+ * Create a signal that aborts after a delay
  */
-export function waitForAbort(signal: AbortSignal): Promise<void> {
-  if (signal.aborted) {
-    return Promise.reject(new Error('Signal already aborted'));
-  }
-  
-  return new Promise((_, reject) => {
-    signal.addEventListener('abort', () => {
-      reject(new Error('Signal aborted'));
-    }, { once: true });
-  });
-}
-
-/**
- * Create delay signal with cleanup
- */
-export function createDelaySignal(delayMs: number): { signal: AbortSignal; cleanup: () => void } {
+export function createDelayedSignal(delay: number): AbortSignal {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), delayMs);
-  
-  const cleanup = () => {
-    clearTimeout(timeoutId);
-  };
-  
-  return { signal: controller.signal, cleanup };
+  setTimeout(() => controller.abort(), delay);
+  return controller.signal;
 }
 
 /**
- * Race promise with signal
+ * Create a signal that aborts on the next tick
  */
-export function raceWithSignal<T>(
-  promise: Promise<T>, 
-  signal?: AbortSignal
-): Promise<T> {
-  if (!signal) return promise;
-  
-  if (signal.aborted) {
-    return Promise.reject(new Error('Signal already aborted'));
-  }
-  
-  return new Promise((resolve, reject) => {
-    const onAbort = () => {
-      reject(new Error('Signal aborted'));
-    };
-    
-    signal.addEventListener('abort', onAbort, { once: true });
-    
-    promise
-      .then(resolve)
-      .catch(reject)
-      .finally(() => {
-        signal.removeEventListener('abort', onAbort);
-      });
-  });
+export function createNextTickSignal(): AbortSignal {
+  const controller = new AbortController();
+  setImmediate(() => controller.abort());
+  return controller.signal;
 }
 
 /**
- * Wrap promise with timeout and signal
+ * Create a signal that never aborts
  */
-export function withTimeoutAndSignal<T>(
-  promise: Promise<T>,
-  timeoutMs?: number,
-  signal?: AbortSignal
-): Promise<T> {
-  if (!timeoutMs && !signal) return promise;
-  
-  const { signal: combinedSignal, cleanup } = combineTimeoutAndSignal(signal, timeoutMs);
-  
-  return raceWithSignal(promise, combinedSignal).finally(() => {
-    cleanup?.();
-  });
+export function createNeverAbortSignal(): AbortSignal {
+  return new AbortController().signal;
+}
+
+/**
+ * Create a signal that is already aborted
+ */
+export function createAbortedSignal(): AbortSignal {
+  const controller = new AbortController();
+  controller.abort();
+  return controller.signal;
 }

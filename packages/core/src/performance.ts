@@ -1,9 +1,9 @@
 /**
- * Performance utilities for HyperHTTP
+ * Performance utilities for Advanced Client Fetch
  * Provides performance monitoring, optimization, and benchmarking
  */
 
-import type { Context, Middleware, PerformanceMetrics } from './types.js';
+import type { Context, Middleware, PerformanceMetrics } from './types';
 
 /**
  * Performance monitor class

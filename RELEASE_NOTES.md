@@ -1,15 +1,15 @@
-# 🚀 HyperHTTP v1.0.0 - Initial Release
+# 🚀 Advanced Client Fetch v1.0.0 - Initial Release
 
 ## 🎉 What's New
 
-HyperHTTP is now officially released! The modern HTTP client that's more powerful than Axios, works across all platforms, and solves real-world problems.
+Advanced Client Fetch is now officially released! The modern HTTP client that's more powerful than Axios, works across all platforms, and solves real-world problems.
 
 ## 📦 Packages Released
 
-- **@hyperhttp/core@1.0.0** - Core HTTP client with fetch-first design
-- **@hyperhttp/plugins@1.0.0** - Powerful plugins for retry, cache, rate limiting, and more
-- **@hyperhttp/presets@1.0.0** - Platform-specific configurations
-- **@hyperhttp/axios-adapter@1.0.0** - Drop-in Axios replacement
+- **@advanced-client-fetch/core@1.0.0** - Core HTTP client with fetch-first design
+- **@advanced-client-fetch/plugins@1.0.0** - Powerful plugins for retry, cache, rate limiting, and more
+- **@advanced-client-fetch/presets@1.0.0** - Platform-specific configurations
+- **@advanced-client-fetch/axios-adapter@1.0.0** - Drop-in Axios replacement
 
 ## ✨ Key Features
 
@@ -40,29 +40,29 @@ HyperHTTP is now officially released! The modern HTTP client that's more powerfu
 - **Drop-in replacement** - Same API as Axios
 - **Solves CORS issues** - Works in Edge runtimes
 - **Better performance** - Smaller bundle size
-- **Modern features** - Built on HyperHTTP core
+- **Modern features** - Built on Advanced Client Fetch core
 
 ## 🛠️ **Installation**
 
 ```bash
 # Core package
-npm install @hyperhttp/core
+npm install @advanced-client-fetch/core
 
 # With plugins
-npm install @hyperhttp/plugins
+npm install @advanced-client-fetch/plugins
 
 # Platform presets
-npm install @hyperhttp/presets
+npm install @advanced-client-fetch/presets
 
 # Axios adapter
-npm install @hyperhttp/axios-adapter
+npm install @advanced-client-fetch/axios-adapter
 ```
 
 ## 📖 **Quick Start**
 
 ```typescript
-import { createClient } from '@hyperhttp/core';
-import { retry, cache, timeout } from '@hyperhttp/plugins';
+import { createClient } from '@advanced-client-fetch/core';
+import { retry, cache, timeout } from '@advanced-client-fetch/plugins';
 
 const client = createClient({
   baseURL: 'https://api.example.com',
@@ -84,20 +84,20 @@ const data = await client.get('/users');
 import axios from 'axios';
 const response = await axios.get('/api/data');
 
-// After (HyperHTTP Axios Adapter)
-import axios from '@hyperhttp/axios-adapter';
+// After (Advanced Client Fetch Axios Adapter)
+import axios from '@advanced-client-fetch/axios-adapter';
 const response = await axios.get('/api/data');
 // Same API, better performance!
 ```
 
 ## 📊 **Bundle Sizes**
 
-- **@hyperhttp/core**: ~13KB (gzipped)
-- **@hyperhttp/plugins**: ~1.6KB (gzipped)
-- **@hyperhttp/presets**: ~1.7KB (gzipped)
-- **@hyperhttp/axios-adapter**: ~15KB (gzipped)
+- **@advanced-client-fetch/core**: ~13KB (gzipped)
+- **@advanced-client-fetch/plugins**: ~1.6KB (gzipped)
+- **@advanced-client-fetch/presets**: ~1.7KB (gzipped)
+- **@advanced-client-fetch/axios-adapter**: ~15KB (gzipped)
 
-## 🎯 **Why HyperHTTP?**
+## 🎯 **Why Advanced Client Fetch?**
 
 1. **Solves real problems** - CORS, cookies, Edge runtime compatibility
 2. **Better than Axios** - Smaller, faster, more features
@@ -107,18 +107,18 @@ const response = await axios.get('/api/data');
 
 ## 📚 **Documentation**
 
-- [Full Documentation](https://github.com/ytahirkose/HyperHTTP)
-- [API Reference](https://github.com/ytahirkose/HyperHTTP/blob/main/docs/api.md)
-- [Examples](https://github.com/ytahirkose/HyperHTTP/tree/main/examples)
+- [Full Documentation](https://github.com/ytahirkose/Advanced Client Fetch)
+- [API Reference](https://github.com/ytahirkose/Advanced Client Fetch/blob/main/docs/api.md)
+- [Examples](https://github.com/ytahirkose/Advanced Client Fetch/tree/main/examples)
 
 ## 🤝 **Contributing**
 
-We welcome contributions! Please see our [Contributing Guide](https://github.com/ytahirkose/HyperHTTP/blob/main/CONTRIBUTING.md).
+We welcome contributions! Please see our [Contributing Guide](https://github.com/ytahirkose/Advanced Client Fetch/blob/main/CONTRIBUTING.md).
 
 ## 📄 **License**
 
-MIT License - see [LICENSE](https://github.com/ytahirkose/HyperHTTP/blob/main/LICENSE) for details.
+MIT License - see [LICENSE](https://github.com/ytahirkose/Advanced Client Fetch/blob/main/LICENSE) for details.
 
 ---
 
-**Ready to upgrade your HTTP client? Install HyperHTTP today!** 🚀
+**Ready to upgrade your HTTP client? Install Advanced Client Fetch today!** 🚀

@@ -1,78 +1,41 @@
 /**
- * Timeout plugin for HyperHTTP
- * Provides per-request and global timeout functionality
+ * Timeout plugin for Advanced Client Fetch
  */
 
-import type { Middleware, RequestOptions } from 'hyperhttp-core';
-import { HyperAbortError, TimeoutError } from 'hyperhttp-core';
-import { combineTimeoutAndSignal } from 'hyperhttp-core';
+import type { Middleware, Context } from '@advanced-client-fetch/core';
+import { TimeoutError } from '@advanced-client-fetch/core';
+import { combineTimeoutAndSignal } from '@advanced-client-fetch/core';
 
 export interface TimeoutPluginOptions {
+  /** Timeout duration in milliseconds */
+  timeout?: number;
   /** Enable timeout plugin */
   enabled?: boolean;
-  /** Default timeout in milliseconds */
-  timeout?: number;
-  /** Per-request timeout in milliseconds */
-  requestTimeout?: number;
-  /** Global timeout in milliseconds */
-  globalTimeout?: number;
-  /** Timeout error message */
+  /** Custom timeout message */
   message?: string;
 }
-
-const DEFAULT_OPTIONS: Required<TimeoutPluginOptions> = {
-  enabled: true,
-  timeout: 30000, // 30 seconds
-  requestTimeout: 0,
-  globalTimeout: 0,
-  message: 'Request timeout',
-};
 
 /**
  * Create timeout middleware
  */
 export function timeout(options: TimeoutPluginOptions = {}): Middleware {
-  const config = { ...DEFAULT_OPTIONS, ...options };
+  const { timeout: timeoutMs = 30000, enabled = true, message } = options;
   
-  if (!config.enabled) {
-    return async (ctx, next) => next();
+  if (!enabled || timeoutMs <= 0) {
+    return async (_ctx, next) => next();
   }
 
   return async (ctx, next) => {
-    // Get timeout from request meta or config
-    const requestTimeout = ctx.meta.timeout || config.requestTimeout || config.timeout;
-    const globalTimeout = config.globalTimeout;
-    
-    // Use global timeout if specified, otherwise use request timeout
-    const timeoutMs = globalTimeout > 0 ? globalTimeout : requestTimeout;
-    
-    if (timeoutMs <= 0) {
-      return next();
-    }
-
-    // Create timeout signal and combine with existing signal
-    const { signal: combinedSignal, cleanup } = combineTimeoutAndSignal(ctx.signal, timeoutMs);
+    const { signal, cleanup } = combineTimeoutAndSignal(ctx.signal, timeoutMs);
     
     try {
-      // Update context with combined signal
-      ctx.signal = combinedSignal;
-      
-      // Clone request with new signal
-      ctx.req = new Request(ctx.req, { signal: combinedSignal });
+      // Update context with new signal
+      ctx.signal = signal;
       
       await next();
-    } catch (error: any) {
-      // More aggressive timeout detection
-      if (error instanceof Error && (
-        error.name === 'AbortError' || 
-        error.message?.includes('timeout') || 
-        error.message?.includes('Request timeout') || 
-        error.message?.includes('TimeoutError') || 
-        error.message?.includes('aborted') ||
-        error.message?.includes('The operation was aborted') ||
-        error.message?.includes('signal is aborted')
-      )) {
-        throw new TimeoutError(config.message, timeoutMs);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        throw new TimeoutError(timeoutMs, signal);
       }
       throw error;
     } finally {
@@ -82,58 +45,51 @@ export function timeout(options: TimeoutPluginOptions = {}): Middleware {
 }
 
 /**
- * Create timeout middleware with per-request timeout
+ * Create request timeout middleware
  */
 export function requestTimeout(timeoutMs: number): Middleware {
-  return timeout({ requestTimeout: timeoutMs });
+  return timeout({ timeout: timeoutMs });
 }
 
 /**
- * Create timeout middleware with global timeout
+ * Create global timeout middleware
  */
 export function globalTimeout(timeoutMs: number): Middleware {
-  return timeout({ globalTimeout: timeoutMs });
+  return timeout({ timeout: timeoutMs });
 }
 
 /**
  * Create timeout middleware with custom message
  */
 export function timeoutWithMessage(timeoutMs: number, message: string): Middleware {
-  return timeout({ 
-    timeout: timeoutMs, 
-    message 
-  });
+  return timeout({ timeout: timeoutMs, message });
 }
 
 /**
- * Create timeout middleware that only applies to specific methods
+ * Create timeout middleware for specific methods
  */
 export function timeoutForMethods(
-  methods: string[], 
-  timeoutMs: number
+  timeoutMs: number,
+  methods: string[]
 ): Middleware {
   return async (ctx, next) => {
-    const method = ctx.req.method.toUpperCase();
-    
-    if (methods.includes(method)) {
+    if (methods.includes(ctx.req.method)) {
       return timeout({ timeout: timeoutMs })(ctx, next);
     }
-    
     return next();
   };
 }
 
 /**
- * Create timeout middleware with exponential backoff
+ * Create timeout middleware with backoff
  */
 export function timeoutWithBackoff(
   baseTimeout: number,
-  maxTimeout: number = 300000,
-  factor: number = 1.5
+  maxTimeout: number = baseTimeout * 4
 ): Middleware {
   return async (ctx, next) => {
     const attempt = ctx.meta.retryAttempt || 1;
-    const timeoutMs = Math.min(baseTimeout * Math.pow(factor, attempt - 1), maxTimeout);
+    const timeoutMs = Math.min(baseTimeout * attempt, maxTimeout);
     
     return timeout({ timeout: timeoutMs })(ctx, next);
   };
@@ -143,16 +99,20 @@ export function timeoutWithBackoff(
  * Create timeout middleware that respects Retry-After header
  */
 export function timeoutWithRetryAfter(
-  defaultTimeout: number,
-  maxTimeout: number = 300000
+  defaultTimeout: number
 ): Middleware {
   return async (ctx, next) => {
     let timeoutMs = defaultTimeout;
     
-    // Check if we have a Retry-After header from previous response
-    const retryAfter = ctx.meta.retryAfter;
-    if (retryAfter) {
-      timeoutMs = Math.min(retryAfter, maxTimeout);
+    // Check for Retry-After header in previous response
+    if (ctx.res?.headers.get('retry-after')) {
+      const retryAfter = ctx.res.headers.get('retry-after');
+      if (retryAfter) {
+        const retryMs = parseInt(retryAfter, 10) * 1000;
+        if (!isNaN(retryMs)) {
+          timeoutMs = Math.min(retryMs, defaultTimeout * 2);
+        }
+      }
     }
     
     return timeout({ timeout: timeoutMs })(ctx, next);
@@ -160,40 +120,32 @@ export function timeoutWithRetryAfter(
 }
 
 /**
- * Create timeout middleware with circuit breaker integration
+ * Create timeout middleware with circuit breaker
  */
 export function timeoutWithCircuitBreaker(
   timeoutMs: number,
   failureThreshold: number = 5
 ): Middleware {
+  let failures = 0;
+  let lastFailureTime = 0;
+  
   return async (ctx, next) => {
-    const state = ctx.state;
-    const key = `timeout_${ctx.req.url}`;
-    
-    // Initialize failure count
-    if (!state[key]) {
-      state[key] = { failures: 0, lastFailure: 0 };
-    }
-    
-    const circuitState = state[key];
     const now = Date.now();
     
-    // Reset failure count if enough time has passed
-    if (now - circuitState.lastFailure > 60000) { // 1 minute
-      circuitState.failures = 0;
+    // Reset failures if enough time has passed
+    if (now - lastFailureTime > 60000) { // 1 minute
+      failures = 0;
     }
     
-    // If too many failures, use shorter timeout
-    const effectiveTimeout = circuitState.failures >= failureThreshold 
-      ? Math.min(timeoutMs, 5000) 
-      : timeoutMs;
+    // Use shorter timeout if circuit is open
+    const effectiveTimeout = failures >= failureThreshold ? timeoutMs / 2 : timeoutMs;
     
     try {
       return await timeout({ timeout: effectiveTimeout })(ctx, next);
     } catch (error) {
       if (error instanceof TimeoutError) {
-        circuitState.failures++;
-        circuitState.lastFailure = now;
+        failures++;
+        lastFailureTime = now;
       }
       throw error;
     }
@@ -201,26 +153,42 @@ export function timeoutWithCircuitBreaker(
 }
 
 /**
- * Timeout per attempt
+ * Create per-attempt timeout middleware
  */
 export function timeoutPerAttempt(timeoutMs: number): Middleware {
-  return timeout({ requestTimeout: timeoutMs });
+  return async (ctx, next) => {
+    const attempt = ctx.meta.retryAttempt || 1;
+    const attemptTimeout = timeoutMs * attempt;
+    
+    return timeout({ timeout: attemptTimeout })(ctx, next);
+  };
 }
 
 /**
- * Total timeout for all attempts
+ * Create total timeout middleware
  */
 export function totalTimeout(timeoutMs: number): Middleware {
-  return timeout({ globalTimeout: timeoutMs });
+  return async (ctx, next) => {
+    const startTime = ctx.meta.startTime || Date.now();
+    const elapsed = Date.now() - startTime;
+    const remaining = timeoutMs - elapsed;
+    
+    if (remaining <= 0) {
+      throw new TimeoutError(timeoutMs);
+    }
+    
+    return timeout({ timeout: remaining })(ctx, next);
+  };
 }
 
 /**
- * Timeout by HTTP method
+ * Create timeout middleware that varies by HTTP method
  */
 export function timeoutByMethod(timeouts: Record<string, number>): Middleware {
   return async (ctx, next) => {
     const method = ctx.req.method;
-    const timeoutMs = timeouts[method] || timeouts['*'] || 30000;
+    const timeoutMs = timeouts[method] || timeouts.default || 30000;
+    
     return timeout({ timeout: timeoutMs })(ctx, next);
   };
 }

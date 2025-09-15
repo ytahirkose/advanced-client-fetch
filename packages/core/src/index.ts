@@ -1,40 +1,53 @@
 /**
- * HyperHTTP Core - Fetch-first HTTP client with plugin architecture
+ * Advanced Client Fetch Core - Fetch-first HTTP client with plugin architecture
  */
 
 // Core exports
-export { createClient, createDefaultClient, createClientFor } from './client.js';
-export { compose, parallel, conditional, once, withErrorHandling, withTiming, withLogging } from './compose.js';
-export { combineSignals, combineTimeoutAndSignal, createTimeoutSignal } from './signal.js';
+export { createClient, createDefaultClient, createClientFor } from './client';
+export { compose, parallel, conditional, once, withErrorHandling, withTiming, withLogging } from './compose';
+export { combineSignals, combineTimeoutAndSignal, createTimeoutSignal } from './signal';
+
+// Re-export types from types.ts
+export type {
+  Headers,
+  Request,
+  Response,
+  AbortSignal,
+  RequestInit,
+  ResponseInit,
+  AbortController,
+  Plugin,
+  HttpMethod,
+  ResponseType,
+  ProgressEvent,
+  ProxyConfig,
+  TransitionalOptions,
+  EnvironmentOptions,
+  FormSerializerOptions,
+  BaseStorage,
+  TimedStorage,
+  CountableStorage,
+  CacheStorage
+} from './types';
 
 // Type exports
 export type {
   Client,
   ClientOptions,
   RequestOptions,
-  ResponseType,
-  HttpMethod,
   RetryOptions,
   RetryInfo,
   CacheOptions,
-  CacheStorage,
-  BaseStorage,
-  TimedStorage,
-  CountableStorage,
   Transport,
   Context,
   Middleware,
-  HttpError,
-  AbortError,
   Interceptor,
   Metrics,
-  MetricsData,
   SecurityOptions,
   Cookie,
   CookieOptions,
   CookieJar,
   NodeAgentOptions,
-  ProxyConfig,
   NodeSslOptions,
   StreamOptions,
   RetryPluginOptions,
@@ -50,26 +63,56 @@ export type {
   BasePluginOptions,
   PluginHooks,
   PluginImplementation,
-  PresetConfig,
-  PlatformOptions,
   PerformanceMetrics,
   BuildOptions,
   BundleAnalysis,
   OptimizationConfig,
-} from './types.js';
+} from './types';
 
 // Error exports
 export {
-  HyperHttpError,
-  HyperAbortError,
-  TimeoutError,
+  // Base error classes
+  BaseError,
+  BaseHttpError,
+  BaseAbortError,
+  // HTTP error classes
+  ClientError,
+  ServerError,
   NetworkError,
+  // Abort error classes
+  TimeoutError,
+  // Other error classes
   RetryError,
   ValidationError,
   ConfigurationError,
   RateLimitError,
   CircuitBreakerError,
-} from './errors.js';
+  // Legacy error classes (deprecated)
+  AdvancedClientFetchError,
+  AdvancedClientFetchAbortError,
+  // Error utility functions
+  isHttpError,
+  isAbortError,
+  isTimeoutError,
+  isNetworkError,
+  isRetryError,
+  isValidationError,
+  isConfigurationError,
+  isRateLimitError,
+  isCircuitBreakerError,
+} from './errors';
+
+// Cancel Token exports
+export {
+  CancelToken,
+  CancelError,
+  isCancel,
+  raceCancelTokens,
+  timeoutCancelToken,
+  type CancelTokenSource,
+  type CancelTokenStatic,
+  type CancelToken as CancelTokenInterface,
+} from './cancel-token';
 
 // Utility exports
 export {
@@ -104,139 +147,52 @@ export {
   simpleKeyGenerator,
   bodyAwareKeyGenerator,
   headerAwareKeyGenerator,
-} from './utils.js';
+} from './utils';
 
-// Storage exports
+// Performance optimization exports
 export {
-  BaseMemoryStorage,
-  MemoryStorage,
-  TimedMemoryStorage,
-  CountableMemoryStorage,
-  createMemoryStorage,
-  createTimedStorage,
-  createCountableStorage,
-  StorageUtils,
-  type StorageStats,
-} from './storage.js';
+  ObjectPool,
+  headersPool,
+  urlPool,
+  requestPool,
+  responsePool,
+  errorPool,
+  mapPool,
+  setPool,
+  arrayPool,
+  getHeaders,
+  releaseHeaders,
+  getURL,
+  releaseURL,
+  getMap,
+  releaseMap,
+  getSet,
+  releaseSet,
+  getArray,
+  releaseArray,
+  clearAllPools,
+} from './object-pool';
 
-// Plugin factory exports
 export {
-  createPlugin,
-  createConditionalPlugin,
-  createWrapperPlugin,
-  createRetryablePlugin,
-  createTimeoutPlugin,
-  createMetricsPlugin,
-  createCachedPlugin,
-  createRateLimitedPlugin,
-  PluginComposer,
-} from './plugin-factory.js';
+  intern,
+  internStrings,
+  internObjectKeys,
+  internHeaders,
+  clearStringCache,
+  getStringCacheStats,
+  HTTP_METHODS,
+  COMMON_HEADERS,
+  CONTENT_TYPES,
+  RESPONSE_TYPES,
+} from './string-intern';
 
-// Preset factory exports
 export {
-  createPresetClient,
-  createMinimalPresetClient,
-  createFullPresetClient,
-  createProductionPresetClient,
-  createDevelopmentPresetClient,
-  createTestPresetClient,
-  createPresetClientBuilder,
-  PresetClientBuilder,
-  type PresetConfig,
-  type PlatformOptions,
-} from './preset-factory.js';
-
-// Node.js specific exports
-export {
-  createHttpAgent,
-  createHttpsAgent,
-  createNodeTransport,
-  createProxyMiddleware,
-  isNodeEnvironment,
-  getDefaultNodeAgentOptions,
-} from './node-agent.js';
-
-// Security exports
-export {
-  isPrivateIP,
-  isLocalhost,
-  validateUrlForSSRF,
-  cleanHopByHopHeaders,
-  blockDangerousHeaders,
-  createSSRFProtection,
-  createRedirectSecurity,
-  createSecurityMiddleware,
-  sanitizeHeaders,
-  validateRequestSize,
-  createRequestSizeValidation,
-  createComprehensiveSecurity,
-  type SecurityOptions,
-} from './security.js';
-
-// Cookie management exports
-export {
-  MemoryCookieJar,
-  createCookieMiddleware,
-  createCookieMiddlewareWithOptions,
-  createDomainCookieMiddleware,
-  createCookieJar,
-  parseCookies,
-  formatCookies,
-  parseCookie,
-  formatCookie,
-  CookieUtils,
-  type CookieOptions,
-  type CookieJar,
-  type Cookie,
-} from './cookie-manager.js';
-
-// Stream utilities exports
-export {
-  streamToNodeReadable,
-  nodeReadableToStream,
-  createTransformStream,
-  createFilterStream,
-  createMapStream,
-  createReduceStream,
-  streamToBuffer,
-  streamToString,
-  streamToJSON,
-  bufferToStream,
-  stringToStream,
-  jsonToStream,
-  pipeStreams,
-  createLimitStream,
-  createSkipStream,
-  createTakeStream,
-  createCollectStream,
-  createSplitStream,
-  StreamUtils,
-  type StreamOptions,
-} from './stream-utils.js';
-
-// Performance exports
-export {
-  PerformanceMonitor,
-  createPerformanceMonitor,
-  createPerformanceMiddleware,
-  Benchmark,
-  createBenchmark,
-  MemoryMonitor,
-  createMemoryMonitor,
-  PerformanceUtils,
-  PERFORMANCE_CONSTANTS,
-  checkPerformanceHealth,
-} from './performance.js';
-
-// Build utilities exports
-export {
-  BundleAnalyzer,
-  createBundleAnalyzer,
-  BuildOptimizer,
-  createBuildOptimizer,
-  BuildUtils,
-  BUILD_CONSTANTS,
-} from './build-utils.js';
-
-// Re-export common types for convenience
-export type { Headers, Request, Response, AbortSignal } from './types.js';
+  lazyLoad,
+  lazyLoadAsync,
+  lazyLoadWithCleanup,
+  clearLazyCache,
+  removeFromLazyCache,
+  getLazyCacheStats,
+  lazyLoaders,
+  createLazyLoader,
+} from './lazy-loading';

@@ -1,13 +1,13 @@
 # API Reference
 
-## Core API (`@hyperhttp/core`)
+## Core API (`@advanced-client-fetch/core`)
 
 ### `createClient(options)`
 
 Creates a new HTTP client instance.
 
 ```typescript
-import { createClient } from '@hyperhttp/core';
+import { createClient } from '@advanced-client-fetch/core';
 
 const client = createClient({
   baseURL: 'https://api.example.com',
@@ -115,7 +115,7 @@ interface Response {
 ### Error Handling
 
 ```typescript
-import { HttpError, NetworkError, TimeoutError } from '@hyperhttp/core';
+import { HttpError, NetworkError, TimeoutError } from '@advanced-client-fetch/core';
 
 try {
   const response = await client.get('/api/data');
@@ -130,12 +130,12 @@ try {
 }
 ```
 
-## Plugin API (`@hyperhttp/plugins`)
+## Plugin API (`@advanced-client-fetch/plugins`)
 
 ### Retry Plugin
 
 ```typescript
-import { retry } from '@hyperhttp/plugins';
+import { retry } from '@advanced-client-fetch/plugins';
 
 const retryPlugin = retry({
   retries: 3,
@@ -163,7 +163,7 @@ const retryPlugin = retry({
 ### Cache Plugin
 
 ```typescript
-import { cache, cacheWithSWR } from '@hyperhttp/plugins';
+import { cache, cacheWithSWR } from '@advanced-client-fetch/plugins';
 
 // Simple cache
 const cachePlugin = cache({
@@ -192,7 +192,7 @@ const swrPlugin = cacheWithSWR({
 ### Rate Limit Plugin
 
 ```typescript
-import { rateLimit } from '@hyperhttp/plugins';
+import { rateLimit } from '@advanced-client-fetch/plugins';
 
 const rateLimitPlugin = rateLimit({
   requests: 100,
@@ -216,7 +216,7 @@ const rateLimitPlugin = rateLimit({
 ### Circuit Breaker Plugin
 
 ```typescript
-import { circuitBreaker } from '@hyperhttp/plugins';
+import { circuitBreaker } from '@advanced-client-fetch/plugins';
 
 const circuitBreakerPlugin = circuitBreaker({
   failureThreshold: 5,
@@ -240,7 +240,7 @@ const circuitBreakerPlugin = circuitBreaker({
 ### Deduplication Plugin
 
 ```typescript
-import { dedupe } from '@hyperhttp/plugins';
+import { dedupe } from '@advanced-client-fetch/plugins';
 
 const dedupePlugin = dedupe({
   maxAge: 30000,
@@ -264,7 +264,7 @@ const dedupePlugin = dedupe({
 ### Metrics Plugin
 
 ```typescript
-import { metrics } from '@hyperhttp/plugins';
+import { metrics } from '@advanced-client-fetch/plugins';
 
 const metricsPlugin = metrics({
   onMetrics: (data) => {
@@ -283,14 +283,14 @@ const metricsPlugin = metrics({
 | `sampling` | `number` | `1.0` | Sampling rate (0-1) |
 | `formatter` | `(data: MetricsData) => string` | - | Metrics formatter |
 
-## Axios Adapter API (`@hyperhttp/axios-adapter`)
+## Axios Adapter API (`@advanced-client-fetch/axios-adapter`)
 
 ### `createAxiosAdapter(options)`
 
 Creates an Axios-compatible adapter.
 
 ```typescript
-import { createAxiosAdapter } from '@hyperhttp/axios-adapter';
+import { createAxiosAdapter } from '@advanced-client-fetch/axios-adapter';
 
 const axios = createAxiosAdapter({
   baseURL: 'https://api.example.com',
@@ -317,7 +317,7 @@ const response = await axios.get('/users', {
 });
 ```
 
-## Presets API (`@hyperhttp/presets`)
+## Presets API (`@advanced-client-fetch/presets`)
 
 ### Platform Presets
 
@@ -328,7 +328,7 @@ import {
   createBrowserClient,
   createDenoClient,
   createBunClient
-} from '@hyperhttp/presets';
+} from '@advanced-client-fetch/presets';
 
 // Node.js
 const nodeClient = createNodeClient({
@@ -405,7 +405,7 @@ class AbortError extends Error {
 ### URL Utilities
 
 ```typescript
-import { buildURL, parseURL, mergeParams } from '@hyperhttp/core';
+import { buildURL, parseURL, mergeParams } from '@advanced-client-fetch/core';
 
 // Build URL with params
 const url = buildURL('https://api.example.com/users', { page: 1, limit: 10 });
@@ -420,7 +420,7 @@ const merged = mergeParams({ page: 1 }, { limit: 10 });
 ### Header Utilities
 
 ```typescript
-import { mergeHeaders, cleanHeaders } from '@hyperhttp/core';
+import { mergeHeaders, cleanHeaders } from '@advanced-client-fetch/core';
 
 // Merge headers
 const headers = mergeHeaders(
@@ -435,7 +435,7 @@ const cleaned = cleanHeaders(headers);
 ### Security Utilities
 
 ```typescript
-import { validateUrlForSSRF, sanitizeHeaders } from '@hyperhttp/core';
+import { validateUrlForSSRF, sanitizeHeaders } from '@advanced-client-fetch/core';
 
 // Validate URL for SSRF
 const isValid = validateUrlForSSRF('https://api.example.com');

@@ -5,7 +5,7 @@
  * for production-ready HTTP clients.
  */
 
-import { createClient } from '@hyperhttp/core';
+import { createClient } from '@advanced-client-fetch/core';
 import { 
   retry, 
   cache, 
@@ -13,7 +13,7 @@ import {
   circuitBreaker, 
   dedupe, 
   metrics 
-} from '@hyperhttp/plugins';
+} from '@advanced-client-fetch/plugins';
 
 // Create a production-ready client
 const client = createClient({

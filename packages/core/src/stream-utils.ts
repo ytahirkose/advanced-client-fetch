@@ -1,9 +1,25 @@
 /**
- * Stream utilities for HyperHTTP
+ * Stream utilities for Advanced Client Fetch
  * Provides stream conversion and manipulation utilities
  */
 
-import type { StreamOptions } from './types.js';
+import type { StreamOptions as BaseStreamOptions } from './types';
+
+/**
+ * Stream options interface
+ */
+export interface StreamOptions {
+  highWaterMark?: number;
+  encoding?: BufferEncoding;
+  objectMode?: boolean;
+  allowHalfOpen?: boolean;
+  readableObjectMode?: boolean;
+  writableObjectMode?: boolean;
+  defaultEncoding?: BufferEncoding;
+  emitClose?: boolean;
+  autoDestroy?: boolean;
+  destroy?: (error: Error | null, callback: (error: Error | null) => void) => void;
+}
 
 /**
  * Convert a Web Stream to Node.js Readable
@@ -396,7 +412,6 @@ export class StreamUtils {
         }, interval);
         
         // Clean up on cancel
-        controller.desiredSize = 0;
         return () => clearInterval(timer);
       }
     });

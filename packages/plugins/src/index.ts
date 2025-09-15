@@ -1,5 +1,5 @@
 /**
- * HyperHTTP Plugins - Collection of middleware plugins
+ * Advanced Client Fetch Plugins - Collection of middleware plugins
  */
 
 // Retry plugin
@@ -45,12 +45,6 @@ export {
   tokenBucketRateLimit,
   slidingWindowRateLimit,
   adaptiveRateLimit,
-  rateLimitByEndpoint,
-  rateLimitByUser,
-  rateLimitByIP,
-  rateLimitByKey,
-  rateLimitWithBurst,
-  rateLimitWithBackoff,
   type RateLimitPluginOptions,
   type RateLimitStorage,
   type RateLimitInfo,
@@ -62,15 +56,10 @@ export {
   circuitBreaker,
   circuitBreakerWithCustomDetection,
   adaptiveCircuitBreaker,
-  circuitBreakerWithBackoff,
-  circuitBreakerWithHealthCheck,
-  circuitBreakerByEndpoint,
-  circuitBreakerByHost,
-  circuitBreakerByKey,
   type CircuitBreakerPluginOptions,
   type CircuitBreakerStorage,
   type CircuitBreakerState,
-  type CircuitState,
+  type CircuitBreakerInfo,
   MemoryCircuitBreakerStorage,
 } from './circuit-breaker.js';
 
@@ -80,14 +69,6 @@ export {
   dedupeWithCustomKey,
   dedupeWithBody,
   dedupeWithHeaders,
-  adaptiveDedupe,
-  dedupeWithCacheWarming,
-  dedupeWithMetrics,
-  dedupeByKey,
-  dedupeByMethod,
-  dedupeWithTTL,
-  dedupeWithCache,
-  dedupeWithRateLimit,
   getDedupeStats,
   clearDedupeCache,
   type DedupePluginOptions,
@@ -105,10 +86,33 @@ export {
   metricsWithFormatter,
   metricsWithAggregation,
   metricsWithHistogram,
-  metricsByKey,
-  metricsWithFilter,
-  metricsWithSampling,
-  metricsWithBuffering,
   type MetricsOptions,
   type DetailedMetrics,
 } from './metrics.js';
+
+// Progress tracking plugin
+export {
+  progress,
+  type ProgressPluginOptions,
+  type ProgressEvent,
+} from './progress.js';
+
+// XSRF protection plugin
+export {
+  xsrf,
+  type XSRFPluginOptions,
+} from './xsrf.js';
+
+// Proxy support plugin
+export {
+  proxy,
+  type ProxyPluginOptions,
+} from './proxy.js';
+
+// HTTP Agents plugin
+export {
+  httpAgents,
+  createHTTPAgent,
+  createHTTPSAgent,
+  type HTTPAgentsPluginOptions,
+} from './http-agents.js';

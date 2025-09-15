@@ -19,16 +19,21 @@
     "declarationMap": true,
     "sourceMap": true,
     "composite": true,
+    "declarationDir": "./dist",
+    "emitDeclarationOnly": false,
+    "preserveConstEnums": true,
+    "verbatimModuleSyntax": false,
     "outDir": "./dist",
     "rootDir": "./src",
     "baseUrl": ".",
     "paths": {
-      "@hyperhttp/core": ["./src"],
-      "@hyperhttp/core/*": ["./src/*"]
+      "@advanced-client-fetch/core": ["./src"],
+      "@advanced-client-fetch/core/*": ["./src/*"]
     },
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "allowJs": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts", "**/__tests__/**/*"]
 }

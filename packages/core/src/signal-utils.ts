@@ -1,5 +1,5 @@
 /**
- * Signal utilities for HyperHTTP
+ * Signal utilities for Advanced Client Fetch
  */
 
 export interface SignalOptions {
@@ -56,7 +56,7 @@ export function createSignalWithTimeout(options: SignalOptions): AbortSignal {
     return signal || new AbortController().signal;
   }
   
-  const timeoutSignal = createTimeoutSignal(timeout);
+  const { signal: timeoutSignal } = createTimeoutSignal(timeout);
   
   if (!signal) {
     return timeoutSignal;

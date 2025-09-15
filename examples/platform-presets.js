@@ -6,7 +6,7 @@
  */
 
 // Node.js
-import { createNodeClient } from '@hyperhttp/presets';
+import { createNodeClient } from '@advanced-client-fetch/presets';
 
 const nodeClient = createNodeClient({
   baseURL: 'https://api.example.com',
@@ -16,7 +16,7 @@ const nodeClient = createNodeClient({
 });
 
 // Edge Runtime (Vercel, Cloudflare Workers)
-import { createEdgeClient } from '@hyperhttp/presets';
+import { createEdgeClient } from '@advanced-client-fetch/presets';
 
 const edgeClient = createEdgeClient({
   baseURL: 'https://api.example.com',
@@ -26,7 +26,7 @@ const edgeClient = createEdgeClient({
 });
 
 // Browser
-import { createBrowserClient } from '@hyperhttp/presets';
+import { createBrowserClient } from '@advanced-client-fetch/presets';
 
 const browserClient = createBrowserClient({
   baseURL: 'https://api.example.com',
@@ -36,7 +36,7 @@ const browserClient = createBrowserClient({
 });
 
 // Deno
-import { createDenoClient } from '@hyperhttp/presets';
+import { createDenoClient } from '@advanced-client-fetch/presets';
 
 const denoClient = createDenoClient({
   baseURL: 'https://api.example.com',
@@ -46,7 +46,7 @@ const denoClient = createDenoClient({
 });
 
 // Bun
-import { createBunClient } from '@hyperhttp/presets';
+import { createBunClient } from '@advanced-client-fetch/presets';
 
 const bunClient = createBunClient({
   baseURL: 'https://api.example.com',

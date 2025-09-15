@@ -1,5 +1,5 @@
 /**
- * Basic usage example for HyperHTTP
+ * Basic usage example for Advanced Client Fetch
  */
 
 import { createClient } from '../packages/core/dist/index.js';
@@ -9,7 +9,7 @@ import { retry, timeout } from '../packages/plugins/dist/index.js';
 const client = createClient({
   baseURL: 'https://jsonplaceholder.typicode.com',
   headers: {
-    'User-Agent': 'hyperhttp/0.1.0',
+    'User-Agent': 'advanced-client-fetch/0.1.0',
   },
   middleware: [
     retry({ retries: 3, minDelay: 100, maxDelay: 2000 }),
@@ -19,7 +19,7 @@ const client = createClient({
 
 async function main() {
   try {
-    console.log('🚀 Testing HyperHTTP...');
+    console.log('🚀 Testing Advanced Client Fetch...');
     
     // GET request
     const users = await client.get('/users');
@@ -27,7 +27,7 @@ async function main() {
     
     // POST request
     const newPost = await client.post('/posts', {
-      title: 'HyperHTTP Test',
+      title: 'Advanced Client Fetch Test',
       body: 'This is a test post',
       userId: 1,
     });

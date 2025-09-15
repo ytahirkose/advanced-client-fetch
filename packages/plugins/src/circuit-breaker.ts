@@ -1,225 +1,168 @@
 /**
- * Circuit breaker plugin for HyperHTTP
- * Implements circuit breaker pattern for fault tolerance
+ * Circuit breaker plugin for Advanced Client Fetch
  */
 
-import type { Middleware, RequestOptions } from 'hyperhttp-core';
-import { defaultKeyGenerator, createKeyGenerator } from 'hyperhttp-core';
-import { CircuitBreakerError } from 'hyperhttp-core';
+import type { Middleware, Request } from '@advanced-client-fetch/core';
+import { CircuitBreakerError } from '@advanced-client-fetch/core';
+import { defaultKeyGenerator } from '@advanced-client-fetch/core';
 
 export interface CircuitBreakerPluginOptions {
-  /** Enable circuit breaker */
-  enabled?: boolean;
-  /** Failure threshold to open circuit */
+  /** Number of failures before opening circuit */
   failureThreshold: number;
   /** Time window for failure counting in milliseconds */
   window: number;
-  /** Time to wait before trying again in milliseconds */
+  /** Time to wait before attempting reset in milliseconds */
   resetTimeout: number;
-  /** Circuit breaker key generator */
-  keyGenerator?: (request: Request) => string;
-  /** Storage for circuit breaker state */
-  storage?: CircuitBreakerStorage;
-  /** Custom error message */
-  message?: string;
-  /** Monitor function for circuit state changes */
-  onStateChange?: (key: string, state: CircuitState, failures: number) => void;
+  /** Key generator for circuit breaking */
+  keyGenerator?: (req: Request) => string;
+  /** Callback when circuit state changes */
+  onStateChange?: (key: string, state: CircuitBreakerState, failures: number) => void;
+  /** Enable circuit breaker */
+  enabled?: boolean;
 }
+
+export type CircuitBreakerState = 'closed' | 'open' | 'half-open';
 
 export interface CircuitBreakerStorage {
-  get(key: string): Promise<CircuitBreakerState | undefined>;
-  set(key: string, state: CircuitBreakerState, ttl: number): Promise<void>;
-  incrementFailures(key: string, window: number): Promise<number>;
-  resetFailures(key: string): Promise<void>;
+  get(key: string): Promise<CircuitBreakerInfo | undefined>;
+  set(key: string, info: CircuitBreakerInfo): Promise<void>;
+  delete(key: string): Promise<void>;
+  clear(): Promise<void>;
 }
 
-export interface CircuitBreakerState {
-  state: CircuitState;
+export interface CircuitBreakerInfo {
+  state: CircuitBreakerState;
   failures: number;
-  lastFailure: number;
-  nextAttempt: number;
-  windowStart: number;
+  lastFailureTime?: number;
+  nextAttemptTime?: number;
+  successCount: number;
 }
-
-export type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
 
 /**
  * In-memory circuit breaker storage
  */
 export class MemoryCircuitBreakerStorage implements CircuitBreakerStorage {
-  private store = new Map<string, CircuitBreakerState>();
-  private timers = new Map<string, NodeJS.Timeout>();
+  private storage = new Map<string, CircuitBreakerInfo>();
 
-  async get(key: string): Promise<CircuitBreakerState | undefined> {
-    return this.store.get(key);
+  async get(key: string): Promise<CircuitBreakerInfo | undefined> {
+    return this.storage.get(key);
   }
 
-  async set(key: string, state: CircuitBreakerState, ttl: number): Promise<void> {
-    this.store.set(key, state);
-    
-    // Clear existing timer
-    const existingTimer = this.timers.get(key);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
-    
-    // Set new timer
-    const timer = setTimeout(() => {
-      this.store.delete(key);
-      this.timers.delete(key);
-    }, ttl);
-    
-    this.timers.set(key, timer);
+  async set(key: string, info: CircuitBreakerInfo): Promise<void> {
+    this.storage.set(key, info);
   }
 
-  async incrementFailures(key: string, window: number): Promise<number> {
-    const now = Date.now();
-    const existing = this.store.get(key);
-    
-    if (!existing || now - existing.windowStart >= window) {
-      // New window
-      const state: CircuitBreakerState = {
-        state: 'CLOSED',
-        failures: 1,
-        lastFailure: now,
-        nextAttempt: 0,
-        windowStart: now,
-      };
-      
-      await this.set(key, state, window);
-      return 1;
-    }
-    
-    // Increment existing window
-    const state: CircuitBreakerState = {
-      ...existing,
-      failures: existing.failures + 1,
-      lastFailure: now,
-    };
-    
-    await this.set(key, state, window - (now - existing.windowStart));
-    return state.failures;
+  async delete(key: string): Promise<void> {
+    this.storage.delete(key);
   }
 
-  async resetFailures(key: string): Promise<void> {
-    const existing = this.store.get(key);
-    if (existing) {
-      const state: CircuitBreakerState = {
-        ...existing,
-        failures: 0,
-        state: 'CLOSED',
-        windowStart: Date.now(),
-      };
-      
-      await this.set(key, state, 60000); // 1 minute
-    }
+  async clear(): Promise<void> {
+    this.storage.clear();
   }
 }
-
-const DEFAULT_OPTIONS: Required<Omit<CircuitBreakerPluginOptions, 'failureThreshold' | 'window' | 'resetTimeout'>> = {
-  enabled: true,
-  keyGenerator: createKeyGenerator({ includeQuery: false, suffix: ':origin' }),
-  storage: new MemoryCircuitBreakerStorage(),
-  message: 'Circuit breaker is open',
-  onStateChange: () => {},
-};
 
 /**
  * Create circuit breaker middleware
  */
 export function circuitBreaker(options: CircuitBreakerPluginOptions): Middleware {
-  console.log('🎯 CIRCUIT BREAKER PLUGIN CREATED');
-  const config = { ...DEFAULT_OPTIONS, ...options };
-  
-  if (!config.enabled) {
-    console.log('❌ CIRCUIT BREAKER PLUGIN DISABLED');
+  const {
+    failureThreshold,
+    window,
+    resetTimeout,
+    keyGenerator = defaultKeyGenerator,
+    onStateChange,
+    enabled = true,
+  } = options;
+
+  if (!enabled) {
     return async (ctx, next) => next();
   }
-  
-  console.log('✅ CIRCUIT BREAKER PLUGIN ENABLED');
+
+  const storage = new MemoryCircuitBreakerStorage();
 
   return async (ctx, next) => {
-    console.log('🚀 CIRCUIT BREAKER MIDDLEWARE FUNCTION CALLED');
-    const request = ctx.req;
-    const key = config.keyGenerator(request);
+    const key = keyGenerator(ctx.req);
     const now = Date.now();
-    
-    console.log(`🔑 Circuit breaker key: ${key}`);
-    
-    // Get current circuit state
-    let circuitState = await config.storage.get(key);
-    
-    console.log(`📊 Circuit breaker state - key: ${key}, state: ${circuitState?.state || 'NEW'}, failures: ${circuitState?.failures || 0}`);
-    
-    if (!circuitState) {
-      circuitState = {
-        state: 'CLOSED',
+
+    // Get current circuit breaker info
+    let info = await storage.get(key);
+    if (!info) {
+      info = {
+        state: 'closed',
         failures: 0,
-        lastFailure: 0,
-        nextAttempt: 0,
-        windowStart: now,
+        successCount: 0,
       };
-      await config.storage.set(key, circuitState, config.window);
     }
-    
-    // Check circuit state
-    if (circuitState.state === 'OPEN') {
-      if (now < circuitState.nextAttempt) {
-        const retryAfter = Math.ceil((circuitState.nextAttempt - now) / 1000);
-        
+
+    // Check if circuit is open
+    if (info.state === 'open') {
+      if (info.nextAttemptTime && now < info.nextAttemptTime) {
         throw new CircuitBreakerError(
-          config.message,
-          circuitState.state,
-          circuitState.failures,
-          circuitState.nextAttempt
+          `Circuit breaker is open for ${key}`,
+          'open',
+          info.failures,
+          info.nextAttemptTime
         );
+      } else {
+        // Move to half-open state
+        info.state = 'half-open';
+        info.successCount = 0;
+        await storage.set(key, info);
+        
+        if (onStateChange) {
+          onStateChange(key, 'half-open', info.failures);
+        }
       }
-      
-      // Move to half-open
-      circuitState.state = 'HALF_OPEN';
-      circuitState.failures = 0;
-      await config.storage.set(key, circuitState, config.window);
-      config.onStateChange(key, circuitState.state, circuitState.failures);
     }
-    
+
     try {
       await next();
       
-      // Check if response indicates failure (4xx, 5xx)
-      if (ctx.res && (ctx.res.status >= 400)) {
-        console.log(`Circuit breaker HTTP error - key: ${key}, status: ${ctx.res.status}`);
-        throw new Error(`HTTP ${ctx.res.status}: ${ctx.res.statusText}`);
+      // Success - reset failures if circuit was half-open
+      if (info.state === 'half-open') {
+        info.successCount++;
+        if (info.successCount >= 3) { // Require 3 successes to close
+          info.state = 'closed';
+          info.failures = 0;
+          info.successCount = 0;
+          await storage.set(key, info);
+          
+          if (onStateChange) {
+            onStateChange(key, 'closed', 0);
+          }
+        } else {
+          await storage.set(key, info);
+        }
+      } else if (info.state === 'closed') {
+        // Reset failure count on success
+        info.failures = 0;
+        await storage.set(key, info);
       }
-      
-      // Set circuit breaker meta
-      ctx.meta.circuitBreaker = {
-        state: circuitState.state,
-        failures: circuitState.failures,
-        key: key,
-      };
-      
-      // Success - reset circuit if it was half-open
-      if (circuitState.state === 'HALF_OPEN') {
-        circuitState.state = 'CLOSED';
-        circuitState.failures = 0;
-        circuitState.windowStart = now;
-        await config.storage.set(key, circuitState, config.window);
-        config.onStateChange(key, circuitState.state, circuitState.failures);
-      }
-      
     } catch (error) {
-      // Increment failure count
-      const failures = await config.storage.incrementFailures(key, config.window);
+      // Failure - increment failure count
+      info.failures++;
+      info.lastFailureTime = now;
       
-      // Debug logging
-      console.log(`Circuit breaker failure - key: ${key}, failures: ${failures}, threshold: ${config.failureThreshold}`);
-      
-      // Check if we should open the circuit - more aggressive check
-      if (failures > config.failureThreshold) {
-        circuitState.state = 'OPEN';
-        circuitState.nextAttempt = now + config.resetTimeout;
-        await config.storage.set(key, circuitState, config.resetTimeout);
-        config.onStateChange(key, circuitState.state, failures);
+      if (info.state === 'half-open') {
+        // Move back to open state
+        info.state = 'open';
+        info.nextAttemptTime = now + resetTimeout;
+        await storage.set(key, info);
+        
+        if (onStateChange) {
+          onStateChange(key, 'open', info.failures);
+        }
+      } else if (info.state === 'closed' && info.failures >= failureThreshold) {
+        // Move to open state
+        info.state = 'open';
+        info.nextAttemptTime = now + resetTimeout;
+        await storage.set(key, info);
+        
+        if (onStateChange) {
+          onStateChange(key, 'open', info.failures);
+        }
+      } else {
+        await storage.set(key, info);
       }
       
       throw error;
@@ -228,7 +171,7 @@ export function circuitBreaker(options: CircuitBreakerPluginOptions): Middleware
 }
 
 /**
- * Create circuit breaker middleware with custom failure detection
+ * Create circuit breaker with custom failure detection
  */
 export function circuitBreakerWithCustomDetection(
   options: CircuitBreakerPluginOptions & {
@@ -241,207 +184,49 @@ export function circuitBreakerWithCustomDetection(
     try {
       await circuitBreaker(circuitOptions)(ctx, next);
     } catch (error) {
-      // Only count as failure if custom function says so
       if (isFailure(error as Error, ctx.res)) {
         throw error;
       }
-      
-      // Not a failure, don't count it
-      const key = circuitOptions.keyGenerator?.(ctx.req) || new URL(ctx.req.url).origin;
-      await circuitOptions.storage?.resetFailures(key);
-      
-      throw error;
+      // If not considered a failure, don't count it
     }
   };
 }
 
 /**
- * Create circuit breaker middleware with different thresholds per endpoint
+ * Create adaptive circuit breaker
  */
 export function adaptiveCircuitBreaker(
-  thresholds: Record<string, {
-    failureThreshold: number;
-    window: number;
-    resetTimeout: number;
-  }>,
+  baseThreshold: number,
+  window: number,
+  resetTimeout: number,
   options: Omit<CircuitBreakerPluginOptions, 'failureThreshold' | 'window' | 'resetTimeout'> = {}
 ): Middleware {
-  const config = { ...DEFAULT_OPTIONS, ...options };
-  
-  if (!config.enabled) {
-    return async (ctx, next) => next();
-  }
+  const keyGenerator = options.keyGenerator || defaultKeyGenerator;
+  const storage = new Map<string, { threshold: number; lastAdjustment: number }>();
 
   return async (ctx, next) => {
-    const request = ctx.req;
-    const url = new URL(request.url);
-    const pathname = url.pathname;
+    const key = keyGenerator(ctx.req);
+    const now = Date.now();
     
-    // Find matching threshold
-    const thresholdConfig = Object.entries(thresholds).find(([pattern]) => {
-      if (pattern === '*') return true;
-      if (pattern.startsWith('/') && pathname.startsWith(pattern)) return true;
-      if (pattern.includes('*')) {
-        const regex = new RegExp(pattern.replace(/\*/g, '.*'));
-        return regex.test(pathname);
-      }
-      return pattern === pathname;
-    });
-    
-    if (!thresholdConfig) {
-      return next();
+    let info = storage.get(key);
+    if (!info) {
+      info = { threshold: baseThreshold, lastAdjustment: now };
+      storage.set(key, info);
     }
-    
-    const [, threshold] = thresholdConfig;
-    
-    // Set adapted threshold in meta
-    ctx.meta.circuitBreaker = {
-      adaptedThreshold: threshold.failureThreshold,
-    };
-    
+
+    // Adjust threshold based on recent performance
+    if (now - info.lastAdjustment > window) {
+      // Reset adjustment period
+      info.lastAdjustment = now;
+      // Could implement more sophisticated adjustment logic here
+    }
+
     return circuitBreaker({
-      ...config,
-      ...threshold,
-    })(ctx, next);
-  };
-}
-
-/**
- * Create circuit breaker middleware with exponential backoff
- */
-export function circuitBreakerWithBackoff(
-  baseOptions: CircuitBreakerPluginOptions,
-  backoffFactor: number = 2,
-  maxBackoff: number = 300000 // 5 minutes
-): Middleware {
-  return async (ctx, next) => {
-    const key = baseOptions.keyGenerator?.(ctx.req) || new URL(ctx.req.url).origin;
-    const circuitState = await baseOptions.storage?.get(key);
-    
-    if (circuitState?.state === 'OPEN') {
-      const now = Date.now();
-      const timeSinceLastFailure = now - circuitState.lastFailure;
-      const backoffTime = Math.min(
-        baseOptions.resetTimeout * Math.pow(backoffFactor, circuitState.failures - 1),
-        maxBackoff
-      );
-      
-      if (timeSinceLastFailure < backoffTime) {
-        const retryAfter = Math.ceil((backoffTime - timeSinceLastFailure) / 1000);
-        
-        throw new CircuitBreakerError(
-          baseOptions.message || 'Circuit breaker is open',
-          circuitState.state,
-          circuitState.failures,
-          now + backoffTime
-        );
-      }
-    }
-    
-    return circuitBreaker(baseOptions)(ctx, next);
-  };
-}
-
-/**
- * Create circuit breaker middleware with health check
- */
-export function circuitBreakerWithHealthCheck(
-  options: CircuitBreakerPluginOptions & {
-    healthCheckUrl?: string;
-    healthCheckInterval?: number;
-  },
-  healthCheckFn?: (request: Request) => Promise<boolean>
-): Middleware {
-  const { healthCheckUrl, healthCheckInterval = 30000, ...circuitOptions } = options;
-  
-  if (!healthCheckUrl && !healthCheckFn) {
-    return circuitBreaker(circuitOptions);
-  }
-  
-  // Start health check if not already running
-  if (!globalThis.__hyperhttp_health_check_running) {
-    globalThis.__hyperhttp_health_check_running = true;
-    
-    setInterval(async () => {
-      try {
-        if (healthCheckFn) {
-          const result = await healthCheckFn(new Request(healthCheckUrl || 'https://example.com'));
-          if (result) {
-            console.log('Health check passed');
-          }
-        } else if (healthCheckUrl) {
-          const response = await fetch(healthCheckUrl);
-          if (response.ok) {
-            console.log('Health check passed');
-          }
-        }
-      } catch (error) {
-        console.log('Health check failed:', error);
-      }
-    }, healthCheckInterval);
-  }
-  
-  return circuitBreaker(circuitOptions);
-}
-
-/**
- * Circuit breaker by endpoint
- */
-export function circuitBreakerByEndpoint(
-  configs: Record<string, { failureThreshold: number; window: number; resetTimeout: number }>
-): Middleware {
-  return async (ctx, next) => {
-    const url = new URL(ctx.req.url);
-    const pathname = url.pathname;
-    
-    const config = Object.entries(configs).find(([pattern]) => {
-      if (pattern === '*') return true;
-      if (pattern.startsWith('/') && pathname.startsWith(pattern)) return true;
-      if (pattern.includes('*')) {
-        const regex = new RegExp(pattern.replace(/\*/g, '.*'));
-        return regex.test(pathname);
-      }
-      return pattern === pathname;
-    });
-    
-    if (!config) {
-      return next();
-    }
-    
-    const [, { failureThreshold, window, resetTimeout }] = config;
-    
-    return circuitBreaker({
-      failureThreshold,
+      ...options,
+      failureThreshold: info.threshold,
       window,
       resetTimeout,
+      keyGenerator,
     })(ctx, next);
   };
-}
-
-/**
- * Circuit breaker by host
- */
-export function circuitBreakerByHost(
-  config: { failureThreshold: number; window: number; resetTimeout: number }
-): Middleware {
-  return circuitBreaker({
-    ...config,
-    keyGenerator: (request) => {
-      const url = new URL(request.url);
-      return url.hostname;
-    },
-  });
-}
-
-/**
- * Circuit breaker by custom key
- */
-export function circuitBreakerByKey(
-  config: { failureThreshold: number; window: number; resetTimeout: number },
-  keyExtractor: (request: Request) => string
-): Middleware {
-  return circuitBreaker({
-    ...config,
-    keyGenerator: keyExtractor,
-  });
 }

@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2024-01-XX
 
 ### Added
-- 🚀 **Core HTTP Client** (`@hyperhttp/core`)
+- 🚀 **Core HTTP Client** (`@advanced-client-fetch/core`)
   - Fetch-first architecture with modern web standards
   - Plugin/middleware system for extensibility
   - AbortController & timeout management
@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - TypeScript support with full type definitions
   - Platform-agnostic design (Node, Edge, Deno, Bun, Browser)
 
-- 🔌 **Plugin Collection** (`@hyperhttp/plugins`)
+- 🔌 **Plugin Collection** (`@advanced-client-fetch/plugins`)
   - **Retry Plugin**: Smart retry with exponential backoff and jitter
   - **Cache Plugin**: HTTP caching with SWR (Stale While Revalidate) support
   - **Rate Limit Plugin**: Request rate limiting with custom key generation
@@ -26,7 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - **Metrics Plugin**: Performance monitoring and analytics
   - **Timeout Plugin**: Request timeout management
 
-- 🔄 **Axios Adapter** (`@hyperhttp/axios-adapter`)
+- 🔄 **Axios Adapter** (`@advanced-client-fetch/axios-adapter`)
   - Drop-in replacement for Axios
   - Solves CORS and cookie issues
   - Works in Edge runtimes
@@ -34,7 +34,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Interceptors support
   - Zero dependencies
 
-- 🌍 **Platform Presets** (`@hyperhttp/presets`)
+- 🌍 **Platform Presets** (`@advanced-client-fetch/presets`)
   - **Node.js Preset**: Optimized for Node.js environments
   - **Edge Preset**: Optimized for Edge runtimes (Vercel, Cloudflare)
   - **Browser Preset**: Optimized for browser environments

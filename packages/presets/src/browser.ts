@@ -1,26 +1,32 @@
 /**
- * Browser preset for HyperHTTP
- * Optimized for browser runtime with limited features
+ * Browser preset for Advanced Client Fetch
+ * Optimized for browser environments
  */
 
-import { createClient, Client, ClientOptions } from 'hyperhttp-core';
-import { retry, timeout, dedupe, metrics } from 'hyperhttp-plugins';
+import { createClient, type Client, type ClientOptions } from '@advanced-client-fetch/core';
+import { retry, timeout, dedupe, metrics } from '@advanced-client-fetch/plugins';
+import type { 
+  Middleware, 
+  RetryPluginOptions, 
+  DedupePluginOptions, 
+  MetricsPluginOptions 
+} from '@advanced-client-fetch/core';
 
 export interface BrowserPresetOptions extends ClientOptions {
   /** Enable retry middleware */
-  retry?: boolean | any;
+  retry?: boolean | RetryPluginOptions;
   /** Enable timeout middleware */
   timeout?: boolean | number;
   /** Enable deduplication middleware */
-  dedupe?: boolean | any;
+  dedupe?: boolean | DedupePluginOptions;
   /** Enable metrics middleware */
-  metrics?: boolean | any;
+  metrics?: boolean | MetricsPluginOptions;
   /** Custom middleware */
-  middleware?: any[];
+  middleware?: Middleware[];
 }
 
 /**
- * Create HyperHTTP client optimized for browser
+ * Create Advanced Client Fetch client optimized for browser
  */
 export function createBrowserClient(options: BrowserPresetOptions = {}): Client {
   const {
@@ -34,16 +40,16 @@ export function createBrowserClient(options: BrowserPresetOptions = {}): Client 
 
   // Set default headers
   const defaultHeaders = {
-    'User-Agent': 'hyperhttp-browser/0.1.0',
+    'User-Agent': 'advanced-client-fetch-browser/1.0.0',
     ...clientOptions.headers,
   };
 
-  const browserMiddleware: any[] = [];
+  const browserMiddleware: Middleware[] = [];
 
   // Add retry middleware
   if (retryOptions) {
     const retryConfig = typeof retryOptions === 'boolean' 
-      ? { retries: 2, minDelay: 100, maxDelay: 1000, jitter: true }
+      ? { retries: 3, minDelay: 100, maxDelay: 2000, jitter: true }
       : retryOptions;
     browserMiddleware.push(retry(retryConfig));
   }
@@ -78,269 +84,24 @@ export function createBrowserClient(options: BrowserPresetOptions = {}): Client 
   return createClient({
     ...clientOptions,
     headers: defaultHeaders,
-    middleware: browserMiddleware,
+    plugins: browserMiddleware,
+    withCredentials: clientOptions.withCredentials || false,
   });
 }
 
 /**
- * Create browser client with minimal features
+ * Create minimal browser client
  */
-export function createMinimalBrowserClient(
-  baseURL?: string,
-  options: Omit<BrowserPresetOptions, 'retry' | 'timeout' | 'dedupe' | 'metrics' | 'middleware'> = {}
-): Client {
-  return createClient({
+export function createMinimalBrowserClient(baseURL?: string, options: BrowserPresetOptions = {}): Client {
+  return createBrowserClient({
     ...options,
     baseURL,
-    middleware: [],
-  });
-}
-
-/**
- * Create browser client with retry only
- */
-export function createBrowserClientWithRetry(
-  retryOptions: any = {},
-  clientOptions: Omit<BrowserPresetOptions, 'retry'> = {}
-): Client {
-  return createBrowserClient({
-    ...clientOptions,
-    retry: retryOptions,
-    timeout: false,
-    dedupe: false,
-    metrics: false,
-  });
-}
-
-/**
- * Create browser client with timeout only
- */
-export function createBrowserClientWithTimeout(
-  timeoutMs: number = 30000,
-  clientOptions: Omit<BrowserPresetOptions, 'timeout'> = {}
-): Client {
-  return createBrowserClient({
-    ...clientOptions,
-    retry: false,
-    timeout: timeoutMs,
-    dedupe: false,
-    metrics: false,
-  });
-}
-
-/**
- * Create browser client with deduplication only
- */
-export function createBrowserClientWithDedupe(
-  dedupeOptions: any = {},
-  clientOptions: Omit<BrowserPresetOptions, 'dedupe'> = {}
-): Client {
-  return createBrowserClient({
-    ...clientOptions,
-    retry: false,
-    timeout: false,
-    dedupe: dedupeOptions,
-    metrics: false,
-  });
-}
-
-/**
- * Create browser client with metrics only
- */
-export function createBrowserClientWithMetrics(
-  metricsOptions: any = {},
-  clientOptions: Omit<BrowserPresetOptions, 'metrics'> = {}
-): Client {
-  return createBrowserClient({
-    ...clientOptions,
     retry: false,
     timeout: false,
     dedupe: false,
-    metrics: metricsOptions,
-  });
-}
-
-/**
- * Create browser client for development
- */
-export function createDevelopmentBrowserClient(
-  options: Omit<BrowserPresetOptions, 'retry' | 'timeout' | 'dedupe' | 'metrics'> = {}
-): Client {
-  return createBrowserClient({
-    ...options,
-    retry: {
-      retries: 1,
-      minDelay: 50,
-      maxDelay: 500,
-      jitter: true,
-    },
-    timeout: 10000,
-    dedupe: true,
-    metrics: {
-      enabled: true,
-      onMetrics: (metrics) => {
-        console.log(`[HyperHTTP Browser] ${metrics.method} ${metrics.url} - ${metrics.status} (${metrics.duration.toFixed(2)}ms)`);
-      },
-    },
-  });
-}
-
-/**
- * Create browser client for production
- */
-export function createProductionBrowserClient(
-  options: Omit<BrowserPresetOptions, 'retry' | 'timeout' | 'dedupe' | 'metrics'> = {}
-): Client {
-  return createBrowserClient({
-    ...options,
-    retry: {
-      retries: 3,
-      minDelay: 100,
-      maxDelay: 2000,
-      jitter: true,
-    },
-    timeout: 30000,
-    dedupe: {
-      maxAge: 60000, // 1 minute
-    },
-    metrics: {
-      enabled: true,
-      includeTiming: true,
-    },
-  });
-}
-
-/**
- * Create browser client for testing
- */
-export function createTestBrowserClient(
-  options: Omit<BrowserPresetOptions, 'retry' | 'timeout' | 'dedupe' | 'metrics'> = {}
-): Client {
-  return createBrowserClient({
-    ...options,
-    retry: false,
-    timeout: 5000,
-    dedupe: false,
     metrics: false,
   });
 }
-
-/**
- * Create browser client for mobile apps
- */
-export function createMobileBrowserClient(
-  options: Omit<BrowserPresetOptions, 'retry' | 'timeout' | 'dedupe' | 'metrics'> = {}
-): Client {
-  return createBrowserClient({
-    ...options,
-    headers: {
-      'User-Agent': 'hyperhttp-browser/mobile/0.1.0',
-      ...options.headers,
-    },
-    retry: {
-      retries: 2,
-      minDelay: 200,
-      maxDelay: 1000,
-      jitter: true,
-    },
-    timeout: 20000,
-    dedupe: {
-      maxAge: 30000,
-    },
-    metrics: {
-      enabled: true,
-      includeTiming: true,
-    },
-  });
-}
-
-/**
- * Create browser client for desktop apps
- */
-export function createDesktopBrowserClient(
-  options: Omit<BrowserPresetOptions, 'retry' | 'timeout' | 'dedupe' | 'metrics'> = {}
-): Client {
-  return createBrowserClient({
-    ...options,
-    headers: {
-      'User-Agent': 'hyperhttp-browser/desktop/0.1.0',
-      ...options.headers,
-    },
-    retry: {
-      retries: 3,
-      minDelay: 100,
-      maxDelay: 2000,
-      jitter: true,
-    },
-    timeout: 30000,
-    dedupe: {
-      maxAge: 60000,
-    },
-    metrics: {
-      enabled: true,
-      includeTiming: true,
-      includeRequestBodySize: true,
-      includeResponseBodySize: true,
-    },
-  });
-}
-
-/**
- * Create browser client for web workers
- */
-export function createWebWorkerClient(
-  options: Omit<BrowserPresetOptions, 'retry' | 'timeout' | 'dedupe' | 'metrics'> = {}
-): Client {
-  return createBrowserClient({
-    ...options,
-    headers: {
-      'User-Agent': 'hyperhttp-browser/worker/0.1.0',
-      ...options.headers,
-    },
-    retry: {
-      retries: 2,
-      minDelay: 100,
-      maxDelay: 1000,
-      jitter: true,
-    },
-    timeout: 15000,
-    dedupe: {
-      maxAge: 30000,
-    },
-    metrics: false, // Disable metrics in workers to reduce overhead
-  });
-}
-
-/**
- * Create browser client for service workers
- */
-export function createServiceWorkerClient(
-  options: Omit<BrowserPresetOptions, 'retry' | 'timeout' | 'dedupe' | 'metrics'> = {}
-): Client {
-  return createBrowserClient({
-    ...options,
-    headers: {
-      'User-Agent': 'hyperhttp-browser/service-worker/0.1.0',
-      ...options.headers,
-    },
-    retry: {
-      retries: 1,
-      minDelay: 100,
-      maxDelay: 500,
-      jitter: true,
-    },
-    timeout: 10000,
-    dedupe: {
-      maxAge: 60000,
-    },
-    metrics: false, // Disable metrics in service workers
-  });
-}
-
-/**
- * Default browser client instance
- */
-export const browserClient = createBrowserClient();
 
 /**
  * Create full browser client with all features
@@ -361,10 +122,10 @@ export function createFullBrowserClient(options: BrowserPresetOptions = {}): Cli
 export function createSPAClient(options: BrowserPresetOptions = {}): Client {
   return createBrowserClient({
     ...options,
-    retry: { retries: 1, minDelay: 100, maxDelay: 500 },
+    retry: { retries: 2, minDelay: 100, maxDelay: 1000 },
     timeout: 10000,
     dedupe: true,
-    metrics: false,
+    metrics: true,
   });
 }
 
@@ -374,7 +135,7 @@ export function createSPAClient(options: BrowserPresetOptions = {}): Client {
 export function createPWAClient(options: BrowserPresetOptions = {}): Client {
   return createBrowserClient({
     ...options,
-    retry: { retries: 3, minDelay: 200, maxDelay: 2000 },
+    retry: { retries: 3, minDelay: 100, maxDelay: 2000 },
     timeout: 15000,
     dedupe: true,
     metrics: true,
@@ -382,12 +143,122 @@ export function createPWAClient(options: BrowserPresetOptions = {}): Client {
 }
 
 /**
- * Create real-time optimized client
+ * Create browser client with retry only
  */
-export function createRealTimeClient(options: BrowserPresetOptions = {}): Client {
+export function createBrowserClientWithRetry(
+  retryOptions: RetryPluginOptions = {},
+  clientOptions: Omit<BrowserPresetOptions, 'retry'> = {}
+): Client {
+  return createBrowserClient({
+    ...clientOptions,
+    retry: retryOptions,
+    timeout: false,
+    dedupe: false,
+    metrics: false,
+  });
+}
+
+/**
+ * Create browser client with timeout only
+ */
+export function createBrowserClientWithTimeout(
+  timeoutMs: number = 30000,
+  clientOptions: Omit<BrowserPresetOptions, 'timeout'> = {}
+): Client {
+  return createBrowserClient({
+    ...clientOptions,
+    timeout: timeoutMs,
+    retry: false,
+    dedupe: false,
+    metrics: false,
+  });
+}
+
+/**
+ * Create browser client with deduplication only
+ */
+export function createBrowserClientWithDedupe(
+  dedupeOptions: DedupePluginOptions = {},
+  clientOptions: Omit<BrowserPresetOptions, 'dedupe'> = {}
+): Client {
+  return createBrowserClient({
+    ...clientOptions,
+    dedupe: dedupeOptions,
+    retry: false,
+    timeout: false,
+    metrics: false,
+  });
+}
+
+/**
+ * Create browser client with metrics only
+ */
+export function createBrowserClientWithMetrics(
+  metricsOptions: MetricsPluginOptions = {},
+  clientOptions: Omit<BrowserPresetOptions, 'metrics'> = {}
+): Client {
+  return createBrowserClient({
+    ...clientOptions,
+    metrics: metricsOptions,
+    retry: false,
+    timeout: false,
+    dedupe: false,
+  });
+}
+
+/**
+ * Create development browser client
+ */
+export function createDevelopmentBrowserClient(
+  options: Omit<BrowserPresetOptions, 'retry' | 'timeout' | 'dedupe' | 'metrics'> = {}
+): Client {
   return createBrowserClient({
     ...options,
-    retry: { retries: 1, minDelay: 50, maxDelay: 200 },
+    retry: {
+      retries: 2,
+      minDelay: 50,
+      maxDelay: 1000,
+      jitter: true,
+    },
+    timeout: 10000,
+    dedupe: true,
+    metrics: {
+      enabled: true,
+    },
+  });
+}
+
+/**
+ * Create production browser client
+ */
+export function createProductionBrowserClient(
+  options: Omit<BrowserPresetOptions, 'retry' | 'timeout' | 'dedupe' | 'metrics'> = {}
+): Client {
+  return createBrowserClient({
+    ...options,
+    retry: {
+      retries: 3,
+      minDelay: 100,
+      maxDelay: 2000,
+      jitter: true,
+    },
+    timeout: 30000,
+    dedupe: true,
+    metrics: {
+      enabled: true,
+    },
+  });
+}
+
+/**
+ * Create test browser client
+ */
+export function createTestBrowserClient(
+  options: Omit<BrowserPresetOptions, 'retry' | 'timeout' | 'dedupe' | 'metrics'> = {}
+): Client {
+  return createBrowserClient({
+    ...options,
+    retry: false,
     timeout: 5000,
     dedupe: false,
     metrics: false,
@@ -395,38 +266,37 @@ export function createRealTimeClient(options: BrowserPresetOptions = {}): Client
 }
 
 /**
- * Create streaming optimized client
+ * Create mobile browser client
  */
-export function createStreamingClient(options: BrowserPresetOptions = {}): Client {
+export function createMobileBrowserClient(
+  options: BrowserPresetOptions = {}
+): Client {
   return createBrowserClient({
     ...options,
-    retry: { retries: 2, minDelay: 100, maxDelay: 1000 },
-    timeout: 60000,
-    dedupe: false,
+    headers: {
+      'User-Agent': 'advanced-client-fetch-browser/mobile/1.0.0',
+      ...options.headers,
+    },
+    retry: { retries: 2, minDelay: 200, maxDelay: 2000 },
+    timeout: 20000,
+    dedupe: true,
     metrics: true,
   });
 }
 
 /**
- * Create WebSocket optimized client
+ * Create desktop browser client
  */
-export function createWebSocketClient(options: BrowserPresetOptions = {}): Client {
+export function createDesktopBrowserClient(
+  options: BrowserPresetOptions = {}
+): Client {
   return createBrowserClient({
     ...options,
-    retry: { retries: 1, minDelay: 100, maxDelay: 500 },
-    timeout: 10000,
-    dedupe: false,
-    metrics: false,
-  });
-}
-
-/**
- * Create batch processing optimized client
- */
-export function createBatchClient(options: BrowserPresetOptions = {}): Client {
-  return createBrowserClient({
-    ...options,
-    retry: { retries: 3, minDelay: 500, maxDelay: 5000 },
+    headers: {
+      'User-Agent': 'advanced-client-fetch-browser/desktop/1.0.0',
+      ...options.headers,
+    },
+    retry: { retries: 3, minDelay: 100, maxDelay: 2000 },
     timeout: 30000,
     dedupe: true,
     metrics: true,
@@ -434,32 +304,48 @@ export function createBatchClient(options: BrowserPresetOptions = {}): Client {
 }
 
 /**
- * Create microservice optimized client
+ * Create web worker client
  */
-export function createMicroserviceClient(options: BrowserPresetOptions = {}): Client {
+export function createWebWorkerClient(
+  options: BrowserPresetOptions = {}
+): Client {
   return createBrowserClient({
     ...options,
-    retry: { retries: 2, minDelay: 200, maxDelay: 2000 },
-    timeout: 10000,
-    dedupe: true,
-    metrics: true,
-  });
-}
-
-/**
- * Create serverless optimized client
- */
-export function createServerlessClient(options: BrowserPresetOptions = {}): Client {
-  return createBrowserClient({
-    ...options,
-    retry: { retries: 1, minDelay: 100, maxDelay: 1000 },
-    timeout: 5000,
+    headers: {
+      'User-Agent': 'advanced-client-fetch-browser/worker/1.0.0',
+      ...options.headers,
+    },
+    retry: { retries: 2, minDelay: 100, maxDelay: 1000 },
+    timeout: 15000,
     dedupe: true,
     metrics: false,
   });
 }
 
 /**
+ * Create service worker client
+ */
+export function createServiceWorkerClient(
+  options: BrowserPresetOptions = {}
+): Client {
+  return createBrowserClient({
+    ...options,
+    headers: {
+      'User-Agent': 'advanced-client-fetch-browser/service-worker/1.0.0',
+      ...options.headers,
+    },
+    retry: { retries: 1, minDelay: 100, maxDelay: 500 },
+    timeout: 10000,
+    dedupe: true,
+    metrics: false,
+  });
+}
+
+/**
+ * Default browser client instance
+ */
+export const browserClient = createBrowserClient();
+
+/**
  * Export for convenience
  */
-export default browserClient;

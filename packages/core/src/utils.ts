@@ -1,8 +1,8 @@
 /**
- * Utility functions for HyperHTTP
+ * Utility functions for Advanced Client Fetch
  */
 
-import type { Headers, Request, Response, HttpMethod } from './types.js';
+import type { Headers, Request, Response, HttpMethod } from './types';
 
 /**
  * Check if value is a plain object
@@ -154,10 +154,13 @@ export function normalizeBody(body: any, headers: Headers): BodyInit | undefined
 }
 
 /**
- * Generate request ID
+ * Generate request ID using crypto API for better security
  */
 export function generateRequestId(): string {
-  return `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const timestamp = performance.now().toString(36);
+  const random = crypto.getRandomValues(new Uint8Array(4));
+  const randomStr = Array.from(random, byte => byte.toString(36)).join('');
+  return `req_${timestamp}_${randomStr}`;
 }
 
 /**
@@ -332,7 +335,6 @@ export function getResponseSize(response: Response): number {
   return 1000; // Default estimate
 }
 
-
 /**
  * Calculate retry delay with exponential backoff and jitter
  */
@@ -453,6 +455,35 @@ export function isRetryableError(error: any): boolean {
   
   // Abort errors (except timeout) are not retryable
   if (error.name === 'AbortError' && error.reason !== 'timeout') {
+    return false;
+  }
+  
+  return false;
+}
+
+/**
+ * Check if response is retryable
+ */
+export function isRetryableResponse(response: Response): boolean {
+  if (!response) return false;
+  
+  // 5xx responses are retryable
+  if (response.status >= 500 && response.status < 600) {
+    return true;
+  }
+  
+  // 429 (Too Many Requests) is retryable
+  if (response.status === 429) {
+    return true;
+  }
+  
+  // 2xx responses are not retryable
+  if (response.status >= 200 && response.status < 300) {
+    return false;
+  }
+  
+  // 4xx responses (except 429) are not retryable
+  if (response.status >= 400 && response.status < 500) {
     return false;
   }
   
@@ -593,6 +624,15 @@ export const defaultKeyGenerator = createKeyGenerator({
 });
 
 /**
+ * Cleanup function for key cache
+ */
+export function cleanupKeyCache(): void {
+  if (typeof globalThis !== 'undefined' && (globalThis as any).__keyCache) {
+    (globalThis as any).__keyCache.clear();
+  }
+}
+
+/**
  * Simple key generator (no hashing)
  */
 export const simpleKeyGenerator = createKeyGenerator({
@@ -621,32 +661,3 @@ export const headerAwareKeyGenerator = (authHeaders: string[] = ['authorization'
     includeHeaders: authHeaders,
     hashAlgorithm: 'md5',
   });
-
-/**
- * Check if response is retryable
- */
-export function isRetryableResponse(response: Response): boolean {
-  if (!response) return false;
-  
-  // 5xx responses are retryable
-  if (response.status >= 500 && response.status < 600) {
-    return true;
-  }
-  
-  // 429 (Too Many Requests) is retryable
-  if (response.status === 429) {
-    return true;
-  }
-  
-  // 2xx responses are not retryable
-  if (response.status >= 200 && response.status < 300) {
-    return false;
-  }
-  
-  // 4xx responses (except 429) are not retryable
-  if (response.status >= 400 && response.status < 500) {
-    return false;
-  }
-  
-  return false;
-}

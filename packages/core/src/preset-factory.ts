@@ -1,10 +1,10 @@
 /**
- * Preset Factory for HyperHTTP
+ * Preset Factory for Advanced Client Fetch
  * Provides common functionality for creating platform-specific clients
  */
 
-import { createClient, type Client, type ClientOptions } from './client.js';
-import type { Middleware } from './types.js';
+import { createClient, type Client, type ClientOptions } from './client';
+import type { Middleware } from './types';
 
 /**
  * Preset configuration interface
@@ -40,7 +40,7 @@ export function createPresetClient<T extends PlatformOptions>(
   middlewareFactory: (config: PresetConfig, options: T) => Middleware[]
 ): Client {
   const {
-    userAgent = `hyperhttp-${platform}/0.1.0`,
+    userAgent = `advanced-client-fetch-${platform}/0.1.0`,
     defaultHeaders = {},
     middleware = [],
     ...clientOptions
@@ -50,7 +50,7 @@ export function createPresetClient<T extends PlatformOptions>(
   const headers = {
     'User-Agent': userAgent,
     ...defaultHeaders,
-    ...clientOptions.headers,
+    ...(clientOptions as any).headers,
   };
 
   // Create middleware based on configuration
@@ -191,7 +191,7 @@ export function createDevelopmentPresetClient<T extends PlatformOptions>(
     metrics: {
       enabled: true,
       onMetrics: (metrics) => {
-        console.log(`[HyperHTTP ${platform}] ${metrics.method} ${metrics.url} - ${metrics.status} (${metrics.duration?.toFixed(2)}ms)`);
+        console.log(`[Advanced Client Fetch ${platform}] ${metrics.method} ${metrics.url} - ${metrics.status} (${metrics.duration?.toFixed(2)}ms)`);
       },
     },
     security: false,

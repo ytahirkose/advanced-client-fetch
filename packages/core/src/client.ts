@@ -10,11 +10,19 @@ import type {
   Transport,
   ResponseType,
   HttpMethod,
-} from './types.js';
-import { compose } from './compose.js';
-import { buildURL, mergeHeaders, normalizeBody, generateRequestId } from './utils.js';
-import { combineTimeoutAndSignal } from './signal.js';
-import { HyperHttpError, HyperAbortError, NetworkError } from './errors.js';
+} from './types';
+import { compose } from './compose';
+import { buildURL, mergeHeaders, normalizeBody, generateRequestId } from './utils';
+import { combineTimeoutAndSignal } from './signal';
+import { 
+  AdvancedClientFetchError, 
+  AdvancedClientFetchAbortError, 
+  NetworkError, 
+  TimeoutError,
+  ClientError,
+  ServerError,
+  BaseHttpError
+} from './errors';
 
 /**
  * Create a new HTTP client
@@ -28,6 +36,9 @@ export function createClient(options: ClientOptions = {}): Client {
     timeout = 0,
     signal,
     paramsSerializer = defaultParamsSerializer,
+    validateStatus = defaultValidateStatus,
+    maxRedirects = 5,
+    withCredentials = false,
   } = options;
 
   // Use provided plugins
@@ -36,9 +47,6 @@ export function createClient(options: ClientOptions = {}): Client {
   const run = compose(allMiddleware);
 
   async function request<T = any>(requestOptions: RequestOptions): Promise<T> {
-    // Use the same middleware for all requests
-    const runRequest = run;
-    
     // Build URL
     const url = buildURL(baseURL, requestOptions.url, requestOptions.query, paramsSerializer);
     
@@ -49,7 +57,10 @@ export function createClient(options: ClientOptions = {}): Client {
     const body = normalizeBody(requestOptions.body, headers);
     
     // Combine timeout and signal
-    const { signal: combinedSignal, cleanup } = combineTimeoutAndSignal(requestOptions.signal, requestOptions.timeout || timeout);
+    const { signal: combinedSignal, cleanup } = combineTimeoutAndSignal(
+      requestOptions.signal || signal, 
+      requestOptions.timeout || timeout
+    );
     
     // Generate request ID
     const requestId = generateRequestId();
@@ -65,21 +76,32 @@ export function createClient(options: ClientOptions = {}): Client {
       
       // Create context
       const context: Context = {
+        request: req,
+        response: undefined,
+        error: undefined,
+        retryCount: 0,
+        startTime: performance.now(),
+        metadata: {
+          requestId,
+          ...requestOptions.meta,
+        },
+        // Legacy properties
         req,
         res: undefined,
-        signal: combinedSignal || new AbortController().signal,
+        signal: combinedSignal,
         meta: {
           requestId,
-          startTime: Date.now(),
+          startTime: performance.now(),
           ...requestOptions.meta,
         },
         state: {},
       };
       
       // Run middleware pipeline
-      await runRequest(context, async () => {
+      await run(context, async () => {
         try {
-          context.res = await transport(context.req);
+          context.response = await transport(context.request);
+          context.res = context.response;
         } catch (error) {
           context.error = error as Error;
           throw error;
@@ -88,6 +110,20 @@ export function createClient(options: ClientOptions = {}): Client {
       
       if (!context.res) {
         throw new Error('No response from transport');
+      }
+      
+      // Validate status
+      if (!validateStatus(context.res.status)) {
+        const status = context.res.status;
+        const message = `Request failed with status ${status}`;
+        
+        if (status >= 400 && status < 500) {
+          throw new ClientError(message, status, context.req, context.res, undefined, requestId);
+        } else if (status >= 500) {
+          throw new ServerError(message, status, context.req, context.res, undefined, requestId);
+        } else {
+          throw new AdvancedClientFetchError(message, status, context.req, context.res, undefined, requestId);
+        }
       }
       
       // Handle response based on responseType
@@ -101,16 +137,21 @@ export function createClient(options: ClientOptions = {}): Client {
   }
 
   // HTTP method shortcuts
+  // Fast path for simple GET requests
   const createMethod = (method: HttpMethod) => {
     return <T = any>(url: string, options: Omit<RequestOptions, 'url' | 'method'> = {}): Promise<T> => {
+      // Fast path for simple requests
+      if (method === 'GET' && Object.keys(options).length === 0) {
+        return request<T>({ url, method });
+      }
       return request<T>({ ...options, url, method });
     };
   };
 
   const createMethodWithBody = (method: HttpMethod) => {
-    return <T = any>(
+    return <T = unknown, D extends BodyInit | string | number | boolean | object | null = BodyInit | string | number | boolean | object | null>(
       url: string,
-      data?: any,
+      data?: D,
       options: Omit<RequestOptions, 'url' | 'method' | 'body'> = {}
     ): Promise<T> => {
       return request<T>({ ...options, url, method, body: data });
@@ -150,8 +191,7 @@ const defaultTransport: Transport = async (request: Request): Promise<Response> 
   } catch (error) {
     throw new NetworkError(
       `Network error: ${(error as Error).message}`,
-      request,
-      error as Error
+      request
     );
   }
 };
@@ -176,19 +216,16 @@ const defaultParamsSerializer = (params: Record<string, any>): string => {
 };
 
 /**
+ * Default status validator
+ */
+const defaultValidateStatus = (status: number): boolean => {
+  return status >= 200 && status < 300;
+};
+
+/**
  * Handle response based on response type
  */
 async function handleResponse<T>(response: Response, request: Request, responseType?: ResponseType): Promise<T> {
-  // Check for HTTP errors
-  if (!response.ok) {
-    throw new HyperHttpError(
-      `HTTP ${response.status}: ${response.statusText}`,
-      response.status,
-      request,
-      response
-    );
-  }
-  
   // Handle different response types
   try {
     switch (responseType) {
@@ -202,6 +239,9 @@ async function handleResponse<T>(response: Response, request: Request, responseT
         return await response.arrayBuffer() as T;
       case 'stream':
         return response.body as T;
+      case 'document':
+        // For document type, return the response as-is
+        return response as T;
       default:
         // Auto-detect based on content type
         const contentType = response.headers.get('content-type');
@@ -214,7 +254,7 @@ async function handleResponse<T>(response: Response, request: Request, responseT
         return response as T;
     }
   } catch (error) {
-    throw new HyperHttpError(
+    throw new AdvancedClientFetchError(
       `Failed to parse response: ${(error as Error).message}`,
       response.status,
       request,
@@ -229,27 +269,26 @@ async function handleResponse<T>(response: Response, request: Request, responseT
  */
 function transformError(error: Error, requestId?: string): Error {
   // Already transformed
-  if (error instanceof HyperHttpError || error instanceof HyperAbortError || error instanceof NetworkError) {
+  if (error instanceof BaseHttpError || error instanceof AdvancedClientFetchAbortError || error instanceof NetworkError) {
     return error;
   }
   
   // AbortError
   if (error.name === 'AbortError') {
-    return new HyperAbortError(error.message, 'aborted');
+    return new AdvancedClientFetchAbortError(error.message, 'aborted');
   }
   
   // Network errors
   if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('connection')) {
     return new NetworkError(
       `Network error: ${error.message}`,
-      new Request(''),
-      error
+      new Request('')
     );
   }
   
   // Timeout errors
   if (error.message.includes('timeout') || error.message.includes('timed out')) {
-    return new HyperAbortError(error.message, 'timeout');
+    return new AdvancedClientFetchAbortError(error.message, 'timeout');
   }
   
   // Generic error with request ID
@@ -266,7 +305,7 @@ function transformError(error: Error, requestId?: string): Error {
 export function createDefaultClient(): Client {
   return createClient({
     headers: {
-      'User-Agent': 'hyperhttp/0.1.0',
+      'User-Agent': 'advanced-client-fetch/1.0.0',
     },
   });
 }
@@ -280,3 +319,6 @@ export function createClientFor(baseURL: string, options: Omit<ClientOptions, 'b
     baseURL,
   });
 }
+
+// Re-export types for convenience
+export type { Client, ClientOptions } from './types';

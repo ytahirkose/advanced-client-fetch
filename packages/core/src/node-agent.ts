@@ -4,7 +4,7 @@
 
 import type { Agent } from 'http';
 import type { Agent as HttpsAgent } from 'https';
-import type { NodeAgentOptions, ProxyConfig, NodeSslOptions, Context } from './types.js';
+import type { NodeAgentOptions, ProxyConfig, NodeSslOptions, Context } from './types';
 
 /**
  * Check if running in Node.js environment
