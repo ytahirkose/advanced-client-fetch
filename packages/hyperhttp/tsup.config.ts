@@ -13,12 +13,7 @@ export default defineConfig({
   clean: true,
   minify: isProd,
   treeshake: true,
-  external: [
-    "hyperhttp-core",
-    "hyperhttp-plugins", 
-    "hyperhttp-presets",
-    "hyperhttp-axios-adapter"
-  ],
+  external: [],
   target: "es2022",
   outDir: "dist",
   platform: "neutral",

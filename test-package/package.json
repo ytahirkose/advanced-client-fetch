@@ -8,5 +8,12 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "advanced-client-fetch": "workspace:*",
+    "hyperhttp-axios-adapter": "workspace:1.0.0",
+    "hyperhttp-core": "workspace:1.0.0",
+    "hyperhttp-plugins": "workspace:1.0.0",
+    "hyperhttp-presets": "workspace:1.0.0"
+  }
 }

@@ -1,6 +1,6 @@
 {
   "name": "advanced-client-fetch",
-  "version": "1.0.3",
+  "version": "1.0.14",
   "description": "🚀 The modern HTTP client that's more powerful than Axios. Fetch-first, plugin-based, platform-independent with smart retry, caching, rate limiting, and more.",
   "type": "module",
   "private": false,
@@ -25,6 +25,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest --watch",
+    "test:coverage": "vitest run --coverage",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -63,17 +64,12 @@
     "url": "https://github.com/ytahirkose/advanced-client-fetch/issues"
   },
   "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
-  "dependencies": {
-    "hyperhttp-core": "^1.0.0",
-    "hyperhttp-plugins": "^1.0.0",
-    "hyperhttp-presets": "^1.0.0",
-    "hyperhttp-axios-adapter": "^1.0.0"
-  },
   "devDependencies": {
     "@types/node": "^20.0.0",
     "tsup": "^8.5.0",
     "typescript": "^5.0.0",
-    "vitest": "^1.0.0"
+    "vitest": "^1.0.0",
+    "@vitest/coverage-v8": "^1.0.0"
   },
   "engines": {
     "node": ">=18.0.0"
