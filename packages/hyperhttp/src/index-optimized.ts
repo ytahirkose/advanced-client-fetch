@@ -3,22 +3,6 @@
  * 
  * A fetch-first, plugin-based HTTP client that works across all platforms.
  * More powerful than Axios with smart retry, caching, rate limiting, and more.
- * 
- * @example
- * ```typescript
- * import { createClient, retry, cache } from 'advanced-client-fetch';
- * 
- * const client = createClient({
- *   baseURL: 'https://api.example.com',
- *   plugins: [
- *     retry({ retries: 3 }),
- *     cache({ ttl: 300000 })
- *   ]
- * });
- * 
- * const response = await client.get('/users');
- * console.log(response.data);
- * ```
  */
 
 // Core types and interfaces
@@ -135,25 +119,12 @@ export interface Middleware {
 export function buildURL(baseURL?: string, url?: string, query?: Record<string, any>): string {
   if (!url) return baseURL || '';
   
-  // If url is absolute, use it as is
   if (url.startsWith('http://') || url.startsWith('https://')) {
     return url;
   }
   
-  // If no baseURL and url is relative, throw error
-  if (!baseURL && url.startsWith('/')) {
-    throw new Error(`Relative URL '${url}' requires a baseURL`);
-  }
+  const fullURL = baseURL ? `${baseURL.replace(/\/$/, '')}/${url.replace(/^\//, '')}` : url;
   
-  // If no baseURL, assume url is complete
-  if (!baseURL) {
-    return url;
-  }
-  
-  // Combine baseURL and url
-  const fullURL = `${baseURL.replace(/\/$/, '')}/${url.replace(/^\//, '')}`;
-  
-  // Add query parameters
   if (query && Object.keys(query).length > 0) {
     const searchParams = new URLSearchParams();
     Object.entries(query).forEach(([key, value]) => {
@@ -173,12 +144,6 @@ export function buildURL(baseURL?: string, url?: string, query?: Record<string, 
 }
 
 export function mergeHeaders(...headers: (Record<string, string> | Headers)[]): Headers {
-  if (headers.length === 0) return new Headers();
-  if (headers.length === 1) {
-    const header = headers[0];
-    return header instanceof Headers ? header : new Headers(header);
-  }
-  
   const merged = new Headers();
   
   for (const header of headers) {
@@ -256,82 +221,6 @@ export function waitForRetry(delay: number): Promise<void> {
   return sleep(delay);
 }
 
-export function deepMerge<T>(target: T, ...sources: Partial<T>[]): T {
-  if (!sources.length) return target;
-  if (sources.length === 1) {
-    const source = sources[0];
-    if (!isObject(target) || !isObject(source)) return target;
-    
-    for (const key in source) {
-      if (isObject(source[key])) {
-        if (!target[key]) (target as any)[key] = {};
-        deepMerge((target as any)[key], source[key] as any);
-      } else {
-        (target as any)[key] = source[key];
-      }
-    }
-    return target;
-  }
-  
-  const source = sources.shift();
-  
-  if (isObject(target) && isObject(source)) {
-    for (const key in source) {
-      if (isObject(source[key])) {
-        if (!target[key]) (target as any)[key] = {};
-        deepMerge((target as any)[key], source[key] as any);
-      } else {
-        (target as any)[key] = source[key];
-      }
-    }
-  }
-  
-  return deepMerge(target, ...sources);
-}
-
-function isObject(item: any): boolean {
-  return item && typeof item === 'object' && !Array.isArray(item);
-}
-
-export function parseRetryAfter(retryAfter: string): number {
-  const seconds = parseInt(retryAfter, 10);
-  if (!isNaN(seconds)) {
-    return seconds * 1000;
-  }
-  
-  const date = new Date(retryAfter);
-  if (!isNaN(date.getTime())) {
-    return date.getTime() - Date.now();
-  }
-  
-  return 0;
-}
-
-export function isAbsoluteURL(url: string): boolean {
-  return /^([a-z][a-z\d+\-.]*:)?\/\//i.test(url);
-}
-
-export function safeJSONParse(text: string): any {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-}
-
-export function isRetryableResponse(response: Response): boolean {
-  return response.status >= 500 || response.status === 429;
-}
-
-export function validateRequestSize(request: Request, maxSize: number = 10 * 1024 * 1024): boolean {
-  const contentLength = request.headers.get('content-length');
-  if (contentLength) {
-    const size = parseInt(contentLength, 10);
-    return size <= maxSize;
-  }
-  return true;
-}
-
 export function isRetryableError(error: any): boolean {
   if (!error) return false;
   
@@ -361,23 +250,6 @@ export interface RetryOptions {
   onRetry?: (info: any) => void;
 }
 
-/**
- * Creates a retry middleware with exponential backoff and jitter.
- * 
- * @param options - Retry configuration options
- * @returns A retry middleware function
- * 
- * @example
- * ```typescript
- * const retryMiddleware = retry({
- *   retries: 3,
- *   minDelay: 100,
- *   maxDelay: 2000,
- *   factor: 2,
- *   jitter: true
- * });
- * ```
- */
 export function retry(options: RetryOptions = {}): Middleware {
   const {
     retries = 3,
@@ -418,21 +290,6 @@ export interface CacheOptions {
   storage?: Map<string, any>;
 }
 
-/**
- * Creates a cache middleware for HTTP responses.
- * 
- * @param options - Cache configuration options
- * @returns A cache middleware function
- * 
- * @example
- * ```typescript
- * const cacheMiddleware = cache({
- *   ttl: 300000, // 5 minutes
- *   maxSize: 1000,
- *   storage: new Map()
- * });
- * ```
- */
 export function cache(options: CacheOptions = {}): Middleware {
   const { ttl = 300000, maxSize = 100, storage = new Map() } = options;
   
@@ -446,20 +303,9 @@ export function cache(options: CacheOptions = {}): Middleware {
     
     const response = await next();
     
-    // Clean expired entries first
     if (storage.size >= maxSize) {
-      const now = Date.now();
-      for (const [k, v] of storage.entries()) {
-        if (now - v.timestamp > ttl) {
-          storage.delete(k);
-        }
-      }
-      
-      // If still at max size, remove oldest
-      if (storage.size >= maxSize) {
-        const firstKey = storage.keys().next().value;
-        storage.delete(firstKey);
-      }
+      const firstKey = storage.keys().next().value;
+      storage.delete(firstKey);
     }
     
     storage.set(key, {
@@ -485,11 +331,6 @@ export function rateLimit(options: RateLimitOptions = {}): Middleware {
     const now = Date.now();
     const record = storage.get(key);
     
-    // Clean expired records
-    if (record && now > record.resetTime) {
-      storage.delete(key);
-    }
-    
     if (!record || now > record.resetTime) {
       storage.set(key, { count: 1, resetTime: now + windowMs });
       return await next();
@@ -511,35 +352,6 @@ export interface CircuitBreakerOptions {
   storage?: Map<string, { failures: number; lastFailureTime: number; state: 'closed' | 'open' | 'half-open' }>;
 }
 
-export interface DedupeOptions {
-  ttl?: number;
-  keyGenerator?: (req: Request) => string;
-}
-
-export interface DedupeEntry {
-  promise: Promise<any>;
-  timestamp: number;
-}
-
-export interface MetricsOptions {
-  enabled?: boolean;
-  sampleRate?: number;
-  onMetric?: (metric: MetricsData) => void;
-  keyGenerator?: (req: Request) => string;
-}
-
-export interface MetricsData {
-  key: string;
-  method: string;
-  url: string;
-  status: number;
-  duration: number;
-  memoryDelta: number;
-  timestamp: string;
-  retryCount: number;
-  error: string | null;
-}
-
 export function circuitBreaker(options: CircuitBreakerOptions = {}): Middleware {
   const { 
     failureThreshold = 5, 
@@ -551,15 +363,6 @@ export function circuitBreaker(options: CircuitBreakerOptions = {}): Middleware 
     const key = ctx.request.url;
     const now = Date.now();
     const record = storage.get(key) || { failures: 0, lastFailureTime: 0, state: 'closed' as const };
-    
-    // Clean old records periodically
-    if (Math.random() < 0.01) { // 1% chance to clean
-      for (const [k, v] of storage.entries()) {
-        if (now - v.lastFailureTime > resetTimeout * 2) {
-          storage.delete(k);
-        }
-      }
-    }
     
     if (record.state === 'open') {
       if (now - record.lastFailureTime > resetTimeout) {
@@ -592,106 +395,7 @@ export function circuitBreaker(options: CircuitBreakerOptions = {}): Middleware 
   };
 }
 
-export function dedupe(options: DedupeOptions = {}): Middleware {
-  const { ttl = 1000, keyGenerator = (req) => `${req.method}:${req.url}` } = options;
-  const storage = new Map<string, DedupeEntry>();
-
-  return async (ctx, next) => {
-    const key = keyGenerator(ctx.request);
-    const now = Date.now();
-    const entry = storage.get(key);
-
-    if (entry && now - entry.timestamp < ttl) {
-      return entry.promise;
-    }
-
-    const promise = next();
-    storage.set(key, { promise, timestamp: now });
-
-    try {
-      const result = await promise;
-      return result;
-    } finally {
-      storage.delete(key);
-    }
-  };
-}
-
-export function metrics(options: MetricsOptions = {}): Middleware {
-  const { 
-    enabled = true, 
-    sampleRate = 1.0, 
-    onMetric = () => {},
-    keyGenerator = (req) => `${req.method}:${req.url}` 
-  } = options;
-  
-  if (!enabled) return async (_ctx, next) => next();
-
-  return async (ctx, next) => {
-    if (Math.random() > sampleRate) {
-      return next();
-    }
-
-    const key = keyGenerator(ctx.request);
-    const startTime = Date.now();
-    const startMemory = process.memoryUsage?.()?.heapUsed || 0;
-
-    try {
-      const result = await next();
-      const endTime = Date.now();
-      const endMemory = process.memoryUsage?.()?.heapUsed || 0;
-      
-      const metric: MetricsData = {
-        key,
-        method: ctx.request.method,
-        url: ctx.request.url,
-        status: result.status,
-        duration: endTime - startTime,
-        memoryDelta: endMemory - startMemory,
-        timestamp: new Date().toISOString(),
-        retryCount: ctx.state.retryCount || 0,
-        error: null
-      };
-
-      onMetric(metric);
-      return result;
-    } catch (error: any) {
-      const endTime = Date.now();
-      const endMemory = process.memoryUsage?.()?.heapUsed || 0;
-      
-      const metric: MetricsData = {
-        key,
-        method: ctx.request.method,
-        url: ctx.request.url,
-        status: 0,
-        duration: endTime - startTime,
-        memoryDelta: endMemory - startMemory,
-        timestamp: new Date().toISOString(),
-        retryCount: ctx.state.retryCount || 0,
-        error: error.message
-      };
-
-      onMetric(metric);
-      throw error;
-    }
-  };
-}
-
-/**
- * Creates a new HTTP client with the specified options and plugins.
- * 
- * @param options - Client configuration options
- * @returns A configured HTTP client instance
- * 
- * @example
- * ```typescript
- * const client = createClient({
- *   baseURL: 'https://api.example.com',
- *   timeout: 10000,
- *   plugins: [retry(), cache()]
- * });
- * ```
- */
+// Main client implementation
 export function createClient(options: ClientOptions = {}): Client {
   const {
     baseURL = '',
@@ -800,70 +504,57 @@ export function createClient(options: ClientOptions = {}): Client {
         });
 
         // Execute middleware pipeline
-        let fetchResponse: globalThis.Response;
+        let response: Response;
         const context = { request, response: undefined as any, error: undefined as any };
         
         // Run plugins
         for (const plugin of plugins) {
           await plugin(context, async () => {
-            fetchResponse = await fetch(request);
-            return fetchResponse;
+            response = await fetch(request);
+            return response;
           });
         }
         
-        if (!fetchResponse!) {
-          fetchResponse = await fetch(request);
-        }
-
-        // Check for HTTP errors
-        if (!fetchResponse.ok) {
-          throw new HttpError(
-            `HTTP ${fetchResponse.status}: ${fetchResponse.statusText}`,
-            fetchResponse.status,
-            fetchResponse.statusText,
-            fetchResponse as any
-          );
+        if (!response!) {
+          response = await fetch(request);
         }
 
         // Handle response based on type
         let data: T;
         switch (responseType) {
           case 'json':
-            data = await fetchResponse.json() as T;
+            data = await response.json() as T;
             break;
           case 'text':
-            data = await fetchResponse.text() as T;
+            data = await response.text() as T;
             break;
           case 'blob':
-            data = await fetchResponse.blob() as T;
+            data = await response.blob() as T;
             break;
           case 'arrayBuffer':
-            data = await fetchResponse.arrayBuffer() as T;
+            data = await response.arrayBuffer() as T;
             break;
           case 'stream':
-            data = fetchResponse.body as T;
+            data = response.body as T;
             break;
           default:
-            data = await fetchResponse.json() as T;
+            data = await response.json() as T;
         }
 
         return {
           data,
-          status: fetchResponse.status,
-          statusText: fetchResponse.statusText,
-          headers: fetchResponse.headers,
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
           config: requestOptions,
           request
-        } as any;
+        };
 
       } catch (error: any) {
         if (error.name === 'AbortError') {
           throw new AbortError('Request was aborted');
         }
-        if (error instanceof HttpError) {
-          throw error;
-        }
-        throw new NetworkError(error.message, error.code, undefined);
+        throw new NetworkError(error.message, error.code, request);
       } finally {
         clearTimeout(timeoutId);
       }
@@ -873,56 +564,8 @@ export function createClient(options: ClientOptions = {}): Client {
   return client;
 }
 
-// Node.js specific types
-export interface NodeAgentOptions {
-  keepAlive?: boolean;
-  maxSockets?: number;
-  maxFreeSockets?: number;
-  timeout?: number;
-  freeSocketTimeout?: number;
-}
-
-export interface ProxyConfig {
-  host: string;
-  port: number;
-  auth?: {
-    username: string;
-    password: string;
-  };
-  protocol?: 'http' | 'https';
-}
-
-export interface NodeSslOptions {
-  rejectUnauthorized?: boolean;
-  ca?: string | Buffer | Array<string | Buffer>;
-  cert?: string | Buffer | Array<string | Buffer>;
-  key?: string | Buffer | Array<string | Buffer>;
-  passphrase?: string;
-  pfx?: string | Buffer | Array<string | Buffer>;
-}
-
-/**
- * Creates a Node.js optimized HTTP client with full feature set.
- * 
- * @param options - Node.js specific client options
- * @returns A Node.js optimized client instance
- * 
- * @example
- * ```typescript
- * const client = createNodeClient({
- *   baseURL: 'https://api.example.com',
- *   agent: { keepAlive: true, maxSockets: 100 },
- *   proxy: 'http://proxy:8080'
- * });
- * ```
- */
-export function createNodeClient(options: ClientOptions & {
-  agent?: NodeAgentOptions;
-  proxy?: string | ProxyConfig;
-  ssl?: NodeSslOptions;
-  keepAlive?: boolean;
-  maxSockets?: number;
-} = {}): Client {
+// Platform presets
+export function createNodeClient(options: ClientOptions = {}): Client {
   return createClient({
     ...options,
     plugins: [
@@ -935,63 +578,18 @@ export function createNodeClient(options: ClientOptions & {
   });
 }
 
-// Edge runtime specific types
-export interface EdgeOptions {
-  timeout?: number;
-  maxRetries?: number;
-  cacheStrategy?: 'memory' | 'kv' | 'none';
-  dedupe?: boolean;
-  compression?: boolean;
-}
-
-export function createEdgeClient(options: ClientOptions & EdgeOptions = {}): Client {
+export function createEdgeClient(options: ClientOptions = {}): Client {
   return createClient({
     ...options,
     plugins: [
-      retry({ retries: options.maxRetries || 2 }),
+      retry({ retries: 2 }),
       cache({ ttl: 60000 }),
-      ...(options.dedupe !== false ? [dedupe({ ttl: 1000 })] : []),
       ...(options.plugins || [])
     ]
   });
 }
 
-// Browser specific types
-export interface CorsOptions {
-  origin?: string | string[] | boolean;
-  credentials?: boolean;
-  methods?: string[];
-  allowedHeaders?: string[];
-  exposedHeaders?: string[];
-  maxAge?: number;
-}
-
-/**
- * Creates a browser optimized HTTP client with CORS and credentials support.
- * 
- * @param options - Browser specific client options
- * @returns A browser optimized client instance
- * 
- * @example
- * ```typescript
- * const client = createBrowserClient({
- *   baseURL: 'https://api.example.com',
- *   credentials: 'include',
- *   mode: 'cors'
- * });
- * ```
- */
-export function createBrowserClient(options: ClientOptions & {
-  cors?: boolean | CorsOptions;
-  credentials?: 'omit' | 'same-origin' | 'include';
-  mode?: 'cors' | 'no-cors' | 'same-origin';
-  redirect?: 'follow' | 'error' | 'manual';
-  referrer?: string;
-  referrerPolicy?: ReferrerPolicy;
-  cache?: RequestCache;
-  integrity?: string;
-  keepalive?: boolean;
-} = {}): Client {
+export function createBrowserClient(options: ClientOptions = {}): Client {
   return createClient({
     ...options,
     plugins: [
@@ -1002,41 +600,22 @@ export function createBrowserClient(options: ClientOptions & {
   });
 }
 
-// Deno specific types
-export interface DenoOptions {
-  timeout?: number;
-  maxRetries?: number;
-  cacheStrategy?: 'memory' | 'none';
-  compression?: boolean;
-  userAgent?: string;
-}
-
-export function createDenoClient(options: ClientOptions & DenoOptions = {}): Client {
+export function createDenoClient(options: ClientOptions = {}): Client {
   return createClient({
     ...options,
     plugins: [
-      retry({ retries: options.maxRetries || 3 }),
+      retry({ retries: 3 }),
       cache({ ttl: 300000 }),
       ...(options.plugins || [])
     ]
   });
 }
 
-// Bun specific types
-export interface BunOptions {
-  timeout?: number;
-  maxRetries?: number;
-  cacheStrategy?: 'memory' | 'none';
-  compression?: boolean;
-  userAgent?: string;
-  httpVersion?: '1.1' | '2';
-}
-
-export function createBunClient(options: ClientOptions & BunOptions = {}): Client {
+export function createBunClient(options: ClientOptions = {}): Client {
   return createClient({
     ...options,
     plugins: [
-      retry({ retries: options.maxRetries || 3 }),
+      retry({ retries: 3 }),
       cache({ ttl: 300000 }),
       ...(options.plugins || [])
     ]
@@ -1070,7 +649,6 @@ export class AxiosError extends Error {
   public config?: AxiosRequestConfig;
   public request?: any;
   public response?: AxiosResponse;
-  public isAxiosError: boolean = true;
 
   constructor(message: string, code?: string, config?: AxiosRequestConfig, request?: any, response?: AxiosResponse) {
     super(message);
@@ -1079,11 +657,10 @@ export class AxiosError extends Error {
     this.config = config;
     this.request = request;
     this.response = response;
-    this.isAxiosError = true;
   }
 
   static isAxiosError(error: any): error is AxiosError {
-    return error instanceof AxiosError || error?.isAxiosError === true;
+    return error instanceof AxiosError;
   }
 }
 
@@ -1095,13 +672,7 @@ export function createAxiosAdapter(options: AxiosRequestConfig = {}) {
     signal: options.signal
   });
 
-  const adapter = {
-    defaults: { ...options },
-    interceptors: {
-      request: { use: () => {} },
-      response: { use: () => {} }
-    },
-    
+  return {
     async request<T = any>(config: AxiosRequestConfig): Promise<AxiosResponse<T>> {
       try {
         const response = await client.request<T>({
@@ -1134,28 +705,26 @@ export function createAxiosAdapter(options: AxiosRequestConfig = {}) {
     },
 
     get: <T = any>(url: string, config?: AxiosRequestConfig) => 
-      adapter.request<T>({ ...config, method: 'GET', url }),
+      client.request<T>({ ...config, method: 'GET', url }),
     
     post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) => 
-      adapter.request<T>({ ...config, method: 'POST', url, data }),
+      client.request<T>({ ...config, method: 'POST', url, body: data }),
     
     put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) => 
-      adapter.request<T>({ ...config, method: 'PUT', url, data }),
+      client.request<T>({ ...config, method: 'PUT', url, body: data }),
     
     patch: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) => 
-      adapter.request<T>({ ...config, method: 'PATCH', url, data }),
+      client.request<T>({ ...config, method: 'PATCH', url, body: data }),
     
     delete: <T = any>(url: string, config?: AxiosRequestConfig) => 
-      adapter.request<T>({ ...config, method: 'DELETE', url }),
+      client.request<T>({ ...config, method: 'DELETE', url }),
     
     head: <T = any>(url: string, config?: AxiosRequestConfig) => 
-      adapter.request<T>({ ...config, method: 'HEAD', url }),
+      client.request<T>({ ...config, method: 'HEAD', url }),
     
     options: <T = any>(url: string, config?: AxiosRequestConfig) => 
-      adapter.request<T>({ ...config, method: 'OPTIONS', url })
+      client.request<T>({ ...config, method: 'OPTIONS', url })
   };
-
-  return adapter;
 }
 
 // Security features
@@ -1173,17 +742,6 @@ export function validateUrlForSSRF(url: string, options: SecurityOptions = {}): 
   try {
     const urlObj = new URL(url);
     const hostname = urlObj.hostname;
-    const protocol = urlObj.protocol;
-    
-    // Block non-HTTP protocols
-    if (!['http:', 'https:'].includes(protocol)) {
-      return false;
-    }
-    
-    // Block file:// and data: URLs
-    if (protocol === 'file:' || protocol === 'data:') {
-      return false;
-    }
     
     if (options.allowedDomains && options.allowedDomains.length > 0) {
       const isAllowed = options.allowedDomains.some(domain => {
@@ -1212,12 +770,7 @@ export function validateUrlForSSRF(url: string, options: SecurityOptions = {}): 
           ip.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./) || 
           ip.match(/^192\.168\./) ||
           ip.match(/^169\.254\./) ||
-          ip.match(/^127\./) ||
-          ip.match(/^0\./) ||
-          ip.match(/^::1$/) ||
-          ip.match(/^fe80:/) ||
-          ip.match(/^fc00:/) ||
-          ip.match(/^fd00:/)) {
+          ip.match(/^127\./)) {
         return false;
       }
     }
@@ -1246,18 +799,12 @@ export function cleanHopByHopHeaders(headers: Headers): Headers {
 export function blockDangerousHeaders(headers: Headers): Headers {
   const dangerousHeaders = [
     'host', 'origin', 'referer', 'user-agent', 'x-forwarded-for',
-    'x-forwarded-host', 'x-forwarded-proto', 'x-real-ip', 'x-forwarded-port',
-    'x-forwarded-scheme', 'x-cluster-client-ip', 'x-client-ip',
-    'x-remote-ip', 'x-remote-addr', 'x-original-url', 'x-rewrite-url'
+    'x-forwarded-host', 'x-forwarded-proto', 'x-real-ip'
   ];
   
   const safe = new Headers();
   for (const [key, value] of headers.entries()) {
-    const lowerKey = key.toLowerCase();
-    if (!dangerousHeaders.includes(lowerKey) && 
-        !lowerKey.startsWith('x-') || 
-        lowerKey.startsWith('x-api-') ||
-        lowerKey.startsWith('x-custom-')) {
+    if (!dangerousHeaders.includes(key.toLowerCase())) {
       safe.set(key, value);
     }
   }
@@ -1280,12 +827,6 @@ export function createSecurityMiddleware(options: SecurityOptions = {}): Middlew
           throw new Error('Request size exceeds limit');
         }
       }
-    }
-    
-    if (options.maxResponseSize) {
-      // This would need to be implemented in the response handler
-      // For now, we'll just store it in context
-      ctx.maxResponseSize = options.maxResponseSize;
     }
     
     if (ctx.request.headers) {

@@ -7,15 +7,25 @@ export default defineConfig({
     index: "src/index.ts",
   },
   format: ["esm", "cjs"],
-  dts: false,
-  splitting: false,
+  dts: true,
+  splitting: true,
   sourcemap: !isProd,
   clean: true,
   minify: isProd,
-  treeshake: true,
+  treeshake: {
+    moduleSideEffects: false,
+    propertyReadSideEffects: false,
+    unknownGlobalSideEffects: false,
+  },
   external: [],
   target: "es2022",
   outDir: "dist",
   platform: "neutral",
   tsconfig: "./tsconfig.json",
+  esbuildOptions(options) {
+    options.treeShaking = true;
+    options.minifyIdentifiers = isProd;
+    options.minifySyntax = isProd;
+    options.minifyWhitespace = isProd;
+  },
 });

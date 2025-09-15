@@ -35,9 +35,9 @@ describe('Platform Presets', () => {
         json: () => Promise.resolve({ data: 'test' })
       };
       
-      (global.fetch as any).mockResolvedValueOnce(mockResponse);
+      (global.fetch as any).mockResolvedValue(mockResponse);
 
-      const client = createNodeClient();
+      const client = createNodeClient({ baseURL: 'https://api.example.com' });
       const response = await client.get('/test');
 
       expect(response.status).toBe(200);
@@ -65,9 +65,9 @@ describe('Platform Presets', () => {
         json: () => Promise.resolve({ data: 'test' })
       };
       
-      (global.fetch as any).mockResolvedValueOnce(mockResponse);
+      (global.fetch as any).mockResolvedValue(mockResponse);
 
-      const client = createEdgeClient();
+      const client = createEdgeClient({ baseURL: 'https://api.example.com' });
       const response = await client.get('/test');
 
       expect(response.status).toBe(200);
@@ -95,9 +95,9 @@ describe('Platform Presets', () => {
         json: () => Promise.resolve({ data: 'test' })
       };
       
-      (global.fetch as any).mockResolvedValueOnce(mockResponse);
+      (global.fetch as any).mockResolvedValue(mockResponse);
 
-      const client = createBrowserClient();
+      const client = createBrowserClient({ baseURL: 'https://api.example.com' });
       const response = await client.get('/test');
 
       expect(response.status).toBe(200);
@@ -125,9 +125,9 @@ describe('Platform Presets', () => {
         json: () => Promise.resolve({ data: 'test' })
       };
       
-      (global.fetch as any).mockResolvedValueOnce(mockResponse);
+      (global.fetch as any).mockResolvedValue(mockResponse);
 
-      const client = createDenoClient();
+      const client = createDenoClient({ baseURL: 'https://api.example.com' });
       const response = await client.get('/test');
 
       expect(response.status).toBe(200);
@@ -155,9 +155,9 @@ describe('Platform Presets', () => {
         json: () => Promise.resolve({ data: 'test' })
       };
       
-      (global.fetch as any).mockResolvedValueOnce(mockResponse);
+      (global.fetch as any).mockResolvedValue(mockResponse);
 
-      const client = createBunClient();
+      const client = createBunClient({ baseURL: 'https://api.example.com' });
       const response = await client.get('/test');
 
       expect(response.status).toBe(200);
