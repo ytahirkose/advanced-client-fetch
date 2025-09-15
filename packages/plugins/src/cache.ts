@@ -1,0 +1,371 @@
+/**
+ * Cache plugin for HyperHTTP
+ * Implements RFC 9111 compliant HTTP caching
+ */
+
+import type { Middleware, CacheOptions, CacheStorage, RequestOptions } from 'hyperhttp-core';
+import { isJSONResponse, getContentType } from 'hyperhttp-core';
+
+export interface CachePluginOptions extends CacheOptions {
+  /** Enable cache plugin */
+  enabled?: boolean;
+  /** Cache only GET requests by default */
+  cacheOnlyGET?: boolean;
+  /** Cache key generator */
+  keyGenerator?: (request: Request) => string;
+  /** Cache validation */
+  validateResponse?: (response: Response) => boolean;
+}
+
+/**
+ * In-memory cache storage implementation
+ */
+export class MemoryCacheStorage implements CacheStorage {
+  private cache = new Map<string, { response: Response; expires: number }>();
+  
+  async get(key: string): Promise<Response | undefined> {
+    const entry = this.cache.get(key);
+    if (!entry) return undefined;
+    
+    if (Date.now() > entry.expires) {
+      this.cache.delete(key);
+      return undefined;
+    }
+    
+    return entry.response;
+  }
+  
+  async set(key: string, response: Response, ttl: number = 300000): Promise<void> {
+    const expires = Date.now() + ttl;
+    this.cache.set(key, { response, expires });
+  }
+  
+  async delete(key: string): Promise<void> {
+    this.cache.delete(key);
+  }
+  
+  async clear(): Promise<void> {
+    this.cache.clear();
+  }
+  
+  size(): number {
+    return this.cache.size;
+  }
+}
+
+/**
+ * Create cache middleware
+ */
+export function cache(options: CachePluginOptions = {}): Middleware {
+  const {
+    enabled = true,
+    ttl = 300000, // 5 minutes
+    storage = new MemoryCacheStorage(),
+    cacheOnlyGET = true,
+    keyGenerator = defaultKeyGenerator,
+    validateResponse = defaultValidateResponse,
+  } = options;
+  
+  if (!enabled) {
+    return async (ctx, next) => next();
+  }
+
+  return async (ctx, next) => {
+    const request = ctx.req;
+    
+    // Only cache GET requests by default
+    if (cacheOnlyGET && request.method !== 'GET') {
+      return next();
+    }
+    
+    // Generate cache key
+    const cacheKey = keyGenerator(request);
+    
+    // Check cache first
+    const cachedResponse = await storage.get(cacheKey);
+    if (cachedResponse) {
+      ctx.res = cachedResponse;
+      ctx.meta.cacheHit = true;
+      return;
+    }
+    
+    // Set cache miss
+    ctx.meta.cacheHit = false;
+    
+    // Add cache headers for validation
+    addCacheHeaders(request);
+    
+    // Make request
+    await next();
+    
+    if (!ctx.res) return;
+    
+    // Validate response
+    if (!validateResponse(ctx.res)) {
+      return;
+    }
+    
+    // Calculate TTL from response headers
+    const responseTTL = calculateTTL(ctx.res, ttl);
+    
+    // Store in cache
+    if (responseTTL > 0) {
+      await storage.set(cacheKey, ctx.res, responseTTL);
+    }
+    
+    ctx.meta.cacheHit = false;
+  };
+}
+
+/**
+ * Default cache key generator (optimized)
+ */
+const keyCache = new Map<string, string>();
+function defaultKeyGenerator(request: Request): string {
+  // Normalize URL to handle trailing slashes consistently
+  const url = new URL(request.url);
+  const normalizedUrl = url.toString();
+  const method = request.method;
+  
+  // Use a simple hash for better performance
+  const key = `${method}:${normalizedUrl}`;
+  
+  
+  if (keyCache.has(key)) {
+    return keyCache.get(key)!;
+  }
+  
+  const hashedKey = btoa(key);
+  keyCache.set(key, hashedKey);
+  
+  // Limit cache size
+  if (keyCache.size > 1000) {
+    const firstKey = keyCache.keys().next().value;
+    keyCache.delete(firstKey);
+  }
+  
+  return hashedKey;
+}
+
+/**
+ * Default response validator
+ */
+function defaultValidateResponse(response: Response): boolean {
+  // Only cache successful responses
+  if (!response.ok) return false;
+  
+  // Don't cache responses with no-store
+  const cacheControl = response.headers.get('cache-control');
+  if (cacheControl?.includes('no-store')) return false;
+  
+  // Don't cache responses with private
+  if (cacheControl?.includes('private')) return false;
+  
+  return true;
+}
+
+/**
+ * Add cache headers to request
+ */
+function addCacheHeaders(request: Request): void {
+  // Add If-None-Match if we have ETag
+  const etag = request.headers.get('if-none-match');
+  if (etag) {
+    request.headers.set('if-none-match', etag);
+  }
+  
+  // Add If-Modified-Since if we have Last-Modified
+  const lastModified = request.headers.get('if-modified-since');
+  if (lastModified) {
+    request.headers.set('if-modified-since', lastModified);
+  }
+}
+
+/**
+ * Calculate TTL from response headers
+ */
+function calculateTTL(response: Response, defaultTTL: number): number {
+  const cacheControl = response.headers.get('cache-control');
+  if (!cacheControl) return defaultTTL;
+  
+  // Parse max-age
+  const maxAgeMatch = cacheControl.match(/max-age=(\d+)/);
+  if (maxAgeMatch) {
+    return parseInt(maxAgeMatch[1], 10) * 1000;
+  }
+  
+  // Parse s-maxage
+  const sMaxAgeMatch = cacheControl.match(/s-maxage=(\d+)/);
+  if (sMaxAgeMatch) {
+    return parseInt(sMaxAgeMatch[1], 10) * 1000;
+  }
+  
+  // Check for no-cache
+  if (cacheControl.includes('no-cache')) {
+    return 0;
+  }
+  
+  // Check for no-store
+  if (cacheControl.includes('no-store')) {
+    return 0;
+  }
+  
+  return defaultTTL;
+}
+
+/**
+ * Create cache middleware with stale-while-revalidate
+ */
+export function cacheWithSWR(options: CachePluginOptions = {}): Middleware {
+  const {
+    enabled = true,
+    ttl = 300000,
+    storage = new MemoryCacheStorage(),
+    staleWhileRevalidate = true,
+  } = options;
+  
+  if (!enabled) {
+    return async (ctx, next) => next();
+  }
+
+  return async (ctx, next) => {
+    const request = ctx.req;
+    
+    if (request.method !== 'GET') {
+      return next();
+    }
+    
+    const cacheKey = defaultKeyGenerator(request);
+    const cachedResponse = await storage.get(cacheKey);
+    
+    if (cachedResponse) {
+      // Check if response is stale
+      const age = Date.now() - (cachedResponse.headers.get('x-cache-timestamp') ? 
+        parseInt(cachedResponse.headers.get('x-cache-timestamp')!, 10) : 0);
+      
+      if (age < ttl) {
+        // Fresh response
+        ctx.res = cachedResponse;
+        ctx.meta.cacheHit = true;
+        return;
+      } else if (staleWhileRevalidate) {
+        // Stale response - serve it but revalidate in background
+        ctx.res = cachedResponse;
+        ctx.meta.cacheHit = true;
+        ctx.meta.staleWhileRevalidate = true;
+        
+        // Revalidate in background
+        Promise.resolve().then(async () => {
+          try {
+            const newRequest = new Request(request);
+            const newResponse = await fetch(newRequest);
+            if (newResponse.ok) {
+              await storage.set(cacheKey, newResponse, ttl);
+            }
+          } catch (error) {
+            // Ignore background revalidation errors
+          }
+        });
+        
+        return;
+      }
+    }
+    
+    // No cache or stale without SWR - make request
+    ctx.meta.cacheHit = false;
+    await next();
+    
+    if (!ctx.res) return;
+    
+    if (ctx.res.ok) {
+      // Add timestamp header
+      const responseWithTimestamp = new Response(ctx.res.body, {
+        status: ctx.res.status,
+        statusText: ctx.res.statusText,
+        headers: {
+          ...Object.fromEntries(ctx.res.headers.entries()),
+          'x-cache-timestamp': Date.now().toString(),
+        },
+      });
+      
+      await storage.set(cacheKey, responseWithTimestamp, ttl);
+      ctx.res = responseWithTimestamp;
+    }
+    
+    ctx.meta.cacheHit = false;
+  };
+}
+
+/**
+ * Create cache middleware for specific content types
+ */
+export function cacheByContentType(
+  contentTypes: string[],
+  options: CachePluginOptions = {}
+): Middleware {
+  return async (ctx, next) => {
+    const request = ctx.req;
+    
+    if (request.method !== 'GET') {
+      return next();
+    }
+    
+    // Use regular cache middleware which will handle content type after response
+    return cache({
+      ...options,
+      validateResponse: (response: Response) => {
+        // First check default validation
+        const defaultValidator = options.validateResponse || defaultValidateResponse;
+        if (!defaultValidator(response)) {
+          return false;
+        }
+        
+        // Check content type
+        const contentType = getContentType(response);
+        if (!contentType || !contentTypes.some(type => contentType.includes(type))) {
+          return false;
+        }
+        
+        return true;
+      }
+    })(ctx, next);
+  };
+}
+
+/**
+ * Create cache middleware with custom TTL per response
+ */
+export function cacheWithCustomTTL(
+  ttlCalculator: (response: Response) => number,
+  options: Omit<CachePluginOptions, 'ttl'> = {}
+): Middleware {
+  return async (ctx, next) => {
+    const request = ctx.req;
+    
+    if (request.method !== 'GET') {
+      return next();
+    }
+    
+    const cacheKey = defaultKeyGenerator(request);
+    const cachedResponse = await options.storage?.get(cacheKey);
+    
+    if (cachedResponse) {
+      ctx.res = cachedResponse;
+      ctx.meta.cacheHit = true;
+      return;
+    }
+    
+    await next();
+    
+    if (!ctx.res) return;
+    
+    if (ctx.res.ok) {
+      const ttl = ttlCalculator(ctx.res);
+      if (ttl > 0) {
+        await options.storage?.set(cacheKey, ctx.res, ttl);
+      }
+    }
+    
+    ctx.meta.cacheHit = false;
+  };
+}

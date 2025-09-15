@@ -1,0 +1,90 @@
+{
+  "name": "hyperhttp-core",
+  "version": "1.0.0",
+  "description": "🚀 Core HTTP client with fetch-first design, plugin architecture, and security features. Works across all platforms with automatic cookie management and SSRF protection.",
+  "type": "module",
+  "private": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./lite": {
+      "types": "./dist/lite.d.ts",
+      "import": "./dist/lite.js",
+      "require": "./dist/lite.cjs"
+    },
+    "./presets/edge": {
+      "types": "./dist/edge.d.ts",
+      "import": "./dist/edge.js",
+      "require": "./dist/edge.cjs"
+    },
+    "./presets/node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js",
+      "require": "./dist/node.cjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:prod": "cross-env NODE_ENV=production tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "http",
+    "client",
+    "fetch",
+    "axios",
+    "retry",
+    "timeout",
+    "plugin",
+    "middleware",
+    "edge",
+    "deno",
+    "bun",
+    "browser",
+    "node",
+    "cors",
+    "cookies",
+    "ssrf",
+    "security",
+    "typescript",
+    "esm",
+    "modern",
+    "platform-agnostic"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ytahirkose/advanced-client-fetch.git",
+    "directory": "packages/core"
+  },
+  "bugs": {
+    "url": "https://github.com/ytahirkose/advanced-client-fetch/issues"
+  },
+  "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
+  "author": "HyperHTTP Team",
+  "license": "MIT"
+}

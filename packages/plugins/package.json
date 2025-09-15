@@ -1,0 +1,112 @@
+{
+  "name": "hyperhttp-plugins",
+  "version": "1.0.0",
+  "description": "🔌 Powerful HTTP plugins for HyperHTTP. Retry, cache, rate limiting, circuit breaker, deduplication, metrics, and more. Production-ready resilience features.",
+  "type": "module",
+  "private": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./retry": {
+      "types": "./dist/retry.d.ts",
+      "import": "./dist/retry.js",
+      "require": "./dist/retry.cjs"
+    },
+    "./timeout": {
+      "types": "./dist/timeout.d.ts",
+      "import": "./dist/timeout.js",
+      "require": "./dist/timeout.cjs"
+    },
+    "./cache": {
+      "types": "./dist/cache.d.ts",
+      "import": "./dist/cache.js",
+      "require": "./dist/cache.cjs"
+    },
+    "./rate-limit": {
+      "types": "./dist/rate-limit.d.ts",
+      "import": "./dist/rate-limit.js",
+      "require": "./dist/rate-limit.cjs"
+    },
+    "./circuit-breaker": {
+      "types": "./dist/circuit-breaker.d.ts",
+      "import": "./dist/circuit-breaker.js",
+      "require": "./dist/circuit-breaker.cjs"
+    },
+    "./dedupe": {
+      "types": "./dist/dedupe.d.ts",
+      "import": "./dist/dedupe.js",
+      "require": "./dist/dedupe.cjs"
+    },
+    "./metrics": {
+      "types": "./dist/metrics.d.ts",
+      "import": "./dist/metrics.js",
+      "require": "./dist/metrics.cjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:prod": "cross-env NODE_ENV=production tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "hyperhttp-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "http",
+    "client",
+    "retry",
+    "timeout",
+    "cache",
+    "rate-limit",
+    "circuit-breaker",
+    "dedupe",
+    "metrics",
+    "plugin",
+    "middleware",
+    "resilience",
+    "fault-tolerance",
+    "performance",
+    "swr",
+    "stale-while-revalidate",
+    "exponential-backoff",
+    "jitter",
+    "typescript",
+    "esm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ytahirkose/advanced-client-fetch.git",
+    "directory": "packages/plugins"
+  },
+  "bugs": {
+    "url": "https://github.com/ytahirkose/advanced-client-fetch/issues"
+  },
+  "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
+  "author": "HyperHTTP Team",
+  "license": "MIT"
+}

@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "preserve",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "composite": true,
+    "baseUrl": ".",
+    "paths": {
+      "@hyperhttp/core": ["./packages/core/src"],
+      "@hyperhttp/core/*": ["./packages/core/src/*"],
+      "@hyperhttp/plugins": ["./packages/plugins/src"],
+      "@hyperhttp/plugins/*": ["./packages/plugins/src/*"],
+      "@hyperhttp/node": ["./packages/node/src"],
+      "@hyperhttp/node/*": ["./packages/node/src/*"],
+      "@hyperhttp/axios-adapter": ["./packages/axios-adapter/src"],
+      "@hyperhttp/axios-adapter/*": ["./packages/axios-adapter/src/*"],
+      "@hyperhttp/presets": ["./packages/presets/src"],
+      "@hyperhttp/presets/*": ["./packages/presets/src/*"]
+    }
+  },
+  "include": ["packages/*/src/**/*"],
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./packages/plugins" },
+    { "path": "./packages/axios-adapter" },
+    { "path": "./packages/presets" }
+  ],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
+}

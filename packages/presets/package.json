@@ -1,0 +1,97 @@
+{
+  "name": "hyperhttp-presets",
+  "version": "1.0.0",
+  "description": "🌍 Platform-specific HTTP client presets for HyperHTTP. Optimized configurations for Node.js, Edge runtimes, Browsers, Deno, and Bun with real-world examples.",
+  "type": "module",
+  "private": false,
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./edge": {
+      "types": "./dist/edge.d.ts",
+      "import": "./dist/edge.js",
+      "require": "./dist/edge.cjs"
+    },
+    "./node": {
+      "types": "./dist/node.d.ts",
+      "import": "./dist/node.js",
+      "require": "./dist/node.cjs"
+    },
+    "./browser": {
+      "types": "./dist/browser.d.ts",
+      "import": "./dist/browser.js",
+      "require": "./dist/browser.cjs"
+    },
+    "./deno": {
+      "types": "./dist/deno.d.ts",
+      "import": "./dist/deno.js",
+      "require": "./dist/deno.cjs"
+    },
+    "./bun": {
+      "types": "./dist/bun.d.ts",
+      "import": "./dist/bun.js",
+      "require": "./dist/bun.cjs"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:prod": "cross-env NODE_ENV=production tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "hyperhttp-core": "workspace:*",
+    "hyperhttp-plugins": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0",
+    "vitest": "^1.0.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "http",
+    "client",
+    "presets",
+    "edge",
+    "node",
+    "browser",
+    "deno",
+    "bun",
+    "platform",
+    "runtime",
+    "optimized",
+    "configuration",
+    "typescript",
+    "esm"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ytahirkose/advanced-client-fetch.git",
+    "directory": "packages/presets"
+  },
+  "bugs": {
+    "url": "https://github.com/ytahirkose/advanced-client-fetch/issues"
+  },
+  "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
+  "author": "HyperHTTP Team",
+  "license": "MIT"
+}
