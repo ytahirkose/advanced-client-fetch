@@ -3,8 +3,8 @@
  * Provides Axios-compatible interface
  */
 
-import { createClient } from '@advanced-client-fetch/core';
-import type { ClientOptions } from '@advanced-client-fetch/core';
+import { createClient } from 'advanced-client-fetch';
+import type { ClientOptions } from 'advanced-client-fetch';
 import type { AxiosRequestConfig, AxiosResponse, AxiosError, AxiosInstance, AxiosInterceptorManager } from './types';
 import { AxiosErrorFactory, BaseAxiosError } from './errors';
 
