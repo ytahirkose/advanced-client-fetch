@@ -3,9 +3,10 @@ import { defineConfig } from 'tsup';
 export default defineConfig({
   entry: {
     index: 'src/index.ts',
+    all: 'src/all.ts',
   },
   format: ['esm', 'cjs'],
-  dts: true,
+  dts: false,
   sourcemap: false,
   clean: true,
   splitting: false,
@@ -26,12 +27,7 @@ export default defineConfig({
     }
   },
   treeshake: true,
-  external: [
-    '@advanced-client-fetch/core',
-    '@advanced-client-fetch/plugins',
-    '@advanced-client-fetch/presets',
-    '@advanced-client-fetch/axios-adapter'
-  ],
+  external: [],
   esbuildOptions(options) {
     options.conditions = ['node', 'import'];
     options.target = 'es2020';

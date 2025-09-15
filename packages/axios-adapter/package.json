@@ -54,7 +54,7 @@
   },
   "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
   "peerDependencies": {
-    "@advanced-client-fetch/core": "^1.0.0"
+    "advanced-client-fetch": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

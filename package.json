@@ -13,10 +13,10 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
-    "./core": {
-      "types": "./packages/core/dist/index.d.ts",
-      "import": "./packages/core/dist/index.js",
-      "require": "./packages/core/dist/index.cjs"
+    "./all": {
+      "types": "./dist/all.d.ts",
+      "import": "./dist/all.js",
+      "require": "./dist/all.cjs"
     },
     "./plugins": {
       "types": "./packages/plugins/dist/index.d.ts",
@@ -27,11 +27,6 @@
       "types": "./packages/presets/dist/index.d.ts",
       "import": "./packages/presets/dist/index.js",
       "require": "./packages/presets/dist/index.cjs"
-    },
-    "./axios-adapter": {
-      "types": "./packages/axios-adapter/dist/index.d.ts",
-      "import": "./packages/axios-adapter/dist/index.js",
-      "require": "./packages/axios-adapter/dist/index.cjs"
     }
   },
   "sideEffects": false,
