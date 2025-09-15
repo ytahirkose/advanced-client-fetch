@@ -3,11 +3,9 @@ import { defineConfig } from "tsup";
 const isProd = process.env.NODE_ENV === "production";
 
 export default defineConfig({
-  entry: {
-    index: "src/index.ts",
-  },
+  entry: ["src/index.ts"],
   format: ["esm", "cjs"],
-  dts: true,
+  dts: false,
   splitting: true,
   sourcemap: !isProd,
   clean: true,

@@ -1,33 +1,37 @@
-# HyperHTTP
+# Advanced Client Fetch
 
-> **🚀 The modern HTTP client that's more powerful than Axios**
-
-[![npm version](https://badge.fury.io/js/hyperhttp.svg)](https://www.npmjs.com/package/hyperhttp)
-[![Build Status](https://github.com/ytahirkose/hyperhttp/workflows/CI/badge.svg)](https://github.com/ytahirkose/hyperhttp/actions)
-[![Bundle Size](https://img.shields.io/bundlephobia/minzip/hyperhttp)](https://bundlephobia.com/result?p=hyperhttp)
+[![npm version](https://img.shields.io/npm/v/advanced-client-fetch.svg)](https://www.npmjs.com/package/advanced-client-fetch)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/advanced-client-fetch)](https://bundlephobia.com/package/advanced-client-fetch)
+[![License](https://img.shields.io/npm/l/advanced-client-fetch.svg)](https://github.com/ytahirkose/advanced-client-fetch/blob/main/LICENSE)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-A fetch-first, plugin-based HTTP client that works across all platforms. More powerful than Axios with smart retry, caching, rate limiting, circuit breaker, and more.
+🚀 **The modern HTTP client that's more powerful than Axios.** Fetch-first, plugin-based, platform-independent with smart retry, caching, rate limiting, and more.
 
 ## ✨ Features
 
-- **🌐 Platform Independent** - Node 18+, Edge, Deno, Bun, Browser
-- **⚡ Fetch-First** - Built on modern web standards
-- **🔌 Plugin Architecture** - Modular and extensible middleware system
-- **📦 Small Core** - Minimal bundle size (~15KB)
-- **🛡️ Security** - SSRF protection, header sanitization
-- **⚡ Performance** - Caching, deduplication, rate limiting
-- **🔧 TypeScript** - Full type safety
-- **🔄 Axios Compatible** - Drop-in replacement for Axios
-- **🧪 Well Tested** - 100% test coverage
-- **🍪 Cookie Management** - Automatic cookie handling
-- **📊 Metrics** - Built-in performance monitoring
+- 🎯 **Fetch-first**: Built on native `fetch` API
+- 🔌 **Plugin-based**: Modular architecture like Koa
+- 🌐 **Platform-independent**: Works on Node.js, Edge, Deno, Bun, and browsers
+- 🚀 **Smart retry**: Exponential backoff with jitter
+- 💾 **Built-in caching**: Memory and persistent storage
+- 🛡️ **Security**: SSRF protection, header sanitization
+- 🍪 **Cookie management**: Automatic cookie handling
+- 📊 **Metrics**: Performance monitoring and analytics
+- 🔄 **Axios compatibility**: Drop-in replacement for Axios
+- 📦 **Tree-shakable**: Only bundle what you use
+- 🎨 **TypeScript**: Full type safety
 
 ## 📦 Installation
 
 ```bash
-npm install hyperhttp
+# Install the main package
+npm install advanced-client-fetch
+
+# Or with specific features
+npm install advanced-client-fetch --core
+npm install advanced-client-fetch --plugins
+npm install advanced-client-fetch --presets
+npm install advanced-client-fetch --axios-adapter
 ```
 
 ## 🚀 Quick Start
@@ -35,291 +39,156 @@ npm install hyperhttp
 ### Basic Usage
 
 ```javascript
-import { createClient } from 'hyperhttp';
+import { createClient } from 'advanced-client-fetch';
 
 const client = createClient({
   baseURL: 'https://api.example.com',
-  headers: {
-    'Authorization': 'Bearer token'
-  }
+  timeout: 5000,
 });
 
-// Make requests
-const users = await client.get('/users');
-const user = await client.post('/users', { name: 'John' });
+// GET request
+const response = await client.get('/users');
+
+// POST request
+const newUser = await client.post('/users', {
+  name: 'John Doe',
+  email: 'john@example.com'
+});
 ```
 
 ### With Plugins
 
 ```javascript
-import { createClient, retry, cache, rateLimit, circuitBreaker } from 'hyperhttp';
+import { createClient } from 'advanced-client-fetch';
+import { retryPlugin, cachePlugin } from 'advanced-client-fetch/plugins';
 
 const client = createClient({
   baseURL: 'https://api.example.com',
   plugins: [
-    retry({ retries: 3, minDelay: 100, maxDelay: 2000 }),
-    cache({ ttl: 300000 }), // 5 minutes
-    rateLimit({ maxRequests: 100, windowMs: 60000 }),
-    circuitBreaker({ failureThreshold: 5, resetTimeout: 30000 })
+    retryPlugin({
+      attempts: 3,
+      delay: 1000,
+      backoff: 'exponential'
+    }),
+    cachePlugin({
+      ttl: 300000, // 5 minutes
+      storage: 'memory'
+    })
   ]
 });
-
-const data = await client.get('/api/data');
 ```
 
 ### Axios Compatibility
 
 ```javascript
-import { createAxiosAdapter } from 'hyperhttp';
+import { createAxiosAdapter } from 'advanced-client-fetch/axios-adapter';
 
 const axios = createAxiosAdapter({
   baseURL: 'https://api.example.com',
-  plugins: [
-    retry({ retries: 3 }),
-    cache({ ttl: 300000 })
-  ]
+  timeout: 5000
 });
 
 // Use exactly like Axios
 const response = await axios.get('/users');
-const user = await axios.post('/users', { name: 'John' });
 ```
 
 ### Platform Presets
 
 ```javascript
-import { 
-  createNodeClient, 
-  createEdgeClient, 
-  createBrowserClient,
-  createDenoClient,
-  createBunClient 
-} from 'hyperhttp';
+import { browserPreset, nodePreset } from 'advanced-client-fetch/presets';
 
-// Node.js (full-featured)
-const nodeClient = createNodeClient({
+// Browser-optimized client
+const browserClient = browserPreset({
   baseURL: 'https://api.example.com'
 });
 
-// Edge runtime (optimized)
-const edgeClient = createEdgeClient({
-  baseURL: 'https://api.example.com'
-});
-
-// Browser (CORS-friendly)
-const browserClient = createBrowserClient({
+// Node.js-optimized client
+const nodeClient = nodePreset({
   baseURL: 'https://api.example.com'
 });
 ```
 
-## 🔌 Plugins
+## 🔌 Available Plugins
 
-### Retry Plugin
+- **Retry**: Smart retry with exponential backoff
+- **Cache**: Memory and persistent caching
+- **Rate Limiting**: Request rate limiting
+- **Circuit Breaker**: Fault tolerance
+- **Deduplication**: Request deduplication
+- **Metrics**: Performance monitoring
+- **Timeout**: Request timeout handling
 
-Intelligent retry logic with exponential backoff and jitter.
+## 🌐 Platform Support
 
-```javascript
-import { retry } from 'hyperhttp';
-
-const client = createClient({
-  plugins: [
-    retry({
-      retries: 3,
-      minDelay: 100,
-      maxDelay: 2000,
-      factor: 2,
-      jitter: true,
-      retryOn: (error) => error.status >= 500
-    })
-  ]
-});
-```
-
-### Cache Plugin
-
-RFC 9111 compliant HTTP caching.
-
-```javascript
-import { cache } from 'hyperhttp';
-
-const client = createClient({
-  plugins: [
-    cache({
-      ttl: 300000, // 5 minutes
-      keyGenerator: (request) => request.url
-    })
-  ]
-});
-```
-
-### Rate Limiting Plugin
-
-Sliding window rate limiting.
-
-```javascript
-import { rateLimit } from 'hyperhttp';
-
-const client = createClient({
-  plugins: [
-    rateLimit({
-      maxRequests: 100,
-      windowMs: 60000, // 1 minute
-      keyGenerator: (request) => request.headers['X-User-ID'] || 'anonymous'
-    })
-  ]
-});
-```
-
-### Circuit Breaker Plugin
-
-Fault tolerance with circuit breaker pattern.
-
-```javascript
-import { circuitBreaker } from 'hyperhttp';
-
-const client = createClient({
-  plugins: [
-    circuitBreaker({
-      failureThreshold: 5,
-      windowMs: 60000,
-      resetTimeout: 30000,
-      keyGenerator: (request) => new URL(request.url).hostname
-    })
-  ]
-});
-```
-
-### Deduplication Plugin
-
-Prevent duplicate requests from being made simultaneously.
-
-```javascript
-import { dedupe } from 'hyperhttp';
-
-const client = createClient({
-  plugins: [
-    dedupe({
-      maxAge: 30000,
-      maxPending: 10
-    })
-  ]
-});
-```
-
-### Metrics Plugin
-
-Collect detailed metrics about requests and responses.
-
-```javascript
-import { metrics } from 'hyperhttp';
-
-const client = createClient({
-  plugins: [
-    metrics({
-      onMetrics: (data) => {
-        console.log('Request metrics:', data);
-      }
-    })
-  ]
-});
-```
-
-## 🌍 Platform Support
-
-| Platform | Support | Notes |
-|----------|---------|-------|
-| **Node.js** | ✅ Full | HTTP agents, proxy support |
-| **Edge** | ✅ Full | Cloudflare Workers, Vercel Edge |
-| **Browser** | ✅ Full | CORS, credentials, cookies |
-| **Deno** | ✅ Full | Native fetch support |
-| **Bun** | ✅ Full | Optimized for Bun runtime |
+- ✅ **Node.js** 18+
+- ✅ **Browsers** (modern)
+- ✅ **Edge Runtime** (Vercel, Cloudflare)
+- ✅ **Deno** 1.0+
+- ✅ **Bun** 1.0+
 
 ## 📊 Bundle Size
 
-| Format | Size | Gzipped |
-|--------|------|---------|
-| **ESM** | 14.6 KB | ~5.2 KB |
-| **CJS** | 15.0 KB | ~5.4 KB |
+- **Core**: ~2.5KB gzipped
+- **With Plugins**: ~8KB gzipped
+- **Full Package**: ~15KB gzipped
 
 ## 🧪 Testing
 
 ```bash
-# Run tests
 npm test
-
-# Run tests with coverage
-npm run test:coverage
-
-# Run tests in watch mode
 npm run test:watch
+npm run test:coverage
 ```
 
-## 🔧 API Reference
+## 📚 API Reference
 
-### createClient(options)
-
-Creates a new HTTP client instance.
-
-**Options:**
-- `baseURL?: string` - Base URL for all requests
-- `timeout?: number` - Request timeout in milliseconds
-- `headers?: Record<string, string>` - Default headers
-- `plugins?: Middleware[]` - Plugin middleware array
-- `signal?: AbortSignal` - Default abort signal
-
-### HTTP Methods
-
-- `client.get(url, options?)` - GET request
-- `client.post(url, data?, options?)` - POST request
-- `client.put(url, data?, options?)` - PUT request
-- `client.patch(url, data?, options?)` - PATCH request
-- `client.delete(url, options?)` - DELETE request
-- `client.head(url, options?)` - HEAD request
-- `client.options(url, options?)` - OPTIONS request
-
-### Response Object
-
-```typescript
-interface Response<T = any> {
-  data: T;
-  status: number;
-  statusText: string;
-  headers: Headers;
-  config: RequestOptions;
-  request?: any;
-}
-```
-
-### Error Classes
-
-- `HttpError` - HTTP status errors (4xx, 5xx)
-- `NetworkError` - Network connectivity errors
-- `AbortError` - Request aborted errors
-- `TimeoutError` - Request timeout errors
-
-## 🚀 Migration from Axios
-
-### 1. Install HyperHTTP
-
-```bash
-npm uninstall axios
-npm install hyperhttp
-```
-
-### 2. Update Imports
+### Core API
 
 ```javascript
-// Before
-import axios from 'axios';
-
-// After
-import { createAxiosAdapter } from 'hyperhttp';
-const axios = createAxiosAdapter();
+import { 
+  createClient,
+  createAxiosAdapter,
+  HttpError,
+  AbortError,
+  NetworkError
+} from 'advanced-client-fetch';
 ```
 
-### 3. That's it! 🎉
+### Plugins API
 
-Your existing Axios code will work without any changes.
+```javascript
+import { 
+  retryPlugin,
+  cachePlugin,
+  rateLimitPlugin,
+  circuitBreakerPlugin
+} from 'advanced-client-fetch/plugins';
+```
+
+### Presets API
+
+```javascript
+import { 
+  browserPreset,
+  nodePreset,
+  edgePreset,
+  denoPreset,
+  bunPreset
+} from 'advanced-client-fetch/presets';
+```
+
+## 🔄 Migration from Axios
+
+```javascript
+// Before (Axios)
+import axios from 'axios';
+const response = await axios.get('/api/users');
+
+// After (Advanced Client Fetch)
+import { createClient } from 'advanced-client-fetch';
+const client = createClient();
+const response = await client.get('/api/users');
+```
 
 ## 🤝 Contributing
 
@@ -331,10 +200,10 @@ Your existing Axios code will work without any changes.
 
 ## 📄 License
 
-MIT © [Yasar Tahir Kose](https://github.com/ytahirkose)
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🙏 Acknowledgments
 
-- [Axios](https://github.com/axios/axios) for inspiration
-- [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) for the foundation
-- [Koa](https://koajs.com/) for middleware architecture inspiration
+- Inspired by [Axios](https://github.com/axios/axios)
+- Built with [TypeScript](https://www.typescriptlang.org/)
+- Powered by native [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API)

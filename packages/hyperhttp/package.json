@@ -1,6 +1,6 @@
 {
   "name": "advanced-client-fetch",
-  "version": "1.0.15",
+  "version": "1.0.16",
   "description": "🚀 The modern HTTP client that's more powerful than Axios. Fetch-first, plugin-based, platform-independent with smart retry, caching, rate limiting, and more.",
   "type": "module",
   "private": false,
