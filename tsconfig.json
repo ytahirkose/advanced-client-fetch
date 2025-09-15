@@ -31,7 +31,7 @@
       "@advanced-client-fetch/presets/*": ["./packages/presets/src/*"]
     }
   },
-  "include": ["packages/*/src/**/*"],
+  "include": ["packages/*/src/**/*", "src/**/*"],
   "references": [
     { "path": "./packages/core" },
     { "path": "./packages/plugins" },
