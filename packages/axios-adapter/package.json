@@ -1,5 +1,5 @@
 {
-  "name": "@advanced-client-fetch/axios-adapter",
+  "name": "advanced-client-fetch-axios-adapter",
   "version": "1.0.0",
   "description": "🔄 Axios-compatible adapter for Advanced Client Fetch. Drop-in replacement for Axios with modern fetch-based architecture.",
   "type": "module",
