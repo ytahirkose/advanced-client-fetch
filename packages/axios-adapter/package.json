@@ -1,5 +1,5 @@
 {
-  "name": "advanced-client-fetch-axios-adapter",
+  "name": "@advanced-client-fetch/axios-adapter",
   "version": "1.0.3",
   "description": "🔄 Axios-compatible adapter for Advanced Client Fetch. Drop-in replacement for Axios with modern fetch-based architecture.",
   "type": "module",
@@ -54,7 +54,7 @@
   },
   "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
   "peerDependencies": {
-    "advanced-client-fetch": "^1.0.0"
+    "@advanced-client-fetch/core": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
