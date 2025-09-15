@@ -30,7 +30,7 @@ export default defineConfig({
       comments: false        // yorumları sil
     }
   },
-  treeshake: true,
+  
   external: [
     '@advanced-client-fetch/core', 
     '@advanced-client-fetch/plugins',
