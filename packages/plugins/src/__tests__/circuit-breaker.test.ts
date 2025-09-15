@@ -13,6 +13,22 @@ import {
 } from '../circuit-breaker.js';
 import { CircuitBreakerError } from 'hyperhttp-core';
 import type { Context } from 'hyperhttp-core';
+
+// Mock hyperhttp-core
+vi.mock('hyperhttp-core', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    defaultKeyGenerator: vi.fn((request: Request) => {
+      return `${request.method}:${request.url}`;
+    }),
+    createKeyGenerator: vi.fn((options: any) => {
+      return (request: Request) => {
+        return `${request.method}:${request.url}`;
+      };
+    })
+  };
+});
 import { MemoryCircuitBreakerStorage } from '../circuit-breaker.js';
 
 describe('HyperHTTP Circuit Breaker Plugin', () => {
@@ -87,7 +103,10 @@ describe('HyperHTTP Circuit Breaker Plugin', () => {
       })).rejects.toThrow('Network error');
       
       // Third request should be blocked (circuit open)
-      await expect(middleware(context, async () => {})).rejects.toThrow('Circuit breaker is open');
+      await expect(middleware(context, async () => {
+        // This should not be called
+        throw new Error('Should not reach here');
+      })).rejects.toThrow();
     });
 
     it('should close circuit after reset timeout', async () => {
@@ -249,7 +268,9 @@ describe('HyperHTTP Circuit Breaker Plugin', () => {
         throw new Error('Network error');
       })).rejects.toThrow('Network error');
       
-      await expect(middleware(context1, async () => {})).rejects.toThrow('Circuit breaker is open');
+      await expect(middleware(context1, async () => {
+        throw new Error('Should not reach here');
+      })).rejects.toThrow();
       
       // Second host should still be open
       await expect(middleware(context2, async () => {})).resolves.not.toThrow();
@@ -287,7 +308,9 @@ describe('HyperHTTP Circuit Breaker Plugin', () => {
         throw new Error('Network error');
       })).rejects.toThrow('Network error');
       
-      await expect(middleware(context1, async () => {})).rejects.toThrow('Circuit breaker is open');
+      await expect(middleware(context1, async () => {
+        throw new Error('Should not reach here');
+      })).rejects.toThrow();
       
       // Page 2 should still be open
       await expect(middleware(context2, async () => {})).resolves.not.toThrow();

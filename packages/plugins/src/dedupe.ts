@@ -4,6 +4,7 @@
  */
 
 import type { Middleware, RequestOptions, Context } from 'hyperhttp-core';
+import { defaultKeyGenerator, createKeyGenerator } from 'hyperhttp-core';
 import { createHash } from 'node:crypto';
 
 export interface DedupePluginOptions {
@@ -99,14 +100,7 @@ const DEFAULT_OPTIONS: Required<DedupePluginOptions> = {
   includeHeaderKeys: [],
 };
 
-/**
- * Default key generator
- */
-function defaultKeyGenerator(request: Request): string {
-  const url = new URL(request.url);
-  const key = `${request.method}:${url.origin}${url.pathname}${url.search}`;
-  return createHash('md5').update(key).digest('hex');
-}
+// Using imported defaultKeyGenerator from hyperhttp-core
 
 /**
  * Create deduplication middleware
@@ -120,7 +114,7 @@ export function dedupe(options: DedupePluginOptions = {}): Middleware {
 
   return async (ctx, next) => {
     const request = ctx.req;
-    const key = config.keyGenerator(request);
+    const key = config.keyGenerator ? config.keyGenerator(request) : defaultKeyGenerator(request);
     console.log('Dedupe key:', key);
     
     // Check if request is already in flight

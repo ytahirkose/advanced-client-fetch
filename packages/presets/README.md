@@ -3,6 +3,8 @@
 > **Platform-Specific HTTP Clients** - Optimized configurations for different environments
 
 [![npm version](https://badge.fury.io/js/@hyperhttp/presets.svg)](https://badge.fury.io/js/@hyperhttp/presets)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@hyperhttp/presets)](https://bundlephobia.com/package/@hyperhttp/presets)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
 Pre-configured HTTP clients optimized for specific platforms and use cases. Each preset includes the best practices and optimizations for its target environment.
 
@@ -173,6 +175,56 @@ const client = createRealTimeClient({
 });
 ```
 
+### WebSocket Client
+
+```typescript
+import { createWebSocketClient } from '@hyperhttp/presets/browser';
+
+const client = createWebSocketClient({
+  baseURL: 'wss://ws.example.com',
+  retry: { retries: 3 },
+  timeout: 10000
+});
+```
+
+### Streaming Client
+
+```typescript
+import { createStreamingClient } from '@hyperhttp/presets/node';
+
+const client = createStreamingClient({
+  baseURL: 'https://stream.example.com',
+  retry: { retries: 2 },
+  timeout: 30000
+});
+```
+
+### Batch Client
+
+```typescript
+import { createBatchClient } from '@hyperhttp/presets/node';
+
+const client = createBatchClient({
+  baseURL: 'https://batch.example.com',
+  retry: { retries: 3 },
+  timeout: 60000,
+  rateLimit: { maxRequests: 100, windowMs: 60000 }
+});
+```
+
+### Serverless Client
+
+```typescript
+import { createServerlessClient } from '@hyperhttp/presets/edge';
+
+const client = createServerlessClient({
+  baseURL: 'https://api.example.com',
+  retry: { retries: 2 },
+  timeout: 10000,
+  cache: { ttl: 300000 }
+});
+```
+
 ## Real-World Examples
 
 ### 1. CORS + Cookie Authentication
@@ -290,7 +342,7 @@ interface PresetOptions {
   circuitBreaker?: boolean | CircuitBreakerOptions;
   dedupe?: boolean | DedupeOptions;
   metrics?: boolean | MetricsOptions;
-  middleware?: Middleware[];
+  plugins?: Middleware[];
 }
 ```
 

@@ -27,6 +27,7 @@ export function createClient(options: ClientOptions = {}): Client {
     plugins = [],
     timeout = 0,
     signal,
+    paramsSerializer = defaultParamsSerializer,
   } = options;
 
   // Use provided plugins
@@ -39,7 +40,7 @@ export function createClient(options: ClientOptions = {}): Client {
     const runRequest = run;
     
     // Build URL
-    const url = buildURL(baseURL, requestOptions.url, requestOptions.query);
+    const url = buildURL(baseURL, requestOptions.url, requestOptions.query, paramsSerializer);
     
     // Merge headers
     const headers = mergeHeaders(defaultHeaders, requestOptions.headers);
@@ -189,27 +190,37 @@ async function handleResponse<T>(response: Response, request: Request, responseT
   }
   
   // Handle different response types
-  switch (responseType) {
-    case 'json':
-      return await response.json() as T;
-    case 'text':
-      return await response.text() as T;
-    case 'blob':
-      return await response.blob() as T;
-    case 'arrayBuffer':
-      return await response.arrayBuffer() as T;
-    case 'stream':
-      return response.body as T;
-    default:
-      // Auto-detect based on content type
-      const contentType = response.headers.get('content-type');
-      if (contentType?.includes('application/json')) {
+  try {
+    switch (responseType) {
+      case 'json':
         return await response.json() as T;
-      }
-      if (contentType?.includes('text/')) {
+      case 'text':
         return await response.text() as T;
-      }
-      return response as T;
+      case 'blob':
+        return await response.blob() as T;
+      case 'arrayBuffer':
+        return await response.arrayBuffer() as T;
+      case 'stream':
+        return response.body as T;
+      default:
+        // Auto-detect based on content type
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('application/json')) {
+          return await response.json() as T;
+        }
+        if (contentType?.includes('text/')) {
+          return await response.text() as T;
+        }
+        return response as T;
+    }
+  } catch (error) {
+    throw new HyperHttpError(
+      `Failed to parse response: ${(error as Error).message}`,
+      response.status,
+      request,
+      response,
+      error
+    );
   }
 }
 
@@ -227,8 +238,26 @@ function transformError(error: Error, requestId?: string): Error {
     return new HyperAbortError(error.message, 'aborted');
   }
   
-  // Generic error
-  return new Error(`Request failed: ${error.message}`);
+  // Network errors
+  if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('connection')) {
+    return new NetworkError(
+      `Network error: ${error.message}`,
+      new Request(''),
+      error
+    );
+  }
+  
+  // Timeout errors
+  if (error.message.includes('timeout') || error.message.includes('timed out')) {
+    return new HyperAbortError(error.message, 'timeout');
+  }
+  
+  // Generic error with request ID
+  const genericError = new Error(`Request failed: ${error.message}`);
+  if (requestId) {
+    (genericError as any).requestId = requestId;
+  }
+  return genericError;
 }
 
 /**

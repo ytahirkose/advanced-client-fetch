@@ -3,10 +3,21 @@
  * Optimized for Cloudflare Workers, Vercel Edge Functions, etc.
  */
 
-import { createClient, Client, ClientOptions } from 'hyperhttp-core';
+import { 
+  createPresetClient, 
+  createMinimalPresetClient, 
+  createFullPresetClient,
+  createProductionPresetClient,
+  createDevelopmentPresetClient,
+  createTestPresetClient,
+  createPresetClientBuilder,
+  type Client, 
+  type PlatformOptions,
+  type PresetConfig
+} from 'hyperhttp-core';
 import { retry, timeout, dedupe, metrics } from 'hyperhttp-plugins';
 
-export interface EdgePresetOptions extends ClientOptions {
+export interface EdgePresetOptions extends PlatformOptions {
   /** Enable retry middleware */
   retry?: boolean | any;
   /** Enable timeout middleware */
@@ -20,66 +31,58 @@ export interface EdgePresetOptions extends ClientOptions {
 }
 
 /**
- * Create HyperHTTP client optimized for edge runtime
+ * Edge middleware factory
  */
-export function createEdgeClient(options: EdgePresetOptions = {}): Client {
-  const {
-    retry: retryOptions = true,
-    timeout: timeoutOptions = 30000,
-    dedupe: dedupeOptions = true,
-    metrics: metricsOptions = false,
-    middleware = [],
-    ...clientOptions
-  } = options;
-
-  // Set default headers
-  const defaultHeaders = {
-    'User-Agent': 'hyperhttp-edge/0.1.0',
-    ...clientOptions.headers,
-  };
-
-  const edgeMiddleware: any[] = [];
+function createEdgeMiddleware(config: PresetConfig, options: EdgePresetOptions): any[] {
+  const middleware: any[] = [];
 
   // Add retry middleware
-  if (retryOptions) {
-    const retryConfig = typeof retryOptions === 'boolean' 
+  if (config.retry) {
+    const retryConfig = typeof config.retry === 'boolean' 
       ? { retries: 3, minDelay: 100, maxDelay: 2000, jitter: true }
-      : retryOptions;
-    edgeMiddleware.push(retry(retryConfig));
+      : config.retry;
+    middleware.push(retry(retryConfig));
   }
 
   // Add timeout middleware
-  if (timeoutOptions) {
-    const timeoutConfig = typeof timeoutOptions === 'number'
-      ? { timeout: timeoutOptions }
-      : timeoutOptions;
-    edgeMiddleware.push(timeout(timeoutConfig));
+  if (config.timeout) {
+    const timeoutConfig = typeof config.timeout === 'number'
+      ? { timeout: config.timeout }
+      : config.timeout;
+    middleware.push(timeout(timeoutConfig));
   }
 
   // Add deduplication middleware
-  if (dedupeOptions) {
-    const dedupeConfig = typeof dedupeOptions === 'boolean'
+  if (config.dedupe) {
+    const dedupeConfig = typeof config.dedupe === 'boolean'
       ? { maxAge: 30000 }
-      : dedupeOptions;
-    edgeMiddleware.push(dedupe(dedupeConfig));
+      : config.dedupe;
+    middleware.push(dedupe(dedupeConfig));
   }
 
   // Add metrics middleware
-  if (metricsOptions) {
-    const metricsConfig = typeof metricsOptions === 'boolean'
+  if (config.metrics) {
+    const metricsConfig = typeof config.metrics === 'boolean'
       ? { enabled: true }
-      : metricsOptions;
-    edgeMiddleware.push(metrics(metricsConfig));
+      : config.metrics;
+    middleware.push(metrics(metricsConfig));
   }
 
-  // Add custom middleware
-  edgeMiddleware.push(...middleware);
+  return middleware;
+}
 
-  return createClient({
-    ...clientOptions,
-    headers: defaultHeaders,
-    middleware: edgeMiddleware,
-  });
+/**
+ * Create HyperHTTP client optimized for edge runtime
+ */
+export function createEdgeClient(options: EdgePresetOptions = {}): Client {
+  const defaultConfig: PresetConfig = {
+    retry: options.retry ?? true,
+    timeout: options.timeout ?? 30000,
+    dedupe: options.dedupe ?? true,
+    metrics: options.metrics ?? false,
+  };
+
+  return createPresetClient('edge', options, defaultConfig, createEdgeMiddleware);
 }
 
 /**
@@ -89,13 +92,15 @@ export function createEdgeClientWithRetry(
   retryOptions: any = {},
   clientOptions: Omit<EdgePresetOptions, 'retry'> = {}
 ): Client {
-  return createEdgeClient({
+  return createPresetClient('edge', {
     ...clientOptions,
+    retry: retryOptions,
+  }, {
     retry: retryOptions,
     timeout: false,
     dedupe: false,
     metrics: false,
-  });
+  }, createEdgeMiddleware);
 }
 
 /**
@@ -105,13 +110,15 @@ export function createEdgeClientWithTimeout(
   timeoutMs: number = 30000,
   clientOptions: Omit<EdgePresetOptions, 'timeout'> = {}
 ): Client {
-  return createEdgeClient({
+  return createPresetClient('edge', {
     ...clientOptions,
+    timeout: timeoutMs,
+  }, {
     retry: false,
     timeout: timeoutMs,
     dedupe: false,
     metrics: false,
-  });
+  }, createEdgeMiddleware);
 }
 
 /**
@@ -121,13 +128,15 @@ export function createEdgeClientWithDedupe(
   dedupeOptions: any = {},
   clientOptions: Omit<EdgePresetOptions, 'dedupe'> = {}
 ): Client {
-  return createEdgeClient({
+  return createPresetClient('edge', {
     ...clientOptions,
+    dedupe: dedupeOptions,
+  }, {
     retry: false,
     timeout: false,
     dedupe: dedupeOptions,
     metrics: false,
-  });
+  }, createEdgeMiddleware);
 }
 
 /**
@@ -137,13 +146,15 @@ export function createEdgeClientWithMetrics(
   metricsOptions: any = {},
   clientOptions: Omit<EdgePresetOptions, 'metrics'> = {}
 ): Client {
-  return createEdgeClient({
+  return createPresetClient('edge', {
     ...clientOptions,
+    metrics: metricsOptions,
+  }, {
     retry: false,
     timeout: false,
     dedupe: false,
     metrics: metricsOptions,
-  });
+  }, createEdgeMiddleware);
 }
 
 
@@ -216,13 +227,9 @@ export const edgeClient = createEdgeClient();
  * Create minimal edge client
  */
 export function createMinimalEdgeClient(baseURL?: string, options: EdgePresetOptions = {}): Client {
-  return createEdgeClient({
+  return createMinimalPresetClient('edge', {
     ...options,
     baseURL,
-    retry: false,
-    timeout: false,
-    dedupe: false,
-    metrics: false,
   });
 }
 
@@ -230,13 +237,12 @@ export function createMinimalEdgeClient(baseURL?: string, options: EdgePresetOpt
  * Create full edge client with all features
  */
 export function createFullEdgeClient(options: EdgePresetOptions = {}): Client {
-  return createEdgeClient({
-    ...options,
+  return createFullPresetClient('edge', options, {
     retry: true,
     timeout: 30000,
     dedupe: true,
     metrics: true,
-  });
+  }, createEdgeMiddleware);
 }
 
 /**

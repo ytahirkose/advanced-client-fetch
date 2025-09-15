@@ -4,6 +4,7 @@
 
 [![npm version](https://badge.fury.io/js/@hyperhttp/core.svg)](https://badge.fury.io/js/@hyperhttp/core)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/@hyperhttp/core)](https://bundlephobia.com/package/@hyperhttp/core)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
 The core package of HyperHTTP - a modern, fetch-first HTTP client with plugin architecture that works across all platforms.
 
@@ -17,6 +18,8 @@ The core package of HyperHTTP - a modern, fetch-first HTTP client with plugin ar
 - 📦 **Tree Shakeable**: Only bundle what you use
 - 🔧 **TypeScript**: Full type safety
 - ⚡ **Performance**: Optimized for modern runtimes
+- 🔄 **Smart Retry**: Exponential backoff with jitter
+- 📊 **Metrics**: Built-in performance monitoring
 
 ## Installation
 
@@ -51,7 +54,7 @@ import { retry, cache, security } from '@hyperhttp/plugins';
 
 const client = createClient({
   baseURL: 'https://api.example.com',
-  middleware: [
+  plugins: [
     retry({ retries: 3, jitter: true }),
     cache({ ttl: 300000 }),
     security({ ssrfProtection: true })
@@ -66,7 +69,7 @@ import { createClient, createCookieMiddleware, createCookieJar } from '@hyperhtt
 
 const cookieJar = createCookieJar();
 const client = createClient({
-  middleware: [createCookieMiddleware(cookieJar)]
+  plugins: [createCookieMiddleware(cookieJar)]
 });
 
 // Cookies are automatically managed
@@ -79,7 +82,7 @@ const response = await client.get('/auth/profile');
 import { createClient, createSecurityMiddleware } from '@hyperhttp/core';
 
 const client = createClient({
-  middleware: [
+  plugins: [
     createSecurityMiddleware({
       ssrfProtection: true,
       blockPrivateIPs: true,
@@ -99,8 +102,10 @@ Creates a new HTTP client instance.
 - `baseURL?: string` - Base URL for all requests
 - `headers?: Record<string, string>` - Default headers
 - `transport?: (request: Request) => Promise<Response>` - Custom transport
-- `middleware?: Middleware[]` - Middleware pipeline
-- `defaults?: Partial<RequestOptions>` - Default request options
+- `plugins?: Middleware[]` - Plugin pipeline
+- `timeout?: number` - Default timeout in milliseconds
+- `signal?: AbortSignal` - Default abort signal
+- `paramsSerializer?: (params: Record<string, any>) => string` - Query parameter serializer
 
 ### Client Methods
 
@@ -165,21 +170,13 @@ import { createCookieJar, createCookieMiddleware } from '@hyperhttp/core';
 const cookieJar = createCookieJar();
 
 // Set cookie
-cookieJar.set({
-  name: 'auth_token',
-  value: 'abc123',
-  domain: 'example.com',
-  path: '/',
-  httpOnly: true,
-  secure: true,
-  sameSite: 'strict'
-});
+cookieJar.set('https://example.com', 'auth_token=abc123; Path=/; HttpOnly; Secure; SameSite=Strict');
 
 // Get cookie
-const token = cookieJar.get('auth_token');
+const cookies = cookieJar.get('https://example.com');
 
 // Delete cookie
-cookieJar.delete('auth_token', 'example.com', '/');
+cookieJar.delete('https://example.com', 'auth_token');
 ```
 
 ### Advanced Cookie Management
@@ -200,90 +197,55 @@ const cookieHeader = formatCookies(cookies);
 
 ```typescript
 import { 
-  streamToString, 
-  streamToJSON, 
-  streamToBuffer,
-  stringToStream,
-  jsonToStream 
+  streamToNodeReadable, 
+  nodeReadableToStream,
+  createTransformStream
 } from '@hyperhttp/core';
 
-// Convert stream to string
-const text = await streamToString(stream);
+// Convert Web Stream to Node.js Readable
+const nodeStream = streamToNodeReadable(webStream);
 
-// Convert stream to JSON
-const data = await streamToJSON(stream);
+// Convert Node.js Readable to Web Stream
+const webStream = nodeReadableToStream(nodeStream);
 
-// Convert stream to buffer
-const buffer = await streamToBuffer(stream);
-
-// Create stream from string
-const stream = stringToStream('Hello World');
-
-// Create stream from JSON
-const stream = jsonToStream({ message: 'Hello' });
-```
-
-### Stream Processing
-
-```typescript
-import { 
-  createTransformStream, 
-  createFilterStream,
-  pipeStreams 
-} from '@hyperhttp/core';
-
-// Transform stream
+// Create transform stream
 const transform = createTransformStream(chunk => {
   return processChunk(chunk);
 });
-
-// Filter stream
-const filter = createFilterStream(chunk => {
-  return chunk.length > 0;
-});
-
-// Pipe streams
-const result = pipeStreams(source, transform, filter);
 ```
 
-## Node.js Features
+## Storage Utilities
 
-### HTTP/HTTPS Agents
+### Memory Storage
 
 ```typescript
-import { createHttpAgent, createHttpsAgent, createNodeTransport } from '@hyperhttp/core';
+import { createMemoryStorage, createTimedStorage, createCountableStorage } from '@hyperhttp/core';
 
-// Create agents
-const httpAgent = createHttpAgent({
-  keepAlive: true,
-  maxSockets: 100
-});
+// Basic memory storage
+const storage = createMemoryStorage();
 
-const httpsAgent = createHttpsAgent({
-  keepAlive: true,
-  maxSockets: 100,
-  ssl: { rejectUnauthorized: false }
-});
+// Storage with TTL
+const timedStorage = createTimedStorage(60000); // 1 minute TTL
 
-// Create transport with agents
-const transport = createNodeTransport({
-  keepAlive: true,
-  maxSockets: 100
-});
-
-const client = createClient({ transport });
+// Storage with count limits
+const countableStorage = createCountableStorage(1000); // Max 1000 items
 ```
 
-### Proxy Support
+## Performance Monitoring
+
+### Built-in Metrics
 
 ```typescript
-import { createProxyMiddleware } from '@hyperhttp/core';
+import { createClient, createPerformanceMonitor } from '@hyperhttp/core';
 
+const monitor = createPerformanceMonitor();
 const client = createClient({
-  middleware: [
-    createProxyMiddleware('http://proxy:8080')
-  ]
+  plugins: [monitor]
 });
+
+// Get performance metrics
+const metrics = monitor.getMetrics();
+console.log('Average response time:', metrics.averageResponseTime);
 ```
 
 ## TypeScript Support
@@ -293,11 +255,13 @@ Full TypeScript support with comprehensive type definitions:
 ```typescript
 import type { 
   Client, 
+  ClientOptions, 
   RequestOptions, 
   ResponseType,
   Middleware,
   CookieOptions,
-  SecurityOptions 
+  SecurityOptions,
+  PerformanceMetrics
 } from '@hyperhttp/core';
 ```
 

@@ -18,6 +18,22 @@ import {
 } from '../metrics.js';
 import type { Context } from 'hyperhttp-core';
 
+// Mock hyperhttp-core
+vi.mock('hyperhttp-core', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    defaultKeyGenerator: vi.fn((request: Request) => {
+      return `${request.method}:${request.url}`;
+    }),
+    createKeyGenerator: vi.fn((options: any) => {
+      return (request: Request) => {
+        return `${request.method}:${request.url}`;
+      };
+    })
+  };
+});
+
 describe('HyperHTTP Metrics Plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();

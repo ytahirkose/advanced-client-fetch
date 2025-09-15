@@ -1,6 +1,6 @@
 {
-  "name": "advanced-client-fetch",
-  "version": "1.0.15",
+  "name": "hyperhttp",
+  "version": "1.0.0",
   "description": "🚀 The modern HTTP client that's more powerful than Axios. Fetch-first, plugin-based, platform-independent with smart retry, caching, rate limiting, and more.",
   "type": "module",
   "private": false,
@@ -58,12 +58,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ytahirkose/advanced-client-fetch.git"
+    "url": "git+https://github.com/ytahirkose/hyperhttp.git"
   },
   "bugs": {
-    "url": "https://github.com/ytahirkose/advanced-client-fetch/issues"
+    "url": "https://github.com/ytahirkose/hyperhttp/issues"
   },
-  "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
+  "homepage": "https://github.com/ytahirkose/hyperhttp#readme",
   "devDependencies": {
     "@types/node": "^20.0.0",
     "tsup": "^8.5.0",

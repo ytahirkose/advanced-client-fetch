@@ -1,47 +1,39 @@
 /**
  * Security utilities for HyperHTTP
+ * Provides SSRF protection, header sanitization, and request validation
  */
 
-import type { Request, Headers } from './types.js';
-
-export interface SecurityOptions {
-  ssrfProtection?: boolean;
-  allowedHosts?: string[];
-  blockedHosts?: string[];
-  maxRedirects?: number;
-  maxRequestSize?: number;
-  allowedHeaders?: string[];
-  blockedHeaders?: string[];
-}
+import type { Middleware, Context, SecurityOptions } from './types.js';
 
 /**
- * Check if IP is private
+ * Check if an IP address is private
  */
 export function isPrivateIP(ip: string): boolean {
-  const parts = ip.split('.').map(Number);
+  // IPv4 private ranges
+  const privateRanges = [
+    /^10\./,                    // 10.0.0.0/8
+    /^172\.(1[6-9]|2[0-9]|3[0-1])\./, // 172.16.0.0/12
+    /^192\.168\./,              // 192.168.0.0/16
+    /^127\./,                   // 127.0.0.0/8 (loopback)
+    /^169\.254\./,              // 169.254.0.0/16 (link-local)
+    /^0\./,                     // 0.0.0.0/8
+    /^::1$/,                    // IPv6 loopback
+    /^fe80:/,                   // IPv6 link-local
+    /^fc00:/,                   // IPv6 unique local
+    /^fd00:/,                   // IPv6 unique local
+  ];
   
-  if (parts.length !== 4) return false;
-  
-  // Private IP ranges
-  return (
-    (parts[0] === 10) ||
-    (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) ||
-    (parts[0] === 192 && parts[1] === 168) ||
-    (parts[0] === 127) || // localhost
-    (parts[0] === 0) ||   // invalid
-    (parts[0] === 169 && parts[1] === 254) // link-local
-  );
+  return privateRanges.some(range => range.test(ip));
 }
 
 /**
- * Check if host is localhost
+ * Check if an IP address is localhost
  */
-export function isLocalhost(hostname: string): boolean {
-  return hostname === 'localhost' || 
-         hostname === '127.0.0.1' || 
-         hostname === '::1' ||
-         hostname.startsWith('127.') ||
-         hostname.startsWith('0.');
+export function isLocalhost(ip: string): boolean {
+  return ip === 'localhost' || 
+         ip === '127.0.0.1' || 
+         ip === '::1' || 
+         ip === '0.0.0.0';
 }
 
 /**
@@ -49,37 +41,32 @@ export function isLocalhost(hostname: string): boolean {
  */
 export function validateUrlForSSRF(url: string, options: SecurityOptions = {}): boolean {
   try {
-    const parsed = new URL(url);
-    const hostname = parsed.hostname;
+    const parsedUrl = new URL(url);
+    const hostname = parsedUrl.hostname;
     
     // Check blocked hosts
-    if (options.blockedHosts?.includes(hostname)) {
+    if (options.blockedHosts?.some(blocked => hostname.includes(blocked))) {
       return false;
     }
     
     // Check allowed hosts (if specified)
-    if (options.allowedHosts && options.allowedHosts.length > 0) {
-      const isAllowed = options.allowedHosts.some(allowedHost => {
-        // Exact match
-        if (hostname === allowedHost) return true;
-        // Subdomain match (e.g., api.example.com matches example.com)
-        if (hostname.endsWith('.' + allowedHost)) return true;
-        return false;
-      });
-      if (!isAllowed) return false;
+    if (options.allowedHosts && !options.allowedHosts.some(allowed => hostname.includes(allowed))) {
+      return false;
     }
     
-    // SSRF protection
-    if (options.ssrfProtection !== false) {
-      // Block private IPs
-      if (isPrivateIP(hostname)) {
-        return false;
-      }
-      
-      // Block localhost
-      if (isLocalhost(hostname)) {
-        return false;
-      }
+    // Check for private IPs
+    if (isPrivateIP(hostname)) {
+      return false;
+    }
+    
+    // Check for localhost
+    if (isLocalhost(hostname)) {
+      return false;
+    }
+    
+    // Check protocol
+    if (!['http:', 'https:'].includes(parsedUrl.protocol)) {
+      return false;
     }
     
     return true;
@@ -91,7 +78,7 @@ export function validateUrlForSSRF(url: string, options: SecurityOptions = {}): 
 /**
  * Clean hop-by-hop headers
  */
-export function cleanHopByHopHeaders(headers: Headers | Record<string, string>): Headers {
+export function cleanHopByHopHeaders(headers: Headers): Headers {
   const hopByHopHeaders = [
     'connection',
     'keep-alive',
@@ -100,23 +87,15 @@ export function cleanHopByHopHeaders(headers: Headers | Record<string, string>):
     'te',
     'trailers',
     'transfer-encoding',
-    'upgrade',
+    'upgrade'
   ];
   
   const cleaned = new Headers();
   
-  if (headers instanceof Headers) {
-    headers.forEach((value, key) => {
-      if (!hopByHopHeaders.includes(key.toLowerCase())) {
-        cleaned.set(key, value);
-      }
-    });
-  } else {
-    Object.entries(headers).forEach(([key, value]) => {
-      if (!hopByHopHeaders.includes(key.toLowerCase())) {
-        cleaned.set(key, value);
-      }
-    });
+  for (const [key, value] of headers.entries()) {
+    if (!hopByHopHeaders.includes(key.toLowerCase())) {
+      cleaned.set(key, value);
+    }
   }
   
   return cleaned;
@@ -125,7 +104,7 @@ export function cleanHopByHopHeaders(headers: Headers | Record<string, string>):
 /**
  * Block dangerous headers
  */
-export function blockDangerousHeaders(headers: Headers | Record<string, string>): Headers {
+export function blockDangerousHeaders(headers: Headers): Headers {
   const dangerousHeaders = [
     'host',
     'origin',
@@ -133,23 +112,19 @@ export function blockDangerousHeaders(headers: Headers | Record<string, string>)
     'user-agent',
     'x-forwarded-for',
     'x-forwarded-proto',
+    'x-forwarded-host',
     'x-real-ip',
+    'x-requested-with',
+    'x-csrf-token',
+    'x-xsrf-token'
   ];
   
   const cleaned = new Headers();
   
-  if (headers instanceof Headers) {
-    headers.forEach((value, key) => {
-      if (!dangerousHeaders.includes(key.toLowerCase())) {
-        cleaned.set(key, value);
-      }
-    });
-  } else {
-    Object.entries(headers).forEach(([key, value]) => {
-      if (!dangerousHeaders.includes(key.toLowerCase())) {
-        cleaned.set(key, value);
-      }
-    });
+  for (const [key, value] of headers.entries()) {
+    if (!dangerousHeaders.includes(key.toLowerCase())) {
+      cleaned.set(key, value);
+    }
   }
   
   return cleaned;
@@ -158,12 +133,12 @@ export function blockDangerousHeaders(headers: Headers | Record<string, string>)
 /**
  * Create SSRF protection middleware
  */
-export function createSSRFProtection(options: SecurityOptions = {}) {
-  return async (ctx: any, next: () => Promise<void>) => {
+export function createSSRFProtection(options: SecurityOptions = {}): Middleware {
+  return async (ctx: Context, next: () => Promise<void>) => {
     const url = ctx.req.url;
     
     if (!validateUrlForSSRF(url, options)) {
-      throw new Error('SSRF protection: URL not allowed');
+      throw new Error(`SSRF protection: URL ${url} is not allowed`);
     }
     
     await next();
@@ -173,53 +148,38 @@ export function createSSRFProtection(options: SecurityOptions = {}) {
 /**
  * Create redirect security middleware
  */
-export function createRedirectSecurity(options: SecurityOptions = {}) {
-  return async (ctx: any, next: () => Promise<void>) => {
-    const maxRedirects = options.maxRedirects || 5;
-    let redirectCount = 0;
+export function createRedirectSecurity(options: SecurityOptions = {}): Middleware {
+  return async (ctx: Context, next: () => Promise<void>) => {
+    // Store original headers
+    const originalHeaders = new Headers(ctx.req.headers);
     
-    const originalFetch = globalThis.fetch;
+    // Clean dangerous headers before redirect
+    const cleanedHeaders = blockDangerousHeaders(originalHeaders);
     
-    // Override fetch to track redirects
-    globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
-      const response = await originalFetch(input, init);
-      
-      if (response.redirected) {
-        redirectCount++;
-        if (redirectCount > maxRedirects) {
-          throw new Error('Too many redirects');
-        }
-      }
-      
-      return response;
-    };
+    // Create new request with cleaned headers
+    ctx.req = new Request(ctx.req, {
+      headers: cleanedHeaders
+    });
     
-    try {
-      await next();
-    } finally {
-      // Restore original fetch
-      globalThis.fetch = originalFetch;
-    }
+    await next();
   };
 }
 
 /**
  * Create security middleware
  */
-export function createSecurityMiddleware(options: SecurityOptions = {}) {
-  return async (ctx: any, next: () => Promise<void>) => {
-    // Clean headers
-    ctx.req.headers = cleanHopByHopHeaders(ctx.req.headers);
-    
-    // Block dangerous headers
-    ctx.req.headers = blockDangerousHeaders(ctx.req.headers);
-    
+export function createSecurityMiddleware(options: SecurityOptions = {}): Middleware {
+  return async (ctx: Context, next: () => Promise<void>) => {
     // SSRF protection
-    if (options.ssrfProtection !== false) {
-      if (!validateUrlForSSRF(ctx.req.url, options)) {
-        throw new Error('SSRF protection: URL not allowed');
-      }
+    if (!validateUrlForSSRF(ctx.req.url, options)) {
+      throw new Error(`Security: URL ${ctx.req.url} is not allowed`);
     }
+    
+    // Clean headers
+    const cleanedHeaders = cleanHopByHopHeaders(ctx.req.headers);
+    ctx.req = new Request(ctx.req, {
+      headers: cleanedHeaders
+    });
     
     await next();
   };
@@ -228,29 +188,17 @@ export function createSecurityMiddleware(options: SecurityOptions = {}) {
 /**
  * Sanitize headers
  */
-export function sanitizeHeaders(headers: Headers | Record<string, string>): Headers {
+export function sanitizeHeaders(headers: Headers): Headers {
   const sanitized = new Headers();
   
-  if (headers instanceof Headers) {
-    headers.forEach((value, key) => {
-      // Remove null bytes and control characters
-      const cleanValue = value.replace(/[\x00-\x1F\x7F]/g, '');
-      const cleanKey = key.replace(/[\x00-\x1F\x7F]/g, '');
-      
-      if (cleanKey && cleanValue) {
-        sanitized.set(cleanKey, cleanValue);
-      }
-    });
-  } else {
-    Object.entries(headers).forEach(([key, value]) => {
-      // Remove null bytes and control characters
-      const cleanValue = value.replace(/[\x00-\x1F\x7F]/g, '');
-      const cleanKey = key.replace(/[\x00-\x1F\x7F]/g, '');
-      
-      if (cleanKey && cleanValue) {
-        sanitized.set(cleanKey, cleanValue);
-      }
-    });
+  for (const [key, value] of headers.entries()) {
+    // Remove null bytes and control characters
+    const sanitizedKey = key.replace(/[\x00-\x1F\x7F]/g, '');
+    const sanitizedValue = value.replace(/[\x00-\x1F\x7F]/g, '');
+    
+    if (sanitizedKey && sanitizedValue) {
+      sanitized.set(sanitizedKey, sanitizedValue);
+    }
   }
   
   return sanitized;
@@ -267,18 +215,90 @@ export function validateRequestSize(request: Request, maxSize: number = 10 * 102
     return size <= maxSize;
   }
   
-  return true;
+  return true; // Unknown size, allow it
 }
 
 /**
  * Create request size validation middleware
  */
-export function createRequestSizeValidation(maxSize: number = 10 * 1024 * 1024) {
-  return async (ctx: any, next: () => Promise<void>) => {
+export function createRequestSizeValidation(maxSize: number = 10 * 1024 * 1024): Middleware {
+  return async (ctx: Context, next: () => Promise<void>) => {
     if (!validateRequestSize(ctx.req, maxSize)) {
-      throw new Error('Request too large');
+      throw new Error(`Request size exceeds maximum allowed size of ${maxSize} bytes`);
     }
     
     await next();
   };
+}
+
+/**
+ * Validate response size
+ */
+export function validateResponseSize(response: Response, maxSize: number = 50 * 1024 * 1024): boolean {
+  const contentLength = response.headers.get('content-length');
+  
+  if (contentLength) {
+    const size = parseInt(contentLength, 10);
+    return size <= maxSize;
+  }
+  
+  return true; // Unknown size, allow it
+}
+
+/**
+ * Create response size validation middleware
+ */
+export function createResponseSizeValidation(maxSize: number = 50 * 1024 * 1024): Middleware {
+  return async (ctx: Context, next: () => Promise<void>) => {
+    await next();
+    
+    if (ctx.res && !validateResponseSize(ctx.res, maxSize)) {
+      throw new Error(`Response size exceeds maximum allowed size of ${maxSize} bytes`);
+    }
+  };
+}
+
+/**
+ * Create comprehensive security middleware
+ */
+export function createComprehensiveSecurity(options: SecurityOptions = {}): Middleware {
+  return async (ctx: Context, next: () => Promise<void>) => {
+    // SSRF protection
+    if (!validateUrlForSSRF(ctx.req.url, options)) {
+      throw new Error(`Security: URL ${ctx.req.url} is not allowed`);
+    }
+    
+    // Request size validation
+    if (options.maxRequestSize && !validateRequestSize(ctx.req, options.maxRequestSize)) {
+      throw new Error(`Request size exceeds maximum allowed size`);
+    }
+    
+    // Sanitize headers
+    const sanitizedHeaders = sanitizeHeaders(ctx.req.headers);
+    const cleanedHeaders = cleanHopByHopHeaders(sanitizedHeaders);
+    
+    ctx.req = new Request(ctx.req, {
+      headers: cleanedHeaders
+    });
+    
+    await next();
+    
+    // Response size validation
+    if (ctx.res && options.maxResponseSize && !validateResponseSize(ctx.res, options.maxResponseSize)) {
+      throw new Error(`Response size exceeds maximum allowed size`);
+    }
+  };
+}
+
+/**
+ * Security options interface
+ */
+export interface SecurityOptions {
+  allowedHosts?: string[];
+  blockedHosts?: string[];
+  maxRedirects?: number;
+  maxRequestSize?: number;
+  maxResponseSize?: number;
+  allowPrivateIPs?: boolean;
+  allowLocalhost?: boolean;
 }

@@ -28,6 +28,8 @@ const client = createClient({
 | `plugins` | `Plugin[]` | `[]` | Array of plugins to use |
 | `headers` | `Record<string, string>` | `{}` | Default headers |
 | `signal` | `AbortSignal` | - | Default abort signal |
+| `transport` | `Transport` | `fetch` | Transport function |
+| `paramsSerializer` | `Function` | - | Query parameter serializer |
 
 ### HTTP Methods
 

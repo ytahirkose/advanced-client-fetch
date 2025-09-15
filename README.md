@@ -1,35 +1,41 @@
-# Advanced Client Fetch
+# HyperHTTP
 
-> **Axios'tan daha küçük, daha modern, daha güçlü HTTP client**
+> **Smaller, more modern, more powerful HTTP client than Axios**
 
-[![npm version](https://badge.fury.io/js/advanced-client-fetch.svg)](https://www.npmjs.com/package/advanced-client-fetch)
-[![Build Status](https://github.com/ytahirkose/advanced-client-fetch/workflows/CI/badge.svg)](https://github.com/ytahirkose/advanced-client-fetch/actions)
+[![npm version](https://badge.fury.io/js/@hyperhttp/core.svg)](https://www.npmjs.com/package/@hyperhttp/core)
+[![Build Status](https://github.com/ytahirkose/hyperhttp/workflows/CI/badge.svg)](https://github.com/ytahirkose/hyperhttp/actions)
 [![Bundle Size](https://img.shields.io/bundlephobia/minzip/@hyperhttp/core)](https://bundlephobia.com/result?p=@hyperhttp/core)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-## 🚀 Özellikler
+## 🚀 Features
 
-- **🌐 Platform Bağımsız** - Node 18+, Edge, Deno, Bun, Browser
-- **⚡ Fetch-First** - Modern web standartları
-- **🔌 Plugin Tabanlı** - Modüler ve genişletilebilir
-- **📦 Küçük Core** - Minimal bundle size (~13KB)
-- **🛡️ Güvenli** - SSRF koruması, header sanitization
-- **⚡ Performanslı** - Caching, deduplication, rate limiting
-- **🔧 TypeScript** - Tam tip desteği
-- **🔄 Axios Uyumlu** - Tanıdık API
+- **🌐 Platform Agnostic** - Node 18+, Edge, Deno, Bun, Browser
+- **⚡ Fetch-First** - Modern web standards
+- **🔌 Plugin-Based** - Modular and extensible
+- **📦 Small Core** - Minimal bundle size (~3-4KB)
+- **🛡️ Secure** - SSRF protection, header sanitization
+- **⚡ Performant** - Caching, deduplication, rate limiting
+- **🔧 TypeScript** - Full type support
+- **🔄 Axios Compatible** - Familiar API
+- **🔄 Smart Retry** - Exponential backoff, jitter, Retry-After
+- **⚡ Circuit Breaker** - Fault tolerance
+- **📊 Metrics** - Request monitoring
+- **🍪 Cookie Management** - Automatic cookie handling
+- **🔒 Security** - Built-in SSRF protection
 
-## 📦 Paketler
+## 📦 Packages
 
-| Paket | Açıklama | Boyut |
-|-------|----------|-------|
-| `@hyperhttp/core` | Ana HTTP client | ~13KB |
-| `@hyperhttp/plugins` | Plugin koleksiyonu | ~10KB |
-| `@hyperhttp/axios-adapter` | Axios uyumluluk katmanı | ~15KB |
-| `@hyperhttp/presets` | Platform-specific presets | ~8KB |
+| Package | Description | Size |
+|---------|-------------|------|
+| `@hyperhttp/core` | Core HTTP client | ~3-4KB |
+| `@hyperhttp/plugins` | Plugin collection | ~8-12KB |
+| `@hyperhttp/axios-adapter` | Axios compatibility layer | ~12-15KB |
+| `@hyperhttp/presets` | Platform-specific presets | ~5-8KB |
 
-## 🚀 Hızlı Başlangıç
+## 🚀 Quick Start
 
-### Kurulum
+### Installation
 
 ```bash
 # Core package
@@ -38,14 +44,14 @@ npm install @hyperhttp/core
 # Plugins
 npm install @hyperhttp/plugins
 
-# Axios adapter (opsiyonel)
+# Axios adapter (optional)
 npm install @hyperhttp/axios-adapter
 
-# Presets (opsiyonel)
+# Presets (optional)
 npm install @hyperhttp/presets
 ```
 
-### Temel Kullanım
+### Basic Usage
 
 ```javascript
 import { createClient } from '@hyperhttp/core';
@@ -77,7 +83,7 @@ const response = await client.get('/profile', {
 });
 ```
 
-### Axios Uyumlu Kullanım
+### Axios Compatible Usage
 
 ```javascript
 import { createAxiosAdapter } from '@hyperhttp/axios-adapter';
@@ -90,11 +96,11 @@ const axios = createAxiosAdapter({
   ]
 });
 
-// Axios API'si ile aynı
+// Same as Axios API
 const response = await axios.get('/users');
 ```
 
-## 🔌 Plugin'ler
+## 🔌 Plugins
 
 ### Retry Plugin
 ```javascript
@@ -116,7 +122,7 @@ const client = createClient({
 ```javascript
 import { cache, cacheWithSWR } from '@hyperhttp/plugins';
 
-// Basit cache
+// Simple cache
 const client = createClient({
   plugins: [
     cache({ ttl: 60000 })
@@ -142,7 +148,7 @@ const client = createClient({
   plugins: [
     rateLimit({
       requests: 100,
-      window: 60000, // 1 dakika
+      window: 60000, // 1 minute
       keyGenerator: (req) => req.url
     })
   ]
@@ -240,9 +246,9 @@ const client = createBunClient({
 });
 ```
 
-## 🔧 Gelişmiş Kullanım
+## 🔧 Advanced Usage
 
-### Custom Plugin Oluşturma
+### Custom Plugin Creation
 ```javascript
 const customPlugin = (options) => {
   return async (ctx, next) => {
@@ -295,18 +301,18 @@ try {
 }
 ```
 
-## 📊 Performans
+## 📊 Performance
 
-### Bundle Size Karşılaştırması
+### Bundle Size Comparison
 
 | Library | Size (min+gzip) | Features |
 |---------|----------------|----------|
-| **HyperHTTP Core** | **13KB** | Fetch-first, plugins, TypeScript |
+| **HyperHTTP Core** | **3-4KB** | Fetch-first, plugins, TypeScript |
 | Axios | 15KB | Legacy, XMLHttpRequest |
 | Fetch API | 0KB | Native, limited features |
 | Got | 25KB | Node.js only |
 
-### Benchmark Sonuçları
+### Benchmark Results
 
 ```
 GET requests/second:
@@ -319,12 +325,13 @@ Memory usage:
 - Axios: 3.2MB
 ```
 
-## 🛡️ Güvenlik
+## 🛡️ Security
 
-- **SSRF Koruması** - Private IP ve localhost engelleme
-- **Header Sanitization** - Tehlikeli header'ları temizleme
-- **Request Validation** - URL ve method doğrulama
-- **CORS Desteği** - Cross-origin request'ler
+- **SSRF Protection** - Private IP and localhost blocking
+- **Header Sanitization** - Dangerous header cleaning
+- **Request Validation** - URL and method validation
+- **CORS Support** - Cross-origin requests
+- **Cookie Security** - Secure cookie handling
 
 ## 🔄 Migration from Axios
 
@@ -339,6 +346,7 @@ const response = await axios.get('/api/users', {
 
 // HyperHTTP
 import { createClient } from '@hyperhttp/core';
+import { timeout } from '@hyperhttp/plugins';
 
 const client = createClient({
   baseURL: 'https://api.example.com',
@@ -350,7 +358,7 @@ const response = await client.get('/api/users', {
 });
 ```
 
-## 📚 Dökümantasyon
+## 📚 Documentation
 
 - [API Reference](./docs/api.md)
 - [Plugin Guide](./docs/plugins.md)
@@ -358,24 +366,24 @@ const response = await client.get('/api/users', {
 - [Examples](./docs/examples.md)
 - [Contributing](./CONTRIBUTING.md)
 
-## 🤝 Katkıda Bulunma
+## 🤝 Contributing
 
-1. Fork yapın
-2. Feature branch oluşturun (`git checkout -b feature/amazing-feature`)
-3. Commit yapın (`git commit -m 'Add amazing feature'`)
-4. Push yapın (`git push origin feature/amazing-feature`)
-5. Pull Request oluşturun
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 Lisans
+## 📄 License
 
-MIT License - detaylar için [LICENSE](LICENSE) dosyasına bakın.
+MIT License - see [LICENSE](LICENSE) file for details.
 
-## 🙏 Teşekkürler
+## 🙏 Acknowledgments
 
-- [Axios](https://github.com/axios/axios) - İlham kaynağı
-- [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) - Modern web standartları
+- [Axios](https://github.com/axios/axios) - Inspiration
+- [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) - Modern web standards
 - [Koa.js](https://koajs.com/) - Middleware pattern
 
 ---
 
-**HyperHTTP** - Modern web için HTTP client 🚀
+**HyperHTTP** - HTTP client for modern web 🚀

@@ -64,6 +64,8 @@ export interface ClientOptions {
   plugins?: Middleware[];
   /** Request/response interceptors */
   interceptors?: Interceptor[];
+  /** Query parameter serializer */
+  paramsSerializer?: (params: Record<string, any>) => string;
 }
 
 // Transport and middleware types
@@ -126,6 +128,25 @@ export interface RetryInfo {
   totalAttempts: number;
 }
 
+// Generic Storage Types
+export interface BaseStorage<T> {
+  get(key: string): Promise<T | undefined>;
+  set(key: string, value: T, ttl?: number): Promise<void>;
+  delete(key: string): Promise<void>;
+  clear(): Promise<void>;
+}
+
+export interface TimedStorage<T> extends BaseStorage<T> {
+  increment(key: string, window: number): Promise<T>;
+  reset(key: string): Promise<void>;
+}
+
+export interface CountableStorage<T> extends BaseStorage<T> {
+  increment(key: string): Promise<number>;
+  decrement(key: string): Promise<number>;
+  getCount(key: string): Promise<number>;
+}
+
 // Cache types
 export interface CacheOptions {
   /** Cache TTL in ms */
@@ -140,11 +161,8 @@ export interface CacheOptions {
   staleWhileRevalidate?: boolean;
 }
 
-export interface CacheStorage {
-  get(key: string): Promise<Response | undefined>;
-  set(key: string, response: Response, ttl?: number): Promise<void>;
-  delete(key: string): Promise<void>;
-  clear(): Promise<void>;
+export interface CacheStorage extends BaseStorage<Response> {
+  // Inherits all BaseStorage methods
 }
 
 export interface CacheEntry {
@@ -346,3 +364,94 @@ export interface DedupeEntry {
   promise: Promise<Response>;
   timestamp: number;
 }
+
+// Key Generator types
+export interface KeyGeneratorOptions {
+  /** Include HTTP method in key */
+  includeMethod?: boolean;
+  /** Include request body in key */
+  includeBody?: boolean;
+  /** Include specific headers in key */
+  includeHeaders?: string[];
+  /** Include all headers in key */
+  includeAllHeaders?: boolean;
+  /** Hash algorithm to use */
+  hashAlgorithm?: 'md5' | 'sha256' | 'base64' | 'none';
+  /** Custom key prefix */
+  prefix?: string;
+  /** Custom key suffix */
+  suffix?: string;
+  /** Include query parameters */
+  includeQuery?: boolean;
+  /** Include URL fragment */
+  includeFragment?: boolean;
+}
+
+// Plugin Factory types
+export interface BasePluginOptions {
+  /** Enable/disable the plugin */
+  enabled?: boolean;
+  /** Plugin name for debugging */
+  name?: string;
+  /** Custom error message */
+  message?: string;
+}
+
+export interface PluginHooks {
+  /** Called before the plugin executes */
+  onBefore?: (ctx: Context) => void | Promise<void>;
+  /** Called after the plugin executes successfully */
+  onAfter?: (ctx: Context) => void | Promise<void>;
+  /** Called when the plugin encounters an error */
+  onError?: (error: Error, ctx: Context) => void | Promise<void>;
+  /** Called when the plugin is disabled */
+  onDisabled?: (ctx: Context) => void | Promise<void>;
+}
+
+// Performance types
+export interface PerformanceMetrics {
+  name: string;
+  startTime: number;
+  endTime: number;
+  duration: number;
+  timestamp: number;
+}
+
+// Build types
+export interface BuildOptions {
+  minify?: boolean;
+  treeShaking?: boolean;
+  codeSplitting?: boolean;
+  compression?: boolean;
+  sourceMap?: boolean;
+  target?: string;
+  format?: 'esm' | 'cjs' | 'umd';
+}
+
+export interface BundleAnalysis {
+  totalSize: number;
+  totalModules: number;
+  averageSize: number;
+  medianSize: number;
+  largestModules: Array<{ name: string; size: number; dependencies: string[] }>;
+  sizeDistribution: {
+    small: number;
+    medium: number;
+    large: number;
+    xlarge: number;
+  };
+  dependencyGraph: Map<string, string[]>;
+}
+
+export interface OptimizationConfig {
+  minify?: boolean;
+  treeShaking?: boolean;
+  codeSplitting?: boolean;
+  compression?: boolean;
+}
+
+export type PluginImplementation<T extends BasePluginOptions> = (
+  config: T,
+  ctx: Context,
+  next: () => Promise<void>
+) => Promise<void>;

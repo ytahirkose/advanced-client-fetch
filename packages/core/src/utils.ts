@@ -460,6 +460,169 @@ export function isRetryableError(error: any): boolean {
 }
 
 /**
+ * Key generator options
+ */
+export interface KeyGeneratorOptions {
+  /** Include HTTP method in key */
+  includeMethod?: boolean;
+  /** Include request body in key */
+  includeBody?: boolean;
+  /** Include specific headers in key */
+  includeHeaders?: string[];
+  /** Include all headers in key */
+  includeAllHeaders?: boolean;
+  /** Hash algorithm to use */
+  hashAlgorithm?: 'md5' | 'sha256' | 'base64' | 'none';
+  /** Custom key prefix */
+  prefix?: string;
+  /** Custom key suffix */
+  suffix?: string;
+  /** Include query parameters */
+  includeQuery?: boolean;
+  /** Include URL fragment */
+  includeFragment?: boolean;
+}
+
+/**
+ * Create a key generator with configurable options
+ */
+export function createKeyGenerator(options: KeyGeneratorOptions = {}) {
+  const {
+    includeMethod = true,
+    includeBody = false,
+    includeHeaders = [],
+    includeAllHeaders = false,
+    hashAlgorithm = 'md5',
+    prefix = '',
+    suffix = '',
+    includeQuery = true,
+    includeFragment = false,
+  } = options;
+
+  return (request: Request): string => {
+    let key = prefix;
+
+    // Add method
+    if (includeMethod) {
+      key += `${request.method}:`;
+    }
+
+    // Parse URL
+    const url = new URL(request.url);
+    
+    // Add origin and pathname
+    key += `${url.origin}${url.pathname}`;
+
+    // Add query parameters
+    if (includeQuery && url.search) {
+      key += url.search;
+    }
+
+    // Add fragment
+    if (includeFragment && url.hash) {
+      key += url.hash;
+    }
+
+    // Add headers
+    if (includeAllHeaders || includeHeaders.length > 0) {
+      const headersToInclude = includeAllHeaders 
+        ? Array.from(request.headers.keys())
+        : includeHeaders;
+
+      for (const headerName of headersToInclude) {
+        const headerValue = request.headers.get(headerName);
+        if (headerValue) {
+          key += `:${headerName}:${headerValue}`;
+        }
+      }
+    }
+
+    // Add body (if enabled and present)
+    if (includeBody && request.body) {
+      // For body, we'll need to clone the request to read it
+      // This is expensive, so it's optional
+      key += `:body:${request.method}`; // Simplified for now
+    }
+
+    key += suffix;
+
+    // Hash the key if requested
+    return hashKey(key, hashAlgorithm);
+  };
+}
+
+/**
+ * Hash a key using the specified algorithm
+ */
+export function hashKey(key: string, algorithm: 'md5' | 'sha256' | 'base64' | 'none' = 'md5'): string {
+  switch (algorithm) {
+    case 'md5':
+      try {
+        const { createHash } = require('node:crypto');
+        return createHash('md5').update(key).digest('hex');
+      } catch {
+        // Fallback to base64 if crypto is not available
+        return btoa(key);
+      }
+    
+    case 'sha256':
+      try {
+        const { createHash } = require('node:crypto');
+        return createHash('sha256').update(key).digest('hex');
+      } catch {
+        // Fallback to base64 if crypto is not available
+        return btoa(key);
+      }
+    
+    case 'base64':
+      return btoa(key);
+    
+    case 'none':
+    default:
+      return key;
+  }
+}
+
+/**
+ * Default key generator for most use cases
+ */
+export const defaultKeyGenerator = createKeyGenerator({
+  includeMethod: true,
+  includeQuery: true,
+  hashAlgorithm: 'md5',
+});
+
+/**
+ * Simple key generator (no hashing)
+ */
+export const simpleKeyGenerator = createKeyGenerator({
+  includeMethod: true,
+  includeQuery: true,
+  hashAlgorithm: 'none',
+});
+
+/**
+ * Body-aware key generator (for POST/PUT requests)
+ */
+export const bodyAwareKeyGenerator = createKeyGenerator({
+  includeMethod: true,
+  includeQuery: true,
+  includeBody: true,
+  hashAlgorithm: 'md5',
+});
+
+/**
+ * Header-aware key generator (for auth-sensitive requests)
+ */
+export const headerAwareKeyGenerator = (authHeaders: string[] = ['authorization', 'x-api-key']) => 
+  createKeyGenerator({
+    includeMethod: true,
+    includeQuery: true,
+    includeHeaders: authHeaders,
+    hashAlgorithm: 'md5',
+  });
+
+/**
  * Check if response is retryable
  */
 export function isRetryableResponse(response: Response): boolean {

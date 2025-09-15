@@ -19,89 +19,70 @@ describe('Cookie Management', () => {
       cookieJar = new MemoryCookieJar();
     });
 
-    it('should set and get cookies', () => {
-      cookieJar.set('test', 'value', {
-        domain: 'example.com',
-        path: '/',
-      });
+    it('should set and get cookies', async () => {
+      await cookieJar.set('https://example.com', 'test=value; Domain=example.com; Path=/');
 
-      expect(cookieJar.get('test')).toBe('value');
-    });
-
-    it('should delete cookies', () => {
-      cookieJar.set('test', 'value', {
-        domain: 'example.com',
-        path: '/',
-      });
-
-      expect(cookieJar.get('test')).toBe('value');
-      
-      cookieJar.delete('test', 'example.com', '/');
-      expect(cookieJar.get('test')).toBeUndefined();
-    });
-
-    it('should clear all cookies', () => {
-      cookieJar.set('test1', 'value1', {
-        domain: 'example.com',
-        path: '/',
-      });
-      cookieJar.set('test2', 'value2', {
-        domain: 'example.com',
-        path: '/',
-      });
-
-      expect(cookieJar.getAll()).toHaveLength(2);
-      
-      cookieJar.clear();
-      expect(cookieJar.getAll()).toHaveLength(0);
-    });
-
-    it('should get cookies for URL', () => {
-      cookieJar.set('test', 'value', {
-        domain: 'example.com',
-        path: '/',
-      });
-
-      const cookies = cookieJar.getForUrl('https://example.com/api');
+      const cookies = await cookieJar.get('https://example.com');
       expect(cookies).toBe('test=value');
     });
 
-    it('should set cookies from response', () => {
+    it('should delete cookies', async () => {
+      await cookieJar.set('https://example.com', 'test=value; Domain=example.com; Path=/');
+
+      let cookies = await cookieJar.get('https://example.com');
+      expect(cookies).toBe('test=value');
+      
+      await cookieJar.delete('https://example.com', 'test');
+      cookies = await cookieJar.get('https://example.com');
+      expect(cookies).toBe('');
+    });
+
+    it('should clear all cookies', async () => {
+      await cookieJar.set('https://example.com', 'test1=value1; Domain=example.com; Path=/');
+      await cookieJar.set('https://example.com', 'test2=value2; Domain=example.com; Path=/');
+
+      const allCookies = cookieJar.getAllCookies();
+      expect(allCookies.size).toBeGreaterThan(0);
+      
+      await cookieJar.clear();
+      const clearedCookies = cookieJar.getAllCookies();
+      expect(clearedCookies.size).toBe(0);
+    });
+
+    it('should get cookies for URL', async () => {
+      await cookieJar.set('https://example.com', 'test=value; Domain=example.com; Path=/');
+
+      const cookies = await cookieJar.get('https://example.com/api');
+      expect(cookies).toBe('test=value');
+    });
+
+    it('should set cookies from response', async () => {
       const response = new Response('', {
         headers: {
           'Set-Cookie': 'test=value; Domain=example.com; Path=/; HttpOnly',
         },
       });
 
-      cookieJar.setFromResponse(response, 'https://example.com');
+      await cookieJar.set('https://example.com', 'test=value; Domain=example.com; Path=/; HttpOnly');
       
-      expect(cookieJar.get('test')).toBe('value');
+      const cookies = await cookieJar.get('https://example.com');
+      expect(cookies).toBe('test=value');
     });
 
-    it('should handle expired cookies', () => {
+    it('should handle expired cookies', async () => {
       const expiredDate = new Date(Date.now() - 1000);
       
-      cookieJar.set({
-        name: 'test',
-        value: 'value',
-        domain: 'example.com',
-        path: '/',
-        expires: expiredDate,
-      });
+      await cookieJar.set('https://example.com', `test=value; Domain=example.com; Path=/; Expires=${expiredDate.toUTCString()}`);
 
-      expect(cookieJar.get('test')).toBeUndefined();
+      const cookies = await cookieJar.get('https://example.com');
+      expect(cookies).toBe('');
     });
 
-    it('should handle max-age cookies', () => {
-      cookieJar.set({
-        name: 'test',
-        value: 'value',
-        domain: 'example.com',
-        path: '/',
-        maxAge: -1, // Expired
-      });
+    it('should handle max-age cookies', async () => {
+      await cookieJar.set('https://example.com', 'test=value; Domain=example.com; Path=/; Max-Age=-1');
 
-      expect(cookieJar.get('test')).toBeUndefined();
+      const cookies = await cookieJar.get('https://example.com');
+      expect(cookies).toBe('');
     });
   });
 
@@ -109,39 +90,39 @@ describe('Cookie Management', () => {
     it('should parse cookie string', () => {
       const cookies = parseCookies('test1=value1; test2=value2; test3=value3');
       
-      expect(cookies.find(c => c.name === 'test1')?.value).toBe('value1');
-      expect(cookies.find(c => c.name === 'test2')?.value).toBe('value2');
-      expect(cookies.find(c => c.name === 'test3')?.value).toBe('value3');
+      expect(cookies.get('test1')).toBe('value1');
+      expect(cookies.get('test2')).toBe('value2');
+      expect(cookies.get('test3')).toBe('value3');
     });
 
     it('should handle empty cookie string', () => {
       const cookies = parseCookies('');
-      expect(cookies.length).toBe(0);
+      expect(cookies.size).toBe(0);
     });
 
     it('should handle malformed cookies', () => {
       const cookies = parseCookies('invalid; test=value; another=invalid');
       
-      expect(cookies.find(c => c.name === 'test')?.value).toBe('value');
-      expect(cookies.find(c => c.name === 'invalid')).toBeUndefined();
-      expect(cookies.find(c => c.name === 'another')?.value).toBe('invalid');
+      expect(cookies.get('test')).toBe('value');
+      expect(cookies.get('invalid')).toBeUndefined();
+      expect(cookies.get('another')).toBe('invalid');
     });
   });
 
   describe('formatCookies', () => {
     it('should format cookies map to string', () => {
-      const cookies = [
-        { name: 'test1', value: 'value1' },
-        { name: 'test2', value: 'value2' },
-        { name: 'test3', value: 'value3' },
-      ];
+      const cookies = new Map([
+        ['test1', 'value1'],
+        ['test2', 'value2'],
+        ['test3', 'value3'],
+      ]);
 
       const formatted = formatCookies(cookies);
       expect(formatted).toBe('test1=value1; test2=value2; test3=value3');
     });
 
     it('should handle empty cookies map', () => {
-      const cookies: any[] = [];
+      const cookies = new Map();
       const formatted = formatCookies(cookies);
       expect(formatted).toBe('');
     });

@@ -31,7 +31,6 @@ describe('Node Agent', () => {
         maxSockets: 50,
         maxFreeSockets: 10,
         timeout: 0,
-        connectionTimeout: 5000,
       });
     });
   });

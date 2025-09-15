@@ -18,6 +18,9 @@ export type {
   RetryInfo,
   CacheOptions,
   CacheStorage,
+  BaseStorage,
+  TimedStorage,
+  CountableStorage,
   Transport,
   Context,
   Middleware,
@@ -25,6 +28,34 @@ export type {
   AbortError,
   Interceptor,
   Metrics,
+  MetricsData,
+  SecurityOptions,
+  Cookie,
+  CookieOptions,
+  CookieJar,
+  NodeAgentOptions,
+  ProxyConfig,
+  NodeSslOptions,
+  StreamOptions,
+  RetryPluginOptions,
+  CachePluginOptions,
+  RateLimitPluginOptions,
+  CircuitBreakerPluginOptions,
+  DedupePluginOptions,
+  MetricsPluginOptions,
+  CircuitBreakerInfo,
+  RateLimitInfo,
+  DedupeEntry,
+  KeyGeneratorOptions,
+  BasePluginOptions,
+  PluginHooks,
+  PluginImplementation,
+  PresetConfig,
+  PlatformOptions,
+  PerformanceMetrics,
+  BuildOptions,
+  BundleAnalysis,
+  OptimizationConfig,
 } from './types.js';
 
 // Error exports
@@ -67,7 +98,53 @@ export {
   calculateRetryDelay,
   waitForRetry,
   createAttemptSignal,
+  createKeyGenerator,
+  hashKey,
+  defaultKeyGenerator,
+  simpleKeyGenerator,
+  bodyAwareKeyGenerator,
+  headerAwareKeyGenerator,
 } from './utils.js';
+
+// Storage exports
+export {
+  BaseMemoryStorage,
+  MemoryStorage,
+  TimedMemoryStorage,
+  CountableMemoryStorage,
+  createMemoryStorage,
+  createTimedStorage,
+  createCountableStorage,
+  StorageUtils,
+  type StorageStats,
+} from './storage.js';
+
+// Plugin factory exports
+export {
+  createPlugin,
+  createConditionalPlugin,
+  createWrapperPlugin,
+  createRetryablePlugin,
+  createTimeoutPlugin,
+  createMetricsPlugin,
+  createCachedPlugin,
+  createRateLimitedPlugin,
+  PluginComposer,
+} from './plugin-factory.js';
+
+// Preset factory exports
+export {
+  createPresetClient,
+  createMinimalPresetClient,
+  createFullPresetClient,
+  createProductionPresetClient,
+  createDevelopmentPresetClient,
+  createTestPresetClient,
+  createPresetClientBuilder,
+  PresetClientBuilder,
+  type PresetConfig,
+  type PlatformOptions,
+} from './preset-factory.js';
 
 // Node.js specific exports
 export {
@@ -92,6 +169,7 @@ export {
   sanitizeHeaders,
   validateRequestSize,
   createRequestSizeValidation,
+  createComprehensiveSecurity,
   type SecurityOptions,
 } from './security.js';
 
@@ -99,11 +177,17 @@ export {
 export {
   MemoryCookieJar,
   createCookieMiddleware,
+  createCookieMiddlewareWithOptions,
+  createDomainCookieMiddleware,
   createCookieJar,
   parseCookies,
   formatCookies,
+  parseCookie,
+  formatCookie,
+  CookieUtils,
   type CookieOptions,
   type CookieJar,
+  type Cookie,
 } from './cookie-manager.js';
 
 // Stream utilities exports
@@ -126,8 +210,33 @@ export {
   createTakeStream,
   createCollectStream,
   createSplitStream,
+  StreamUtils,
   type StreamOptions,
 } from './stream-utils.js';
+
+// Performance exports
+export {
+  PerformanceMonitor,
+  createPerformanceMonitor,
+  createPerformanceMiddleware,
+  Benchmark,
+  createBenchmark,
+  MemoryMonitor,
+  createMemoryMonitor,
+  PerformanceUtils,
+  PERFORMANCE_CONSTANTS,
+  checkPerformanceHealth,
+} from './performance.js';
+
+// Build utilities exports
+export {
+  BundleAnalyzer,
+  createBundleAnalyzer,
+  BuildOptimizer,
+  createBuildOptimizer,
+  BuildUtils,
+  BUILD_CONSTANTS,
+} from './build-utils.js';
 
 // Re-export common types for convenience
 export type { Headers, Request, Response, AbortSignal } from './types.js';

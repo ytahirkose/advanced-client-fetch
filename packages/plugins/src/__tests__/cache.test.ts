@@ -104,7 +104,8 @@ describe('HyperHTTP Cache Plugin', () => {
         throw new Error('Should not be called');
       });
       
-      expect(context2.res).toBe(response);
+      expect(context2.res?.status).toBe(response.status);
+      expect(context2.res?.statusText).toBe(response.statusText);
       expect(context2.meta.cacheHit).toBe(true);
     });
 
@@ -308,7 +309,8 @@ describe('HyperHTTP Cache Plugin', () => {
         throw new Error('Should not be called');
       });
       
-      expect(jsonContext2.res).toBe(jsonResponse);
+      expect(jsonContext2.res?.status).toBe(jsonResponse.status);
+      expect(jsonContext2.res?.statusText).toBe(jsonResponse.statusText);
       expect(jsonContext2.meta.cacheHit).toBe(true);
     });
   });

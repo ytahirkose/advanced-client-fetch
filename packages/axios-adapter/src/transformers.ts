@@ -54,20 +54,28 @@ export const defaultResponseTransformers: Array<(data: any, headers: Headers) =>
 
 export function createContentTypeTransformer() {
   return (data: any, headers: Headers) => {
-    if (typeof data === 'object' && data !== null && !(data instanceof FormData)) {
+    if (data && typeof data === 'object' && !(data instanceof FormData) && !(data instanceof URLSearchParams)) {
       if (!headers.has('content-type')) {
         headers.set('content-type', 'application/json; charset=utf-8');
       }
+      return JSON.stringify(data);
     }
     return data;
   };
 }
 
 export function createFormDataTransformer() {
-  return (data: any, _headers: Headers) => {
-    if (data instanceof FormData) {
-      // FormData sets its own content-type
-      return data;
+  return (data: any, headers: Headers) => {
+    if (data && typeof data === 'object' && !(data instanceof FormData)) {
+      const formData = new FormData();
+      Object.entries(data).forEach(([key, value]) => {
+        if (value instanceof File || value instanceof Blob) {
+          formData.append(key, value);
+        } else {
+          formData.append(key, String(value));
+        }
+      });
+      return formData;
     }
     return data;
   };
@@ -75,10 +83,19 @@ export function createFormDataTransformer() {
 
 export function createURLSearchParamsTransformer() {
   return (data: any, headers: Headers) => {
-    if (data instanceof URLSearchParams) {
+    if (data && typeof data === 'object' && !(data instanceof URLSearchParams)) {
+      const params = new URLSearchParams();
+      Object.entries(data).forEach(([key, value]) => {
+        if (Array.isArray(value)) {
+          value.forEach(v => params.append(key, String(v)));
+        } else {
+          params.append(key, String(value));
+        }
+      });
       if (!headers.has('content-type')) {
         headers.set('content-type', 'application/x-www-form-urlencoded; charset=utf-8');
       }
+      return params.toString();
     }
     return data;
   };
@@ -150,67 +167,166 @@ export function createStatusCodeResponseTransformer() {
 }
 
 export function createPaginationResponseTransformer() {
-  return (data: any, _headers: Headers) => {
-    // Handle pagination metadata
-    if (data && typeof data === 'object' && data.pagination) {
-      return data;
+  return (data: any, headers: Headers) => {
+    // Extract pagination info from headers
+    const pagination = {
+      page: parseInt(headers.get('x-page') || '1'),
+      perPage: parseInt(headers.get('x-per-page') || '10'),
+      total: parseInt(headers.get('x-total') || '0'),
+      totalPages: parseInt(headers.get('x-total-pages') || '1')
+    };
+
+    if (pagination.total > 0) {
+      return {
+        data,
+        pagination
+      };
     }
     return data;
   };
 }
 
 export function createRateLimitResponseTransformer() {
-  return (data: any, _headers: Headers) => {
-    // Handle rate limit headers
+  return (data: any, headers: Headers) => {
+    const rateLimit = {
+      limit: parseInt(headers.get('x-ratelimit-limit') || '0'),
+      remaining: parseInt(headers.get('x-ratelimit-remaining') || '0'),
+      reset: parseInt(headers.get('x-ratelimit-reset') || '0')
+    };
+
+    if (rateLimit.limit > 0) {
+      return {
+        data,
+        rateLimit
+      };
+    }
     return data;
   };
 }
 
 export function createCacheResponseTransformer() {
-  return (data: any, _headers: Headers) => {
-    // Handle cache headers
+  return (data: any, headers: Headers) => {
+    const cache = {
+      hit: headers.get('x-cache') === 'HIT',
+      age: parseInt(headers.get('x-cache-age') || '0'),
+      expires: headers.get('cache-control')?.includes('max-age'),
+      etag: headers.get('etag'),
+      lastModified: headers.get('last-modified')
+    };
+
+    if (cache.hit || cache.etag || cache.lastModified) {
+      return {
+        data,
+        cache
+      };
+    }
     return data;
   };
 }
 
 export function createCORSResponseTransformer() {
-  return (data: any, _headers: Headers) => {
-    // Handle CORS headers
+  return (data: any, headers: Headers) => {
+    const cors = {
+      allowOrigin: headers.get('access-control-allow-origin'),
+      allowMethods: headers.get('access-control-allow-methods'),
+      allowHeaders: headers.get('access-control-allow-headers'),
+      allowCredentials: headers.get('access-control-allow-credentials') === 'true'
+    };
+
+    if (cors.allowOrigin) {
+      return {
+        data,
+        cors
+      };
+    }
     return data;
   };
 }
 
 export function createSecurityResponseTransformer() {
-  return (data: any, _headers: Headers) => {
-    // Handle security headers
+  return (data: any, headers: Headers) => {
+    const security = {
+      contentSecurityPolicy: headers.get('content-security-policy'),
+      xFrameOptions: headers.get('x-frame-options'),
+      xContentTypeOptions: headers.get('x-content-type-options'),
+      strictTransportSecurity: headers.get('strict-transport-security'),
+      xXSSProtection: headers.get('x-xss-protection')
+    };
+
+    // Only add security info if any security headers are present
+    if (Object.values(security).some(value => value !== null)) {
+      return {
+        data,
+        security
+      };
+    }
     return data;
   };
 }
 
-export function createCustomHeadersResponseTransformer() {
-  return (data: any, _headers: Headers) => {
-    // Handle custom headers
+export function createCustomHeadersResponseTransformer(headerNames: string[] = []) {
+  return (data: any, headers: Headers) => {
+    if (headerNames.length === 0) return data;
+    
+    const customHeaders: Record<string, string> = {};
+    headerNames.forEach(name => {
+      const value = headers.get(name);
+      if (value) {
+        customHeaders[name] = value;
+      }
+    });
+
+    if (Object.keys(customHeaders).length > 0) {
+      return {
+        data,
+        customHeaders
+      };
+    }
     return data;
   };
 }
 
 export function createMetadataResponseTransformer() {
-  return (data: any, _headers: Headers) => {
-    // Handle metadata
+  return (data: any, headers: Headers) => {
+    const metadata = {
+      server: headers.get('server'),
+      date: headers.get('date'),
+      contentLength: headers.get('content-length'),
+      contentType: headers.get('content-type'),
+      lastModified: headers.get('last-modified'),
+      etag: headers.get('etag'),
+      expires: headers.get('expires'),
+      age: headers.get('age')
+    };
+
+    // Only add metadata if any metadata headers are present
+    if (Object.values(metadata).some(value => value !== null)) {
+      return {
+        data,
+        metadata
+      };
+    }
     return data;
   };
 }
 
 export function createDebugResponseTransformer() {
-  return (data: any, _headers: Headers) => {
-    // Handle debug information
+  return (data: any, headers: Headers) => {
+    if (process.env.NODE_ENV === 'development' || process.env.DEBUG) {
+      console.log('Response Debug:', {
+        data,
+        headers: Object.fromEntries(headers.entries()),
+        timestamp: new Date().toISOString()
+      });
+    }
     return data;
   };
 }
 
-export function createLoggingResponseTransformer() {
-  return (data: any, _headers: Headers) => {
-    // Handle logging
+export function createLoggingResponseTransformer(logger?: (message: string) => void) {
+  const log = logger || console.log;
+  return (data: any, headers: Headers) => {
+    log(`Response: ${JSON.stringify(data)}`);
     return data;
   };
 }

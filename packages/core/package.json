@@ -1,5 +1,5 @@
 {
-  "name": "hyperhttp-core",
+  "name": "@hyperhttp/core",
   "version": "1.0.0",
   "description": "🚀 Core HTTP client with fetch-first design, plugin architecture, and security features. Works across all platforms with automatic cookie management and SSRF protection.",
   "type": "module",
@@ -40,7 +40,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "lint": "eslint src/**/*.ts",
+    "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "clean": "rm -rf dist"
   },
@@ -78,13 +78,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ytahirkose/advanced-client-fetch.git",
+    "url": "https://github.com/ytahirkose/hyperhttp.git",
     "directory": "packages/core"
   },
   "bugs": {
-    "url": "https://github.com/ytahirkose/advanced-client-fetch/issues"
+    "url": "https://github.com/ytahirkose/hyperhttp/issues"
   },
-  "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
+  "homepage": "https://github.com/ytahirkose/hyperhttp#readme",
   "author": "HyperHTTP Team",
   "license": "MIT"
 }

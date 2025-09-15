@@ -3,6 +3,8 @@
 > **Powerful HTTP Plugins** - Retry, cache, rate limiting, circuit breaker, and more
 
 [![npm version](https://badge.fury.io/js/@hyperhttp/plugins.svg)](https://badge.fury.io/js/@hyperhttp/plugins)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@hyperhttp/plugins)](https://bundlephobia.com/package/@hyperhttp/plugins)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
 A comprehensive collection of plugins for HyperHTTP that add powerful features like retry logic, caching, rate limiting, circuit breakers, and more.
 
@@ -22,7 +24,7 @@ Intelligent retry logic with exponential backoff, jitter, and Retry-After header
 import { retry } from '@hyperhttp/plugins';
 
 const client = createClient({
-  middleware: [
+  plugins: [
     retry({
       retries: 3,
       minDelay: 100,
@@ -51,7 +53,7 @@ RFC 9111 compliant HTTP caching with stale-while-revalidate support.
 import { cache } from '@hyperhttp/plugins';
 
 const client = createClient({
-  middleware: [
+  plugins: [
     cache({
       ttl: 300000, // 5 minutes
       respectHeaders: true,
@@ -76,7 +78,7 @@ Sliding window and token bucket rate limiting algorithms.
 import { rateLimit } from '@hyperhttp/plugins';
 
 const client = createClient({
-  middleware: [
+  plugins: [
     rateLimit({
       maxRequests: 100,
       windowMs: 60000, // 1 minute
@@ -101,7 +103,7 @@ Fault tolerance with circuit breaker pattern.
 import { circuitBreaker } from '@hyperhttp/plugins';
 
 const client = createClient({
-  middleware: [
+  plugins: [
     circuitBreaker({
       failureThreshold: 5,
       windowMs: 60000,
@@ -126,7 +128,7 @@ Prevent duplicate requests from being made simultaneously.
 import { dedupe } from '@hyperhttp/plugins';
 
 const client = createClient({
-  middleware: [
+  plugins: [
     dedupe({
       timeout: 30000,
       maxPending: 100
@@ -150,7 +152,7 @@ Collect detailed metrics about requests and responses.
 import { metrics } from '@hyperhttp/plugins';
 
 const client = createClient({
-  middleware: [
+  plugins: [
     metrics({
       collectSizes: true,
       collectTiming: true,
@@ -176,7 +178,7 @@ Per-request and per-attempt timeout support.
 import { timeout } from '@hyperhttp/plugins';
 
 const client = createClient({
-  middleware: [
+  plugins: [
     timeout({
       timeout: 10000, // 10 seconds
       timeoutPerAttempt: 5000 // 5 seconds per attempt
@@ -208,7 +210,7 @@ import {
 
 const client = createClient({
   baseURL: 'https://api.example.com',
-  middleware: [
+  plugins: [
     // Retry with exponential backoff
     retry({
       retries: 3,
@@ -258,7 +260,7 @@ import { retry, circuitBreaker, dedupe } from '@hyperhttp/plugins';
 
 const userService = createClient({
   baseURL: 'https://user-service.internal',
-  middleware: [
+  plugins: [
     retry({
       retries: 3,
       methods: ['GET', 'POST', 'PUT', 'DELETE'],
@@ -285,7 +287,7 @@ import { cache, retry, rateLimit } from '@hyperhttp/plugins';
 
 const cdnClient = createClient({
   baseURL: 'https://cdn.example.com',
-  middleware: [
+  plugins: [
     cache({
       ttl: 3600000, // 1 hour
       respectHeaders: true,
@@ -313,7 +315,7 @@ import { retry, dedupe, timeout } from '@hyperhttp/plugins';
 
 const realtimeClient = createClient({
   baseURL: 'https://realtime.example.com',
-  middleware: [
+  plugins: [
     timeout({
       timeout: 5000, // 5 seconds
       timeoutPerAttempt: 2000 // 2 seconds per attempt
@@ -339,7 +341,7 @@ const realtimeClient = createClient({
 import { retry } from '@hyperhttp/plugins';
 
 const client = createClient({
-  middleware: [
+  plugins: [
     retry({
       retries: 3,
       retryOn: (error) => {
@@ -359,7 +361,7 @@ const client = createClient({
 ### Custom Cache Storage
 
 ```typescript
-import { cache, MemoryCacheStorage } from '@hyperhttp/plugins';
+import { cache } from '@hyperhttp/plugins';
 
 class RedisCacheStorage {
   async get(key: string) {
@@ -380,7 +382,7 @@ class RedisCacheStorage {
 }
 
 const client = createClient({
-  middleware: [
+  plugins: [
     cache({
       storage: new RedisCacheStorage(),
       ttl: 300000
@@ -395,7 +397,7 @@ const client = createClient({
 import { rateLimit } from '@hyperhttp/plugins';
 
 const client = createClient({
-  middleware: [
+  plugins: [
     rateLimit({
       maxRequests: 100,
       windowMs: 60000,
@@ -415,7 +417,7 @@ const client = createClient({
 import { circuitBreaker } from '@hyperhttp/plugins';
 
 const client = createClient({
-  middleware: [
+  plugins: [
     circuitBreaker({
       failureThreshold: 5,
       windowMs: 60000,
@@ -435,19 +437,19 @@ const client = createClient({
 ### Conditional Plugins
 
 ```typescript
-import { conditional } from '@hyperhttp/core';
+import { createConditionalPlugin } from '@hyperhttp/core';
 import { retry, cache } from '@hyperhttp/plugins';
 
 const client = createClient({
-  middleware: [
+  plugins: [
     // Only retry GET requests
-    conditional(
+    createConditionalPlugin(
       (ctx) => ctx.req.method === 'GET',
       retry({ retries: 3 })
     ),
     
     // Only cache successful responses
-    conditional(
+    createConditionalPlugin(
       (ctx) => ctx.res?.ok === true,
       cache({ ttl: 300000 })
     )
@@ -468,7 +470,7 @@ const apiMiddleware = compose([
 ]);
 
 const client = createClient({
-  middleware: [apiMiddleware]
+  plugins: [apiMiddleware]
 });
 ```
 
@@ -515,7 +517,7 @@ const mockCache = vi.fn().mockImplementation(() => async (ctx, next) => {
 });
 
 const client = createClient({
-  middleware: [mockRetry(), mockCache()]
+  plugins: [mockRetry(), mockCache()]
 });
 ```
 
@@ -533,7 +535,7 @@ describe('Retry Plugin', () => {
     global.fetch = mockFetch;
     
     const client = createClient({
-      middleware: [retry({ retries: 1 })]
+      plugins: [retry({ retries: 1 })]
     });
     
     const result = await client.get('/test');

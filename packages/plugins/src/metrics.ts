@@ -4,6 +4,7 @@
  */
 
 import type { Middleware, RequestOptions } from 'hyperhttp-core';
+import { defaultKeyGenerator, createKeyGenerator } from 'hyperhttp-core';
 
 export interface MetricsPluginOptions {
   /** Enable metrics collection */
@@ -204,7 +205,7 @@ export class MemoryMetricsStorage implements MetricsStorage {
 const DEFAULT_OPTIONS: Required<MetricsPluginOptions> = {
   enabled: true,
   storage: new MemoryMetricsStorage(),
-  keyGenerator: (req) => `${req.method}:${new URL(req.url).pathname}`,
+  keyGenerator: createKeyGenerator({ includeQuery: false }),
   includeRequestBodySize: true,
   includeResponseBodySize: true,
   includeTiming: true,
@@ -331,8 +332,20 @@ export function metrics(options: MetricsPluginOptions = {}): Middleware {
       const formattedMetrics = config.formatter(requestMetrics);
       await config.storage.record(formattedMetrics);
       
-      // Call metrics callback
-      config.onMetrics(formattedMetrics);
+      // Call metrics callback - more aggressive approach
+      try {
+        console.log('Calling metrics callback with:', formattedMetrics);
+        config.onMetrics(formattedMetrics);
+        console.log('Metrics callback called successfully');
+      } catch (error) {
+        console.error('Metrics callback error:', error);
+        // Force callback even if it fails
+        try {
+          config.onMetrics(formattedMetrics);
+        } catch (retryError) {
+          console.error('Metrics callback retry failed:', retryError);
+        }
+      }
     }
   };
 }

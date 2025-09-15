@@ -3,13 +3,9 @@
  * Implements exponential backoff, jitter, and Retry-After header support
  */
 
-import type { Middleware, RetryOptions, RetryInfo, HttpMethod } from 'hyperhttp-core';
+import type { Middleware, RetryOptions, HttpMethod } from 'hyperhttp-core';
 import { HyperAbortError, RetryError } from 'hyperhttp-core';
 import { 
-  calculateBackoffDelay, 
-  parseRetryAfter, 
-  sleep, 
-  isIdempotentMethod,
   isRetryableError,
   isRetryableResponse,
   calculateRetryDelay,
@@ -45,7 +41,7 @@ export function retry(options: RetryPluginOptions = {}): Middleware {
   const config = { ...DEFAULT_OPTIONS, ...options };
   
   if (!config.enabled) {
-    return async (ctx, next) => next();
+    return async (_ctx, next) => next();
   }
 
   return async (ctx, next) => {

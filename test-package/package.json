@@ -1,19 +1,26 @@
 {
   "name": "test-package",
   "version": "1.0.0",
-  "description": "",
+  "description": "Integration tests for HyperHTTP",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test-integration.js",
+    "test:basic": "node test.js",
+    "test:complete": "node test-complete.js",
+    "test:final": "node test-final.js",
+    "test:plugins": "node test-plugins.js",
+    "test:presets": "node test-presets.js",
+    "test:axios": "node test-axios.js",
+    "test:integration": "node test-integration.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": ["hyperhttp", "http-client", "testing"],
+  "author": "HyperHTTP Team",
+  "license": "MIT",
   "dependencies": {
-    "advanced-client-fetch": "workspace:*",
-    "hyperhttp-axios-adapter": "workspace:1.0.0",
-    "hyperhttp-core": "workspace:1.0.0",
-    "hyperhttp-plugins": "workspace:1.0.0",
-    "hyperhttp-presets": "workspace:1.0.0"
+    "@hyperhttp/hyperhttp": "file:../packages/hyperhttp",
+    "@hyperhttp/core": "file:../packages/core",
+    "@hyperhttp/plugins": "file:../packages/plugins",
+    "@hyperhttp/axios-adapter": "file:../packages/axios-adapter",
+    "@hyperhttp/presets": "file:../packages/presets"
   }
 }

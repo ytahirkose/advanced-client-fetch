@@ -3,6 +3,8 @@
 > **Axios Compatibility Layer** - Drop-in replacement for Axios with HyperHTTP power
 
 [![npm version](https://badge.fury.io/js/@hyperhttp/axios-adapter.svg)](https://badge.fury.io/js/@hyperhttp/axios-adapter)
+[![Bundle Size](https://img.shields.io/bundlephobia/minzip/@hyperhttp/axios-adapter)](https://bundlephobia.com/package/@hyperhttp/axios-adapter)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
 A complete Axios compatibility layer that allows you to use HyperHTTP's powerful features while maintaining the familiar Axios API. Perfect for migrating existing Axios-based applications.
 
@@ -195,7 +197,7 @@ import { retry, cache, circuitBreaker } from '@hyperhttp/plugins';
 
 const axios = createAxiosInstance({
   baseURL: 'https://api.example.com',
-  middleware: [
+  plugins: [
     retry({ retries: 3, jitter: true }),
     cache({ ttl: 300000 }),
     circuitBreaker({
@@ -391,7 +393,7 @@ import { retry, circuitBreaker } from '@hyperhttp/plugins';
 
 const axios = createAxiosInstance({
   baseURL: 'https://user-service.internal',
-  middleware: [
+  plugins: [
     retry({
       retries: 3,
       respectRetryAfter: true
@@ -416,7 +418,7 @@ import { rateLimit, retry } from '@hyperhttp/plugins';
 
 const axios = createAxiosInstance({
   baseURL: 'https://api.example.com',
-  middleware: [
+  plugins: [
     rateLimit({
       maxRequests: 100,
       windowMs: 60000,
@@ -443,7 +445,7 @@ import { retry, cache } from '@hyperhttp/plugins';
 
 const axios = createAxiosInstance({
   baseURL: 'https://api.example.com',
-  middleware: [
+  plugins: [
     retry({ retries: 2 }),
     cache({ ttl: 300000 })
   ]
@@ -467,7 +469,7 @@ Creates a new Axios-compatible instance.
 - `baseURL?: string` - Base URL for all requests
 - `timeout?: number` - Request timeout in milliseconds
 - `headers?: Record<string, string>` - Default headers
-- `middleware?: Middleware[]` - HyperHTTP middleware
+- `plugins?: Middleware[]` - HyperHTTP middleware
 - `transformRequest?: Transformer[]` - Request transformers
 - `transformResponse?: Transformer[]` - Response transformers
 

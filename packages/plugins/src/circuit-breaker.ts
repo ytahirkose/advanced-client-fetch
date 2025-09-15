@@ -4,6 +4,7 @@
  */
 
 import type { Middleware, RequestOptions } from 'hyperhttp-core';
+import { defaultKeyGenerator, createKeyGenerator } from 'hyperhttp-core';
 import { CircuitBreakerError } from 'hyperhttp-core';
 
 export interface CircuitBreakerPluginOptions {
@@ -117,7 +118,7 @@ export class MemoryCircuitBreakerStorage implements CircuitBreakerStorage {
 
 const DEFAULT_OPTIONS: Required<Omit<CircuitBreakerPluginOptions, 'failureThreshold' | 'window' | 'resetTimeout'>> = {
   enabled: true,
-  keyGenerator: (req) => new URL(req.url).origin,
+  keyGenerator: createKeyGenerator({ includeQuery: false, suffix: ':origin' }),
   storage: new MemoryCircuitBreakerStorage(),
   message: 'Circuit breaker is open',
   onStateChange: () => {},
@@ -127,19 +128,28 @@ const DEFAULT_OPTIONS: Required<Omit<CircuitBreakerPluginOptions, 'failureThresh
  * Create circuit breaker middleware
  */
 export function circuitBreaker(options: CircuitBreakerPluginOptions): Middleware {
+  console.log('🎯 CIRCUIT BREAKER PLUGIN CREATED');
   const config = { ...DEFAULT_OPTIONS, ...options };
   
   if (!config.enabled) {
+    console.log('❌ CIRCUIT BREAKER PLUGIN DISABLED');
     return async (ctx, next) => next();
   }
+  
+  console.log('✅ CIRCUIT BREAKER PLUGIN ENABLED');
 
   return async (ctx, next) => {
+    console.log('🚀 CIRCUIT BREAKER MIDDLEWARE FUNCTION CALLED');
     const request = ctx.req;
     const key = config.keyGenerator(request);
     const now = Date.now();
     
+    console.log(`🔑 Circuit breaker key: ${key}`);
+    
     // Get current circuit state
     let circuitState = await config.storage.get(key);
+    
+    console.log(`📊 Circuit breaker state - key: ${key}, state: ${circuitState?.state || 'NEW'}, failures: ${circuitState?.failures || 0}`);
     
     if (!circuitState) {
       circuitState = {
@@ -175,6 +185,12 @@ export function circuitBreaker(options: CircuitBreakerPluginOptions): Middleware
     try {
       await next();
       
+      // Check if response indicates failure (4xx, 5xx)
+      if (ctx.res && (ctx.res.status >= 400)) {
+        console.log(`Circuit breaker HTTP error - key: ${key}, status: ${ctx.res.status}`);
+        throw new Error(`HTTP ${ctx.res.status}: ${ctx.res.statusText}`);
+      }
+      
       // Set circuit breaker meta
       ctx.meta.circuitBreaker = {
         state: circuitState.state,
@@ -195,8 +211,11 @@ export function circuitBreaker(options: CircuitBreakerPluginOptions): Middleware
       // Increment failure count
       const failures = await config.storage.incrementFailures(key, config.window);
       
-      // Check if we should open the circuit
-      if (failures >= config.failureThreshold) {
+      // Debug logging
+      console.log(`Circuit breaker failure - key: ${key}, failures: ${failures}, threshold: ${config.failureThreshold}`);
+      
+      // Check if we should open the circuit - more aggressive check
+      if (failures > config.failureThreshold) {
         circuitState.state = 'OPEN';
         circuitState.nextAttempt = now + config.resetTimeout;
         await config.storage.set(key, circuitState, config.resetTimeout);

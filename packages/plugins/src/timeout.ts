@@ -39,8 +39,8 @@ export function timeout(options: TimeoutPluginOptions = {}): Middleware {
   }
 
   return async (ctx, next) => {
-    const requestOptions = ctx.options as RequestOptions;
-    const requestTimeout = requestOptions.timeout || config.requestTimeout || config.timeout;
+    // Get timeout from request meta or config
+    const requestTimeout = ctx.meta.timeout || config.requestTimeout || config.timeout;
     const globalTimeout = config.globalTimeout;
     
     // Use global timeout if specified, otherwise use request timeout
@@ -61,9 +61,18 @@ export function timeout(options: TimeoutPluginOptions = {}): Middleware {
       ctx.req = new Request(ctx.req, { signal: combinedSignal });
       
       await next();
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        throw new TimeoutError(timeoutMs, combinedSignal);
+    } catch (error: any) {
+      // More aggressive timeout detection
+      if (error instanceof Error && (
+        error.name === 'AbortError' || 
+        error.message?.includes('timeout') || 
+        error.message?.includes('Request timeout') || 
+        error.message?.includes('TimeoutError') || 
+        error.message?.includes('aborted') ||
+        error.message?.includes('The operation was aborted') ||
+        error.message?.includes('signal is aborted')
+      )) {
+        throw new TimeoutError(config.message, timeoutMs);
       }
       throw error;
     } finally {

@@ -4,7 +4,7 @@
  */
 
 import type { Middleware, RequestOptions } from 'hyperhttp-core';
-import { RateLimitError } from 'hyperhttp-core';
+import { RateLimitError, defaultKeyGenerator, createKeyGenerator } from 'hyperhttp-core';
 import { sleep } from 'hyperhttp-core';
 
 export interface RateLimitPluginOptions {
@@ -26,6 +26,8 @@ export interface RateLimitPluginOptions {
   message?: string;
   /** Headers to include in response */
   headers?: boolean;
+  /** Callback when rate limit is reached */
+  onLimitReached?: (key: string, count: number, limit: number) => void;
 }
 
 export interface RateLimitStorage {
@@ -110,7 +112,7 @@ export class MemoryRateLimitStorage implements RateLimitStorage {
 
 const DEFAULT_OPTIONS: Required<Omit<RateLimitPluginOptions, 'limit' | 'window'>> = {
   enabled: true,
-  keyGenerator: (req) => req.url,
+  keyGenerator: defaultKeyGenerator,
   storage: new MemoryRateLimitStorage(),
   skipSuccessful: false,
   skipFailed: false,
@@ -122,18 +124,28 @@ const DEFAULT_OPTIONS: Required<Omit<RateLimitPluginOptions, 'limit' | 'window'>
  * Create rate limit middleware
  */
 export function rateLimit(options: RateLimitPluginOptions): Middleware {
+  console.log('🎯 RATE LIMIT PLUGIN CREATED');
   const config = { ...DEFAULT_OPTIONS, ...options };
   
   if (!config.enabled) {
+    console.log('❌ RATE LIMIT PLUGIN DISABLED');
     return async (ctx, next) => next();
   }
+  
+  console.log('✅ RATE LIMIT PLUGIN ENABLED');
 
   return async (ctx, next) => {
+    console.log('🚀 RATE LIMIT MIDDLEWARE FUNCTION CALLED');
     const request = ctx.req;
     const key = config.keyGenerator(request);
     
+    console.log(`🔑 Rate limit key: ${key}`);
+    
     // Get current rate limit info
     const info = await config.storage.increment(key, config.window);
+    
+    // Debug logging
+    console.log(`📊 Rate limit check - key: ${key}, count: ${info.count}, limit: ${config.limit}`);
     
     // Calculate remaining requests
     const remaining = Math.max(0, config.limit - info.count);
@@ -145,7 +157,7 @@ export function rateLimit(options: RateLimitPluginOptions): Middleware {
       reset: info.resetTime,
     };
     
-    // Check if limit exceeded
+    // Check if limit exceeded - correct logic
     if (info.count > config.limit) {
       const resetTime = info.resetTime;
       const retryAfter = Math.ceil((resetTime - Date.now()) / 1000);
@@ -158,6 +170,11 @@ export function rateLimit(options: RateLimitPluginOptions): Middleware {
           'X-RateLimit-Reset': Math.ceil(resetTime / 1000).toString(),
           'Retry-After': retryAfter.toString(),
         };
+      }
+      
+      // Call callback if provided
+      if (config.onLimitReached) {
+        config.onLimitReached(key, info.count, config.limit);
       }
       
       throw new RateLimitError(

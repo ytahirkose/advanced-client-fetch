@@ -13,7 +13,7 @@ describe('Transformers', () => {
     
     const result = transformer(data, headers);
     
-    expect(result).toBe(data);
+    expect(result).toBe('{"test":"value"}'); // Should be JSON string
     expect(headers.get('content-type')).toBe('application/json; charset=utf-8');
   });
 });

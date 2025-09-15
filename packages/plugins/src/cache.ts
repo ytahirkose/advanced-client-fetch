@@ -4,7 +4,7 @@
  */
 
 import type { Middleware, CacheOptions, CacheStorage, RequestOptions } from 'hyperhttp-core';
-import { isJSONResponse, getContentType } from 'hyperhttp-core';
+import { isJSONResponse, getContentType, MemoryStorage } from 'hyperhttp-core';
 
 export interface CachePluginOptions extends CacheOptions {
   /** Enable cache plugin */
@@ -110,7 +110,9 @@ export function cache(options: CachePluginOptions = {}): Middleware {
     
     // Store in cache
     if (responseTTL > 0) {
-      await storage.set(cacheKey, ctx.res, responseTTL);
+      // Clone response to avoid body consumption issues
+      const clonedResponse = ctx.res.clone();
+      await storage.set(cacheKey, clonedResponse, responseTTL);
     }
     
     ctx.meta.cacheHit = false;

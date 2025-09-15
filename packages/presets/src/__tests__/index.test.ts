@@ -2,7 +2,55 @@
  * Tests for HyperHTTP Presets index
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+// Mock the dependencies
+vi.mock('hyperhttp-core', () => ({
+  createClient: vi.fn((options) => ({
+    request: vi.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+    json: vi.fn(),
+    _options: options,
+  })),
+  createPresetClient: vi.fn((platform, options, config, middlewareFactory) => ({
+    request: vi.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+    json: vi.fn(),
+    _platform: platform,
+    _options: options,
+    _config: config,
+  })),
+  createMinimalPresetClient: vi.fn((platform, options) => ({
+    request: vi.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+    json: vi.fn(),
+    _platform: platform,
+    _options: options,
+  })),
+  createFullPresetClient: vi.fn((platform, options, config, middlewareFactory) => ({
+    request: vi.fn(),
+    get: vi.fn(),
+    post: vi.fn(),
+    json: vi.fn(),
+    _platform: platform,
+    _options: options,
+    _config: config,
+  })),
+}));
+
+vi.mock('hyperhttp-plugins', () => ({
+  retry: vi.fn((options) => ({ type: 'retry', options })),
+  timeout: vi.fn((options) => ({ type: 'timeout', options })),
+  cache: vi.fn((options) => ({ type: 'cache', options })),
+  rateLimit: vi.fn((options) => ({ type: 'rateLimit', options })),
+  circuitBreaker: vi.fn((options) => ({ type: 'circuitBreaker', options })),
+  dedupe: vi.fn((options) => ({ type: 'dedupe', options })),
+  metrics: vi.fn((options) => ({ type: 'metrics', options })),
+}));
+
 import * as presets from '../index.js';
 
 describe('HyperHTTP Presets Index', () => {

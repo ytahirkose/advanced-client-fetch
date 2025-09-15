@@ -16,6 +16,22 @@ import { RateLimitError } from 'hyperhttp-core';
 import type { Context } from 'hyperhttp-core';
 import { MemoryRateLimitStorage } from '../rate-limit.js';
 
+// Mock hyperhttp-core
+vi.mock('hyperhttp-core', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    defaultKeyGenerator: vi.fn((request: Request) => {
+      return `${request.method}:${request.url}`;
+    }),
+    createKeyGenerator: vi.fn((options: any) => {
+      return (request: Request) => {
+        return `${request.method}:${request.url}`;
+      };
+    })
+  };
+});
+
 describe('HyperHTTP Rate Limiting Plugin', () => {
   beforeEach(() => {
     vi.clearAllMocks();

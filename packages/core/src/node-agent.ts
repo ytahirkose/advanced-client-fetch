@@ -4,7 +4,7 @@
 
 import type { Agent } from 'http';
 import type { Agent as HttpsAgent } from 'https';
-import type { NodeAgentOptions, ProxyConfig, NodeSslOptions } from './types.js';
+import type { NodeAgentOptions, ProxyConfig, NodeSslOptions, Context } from './types.js';
 
 /**
  * Check if running in Node.js environment
@@ -92,12 +92,38 @@ export function createNodeTransport(agent?: Agent | HttpsAgent): (request: Reque
 }
 
 /**
- * Create proxy middleware (placeholder)
+ * Create proxy middleware
  */
 export function createProxyMiddleware(proxy: ProxyConfig) {
-  // This would be implemented with actual proxy logic
-  return async (ctx: any, next: () => Promise<void>) => {
-    // Proxy implementation would go here
+  return async (ctx: Context, next: () => Promise<void>) => {
+    const url = new URL(ctx.req.url);
+    
+    // Apply proxy configuration
+    if (proxy.protocol === 'http' || proxy.protocol === 'https') {
+      // HTTP/HTTPS proxy
+      const proxyUrl = `${proxy.protocol}://${proxy.host}:${proxy.port}`;
+      
+      // Set proxy headers
+      if (proxy.auth) {
+        const auth = Buffer.from(`${proxy.auth.username}:${proxy.auth.password}`).toString('base64');
+        ctx.req.headers.set('Proxy-Authorization', `Basic ${auth}`);
+      }
+      
+      // Modify request URL for proxy
+      const originalUrl = ctx.req.url;
+      ctx.req = new Request(proxyUrl + originalUrl, {
+        method: ctx.req.method,
+        headers: ctx.req.headers,
+        body: ctx.req.body,
+        signal: ctx.req.signal
+      });
+      
+      ctx.meta.proxy = { type: 'http', originalUrl };
+    } else if (proxy.protocol === 'socks5') {
+      // SOCKS5 proxy (would require additional implementation)
+      ctx.meta.proxy = { type: 'socks5', config: proxy };
+    }
+    
     await next();
   };
 }

@@ -1,5 +1,5 @@
 {
-  "name": "hyperhttp-axios-adapter",
+  "name": "@hyperhttp/axios-adapter",
   "version": "1.0.0",
   "description": "🔄 Axios compatibility layer for HyperHTTP. Drop-in replacement for Axios with HyperHTTP power. Solves CORS+cookie issues and works in Edge runtimes.",
   "type": "module",
@@ -30,7 +30,7 @@
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
-    "hyperhttp-core": "^1.0.0"
+    "@hyperhttp/core": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
@@ -60,13 +60,13 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/ytahirkose/advanced-client-fetch.git",
+    "url": "https://github.com/ytahirkose/hyperhttp.git",
     "directory": "packages/axios-adapter"
   },
   "bugs": {
-    "url": "https://github.com/ytahirkose/advanced-client-fetch/issues"
+    "url": "https://github.com/ytahirkose/hyperhttp/issues"
   },
-  "homepage": "https://github.com/ytahirkose/advanced-client-fetch#readme",
+  "homepage": "https://github.com/ytahirkose/hyperhttp#readme",
   "author": "HyperHTTP Team",
   "license": "MIT"
 }
