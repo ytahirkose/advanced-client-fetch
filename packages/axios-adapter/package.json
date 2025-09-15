@@ -25,12 +25,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest --watch",
-    "lint": "eslint .",
+    "lint": "eslint src/**/*.ts",
     "lint:fix": "eslint . --fix",
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
-    "hyperhttp-core": "workspace:*"
+    "hyperhttp-core": "^1.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

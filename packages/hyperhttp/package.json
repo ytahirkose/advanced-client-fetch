@@ -1,6 +1,6 @@
 {
   "name": "advanced-client-fetch",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "description": "🚀 The modern HTTP client that's more powerful than Axios. Fetch-first, plugin-based, platform-independent with smart retry, caching, rate limiting, and more.",
   "type": "module",
   "private": false,
@@ -12,26 +12,6 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
-    },
-    "./core": {
-      "types": "./dist/core.d.ts",
-      "import": "./dist/core.js",
-      "require": "./dist/core.cjs"
-    },
-    "./plugins": {
-      "types": "./dist/plugins.d.ts",
-      "import": "./dist/plugins.js",
-      "require": "./dist/plugins.cjs"
-    },
-    "./presets": {
-      "types": "./dist/presets.d.ts",
-      "import": "./dist/presets.js",
-      "require": "./dist/presets.cjs"
-    },
-    "./axios": {
-      "types": "./dist/axios.d.ts",
-      "import": "./dist/axios.js",
-      "require": "./dist/axios.cjs"
     }
   },
   "files": [

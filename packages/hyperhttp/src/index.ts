@@ -1,12 +1,12 @@
 /**
- * HyperHTTP - The modern HTTP client
+ * Advanced Client Fetch - The modern HTTP client
  * 
  * A fetch-first, plugin-based HTTP client that works across all platforms.
  * More powerful than Axios with smart retry, caching, rate limiting, and more.
  * 
  * @example
  * ```typescript
- * import { createClient } from 'hyperhttp';
+ * import { createClient, retry, cache, rateLimit } from 'advanced-client-fetch';
  * 
  * const client = createClient({
  *   baseURL: 'https://api.example.com',
@@ -17,34 +17,11 @@
  * ```
  */
 
-// Re-export everything from core
+// Re-export from published packages
 export * from 'hyperhttp-core';
+export * from 'hyperhttp-plugins';
+export * from 'hyperhttp-presets';
+export * from 'hyperhttp-axios-adapter';
 
-// Re-export commonly used plugins
-export {
-  retry,
-  cache,
-  rateLimit,
-  circuitBreaker,
-  dedupe,
-  metrics,
-  timeout
-} from 'hyperhttp-plugins';
-
-// Re-export presets
-export {
-  createNodeClient,
-  createEdgeClient,
-  createBrowserClient,
-  createDenoClient,
-  createBunClient
-} from 'hyperhttp-presets';
-
-// Re-export axios adapter
-export {
-  createAxiosAdapter,
-  createAxiosInstance
-} from 'hyperhttp-axios-adapter';
-
-// Default export for convenience
+// Default export
 export { createClient as default } from 'hyperhttp-core';
