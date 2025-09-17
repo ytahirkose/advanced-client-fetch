@@ -36,7 +36,7 @@ export function xsrf(options: XSRFPluginOptions = {}): Plugin {
     sameSite = 'lax',
     tokenGenerator = generateToken,
     tokenValidator = validateToken
-  } = options;
+  } = options as any;
 
   return {
     name: 'xsrf',

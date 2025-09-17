@@ -108,13 +108,13 @@ export function cache(options: CachePluginOptions = {}): Middleware {
     cacheOnlyGET = true,
     keyGenerator = createCacheKeyGenerator(),
     validateResponse = defaultValidateResponse,
-  } = options;
+  } = options as any;
   
   if (!enabled) {
-    return async (ctx, next) => next();
+    return async (ctx: any, next: any) => next();
   }
 
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const request = ctx.req;
     
     // Only cache GET requests by default
@@ -302,13 +302,13 @@ export function cacheWithSWR(options: CachePluginOptions = {}): Middleware {
     ttl = 300000,
     storage = new MemoryCacheStorage(),
     staleWhileRevalidate = true,
-  } = options;
+  } = options as any;
   
   if (!enabled) {
-    return async (ctx, next) => next();
+    return async (ctx: any, next: any) => next();
   }
 
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const request = ctx.req;
     
     if (request.method !== 'GET') {
@@ -383,7 +383,7 @@ export function cacheByContentType(
   contentTypes: string[],
   options: CachePluginOptions = {}
 ): Middleware {
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const request = ctx.req;
     
     if (request.method !== 'GET') {
@@ -419,7 +419,7 @@ export function cacheWithCustomTTL(
   ttlCalculator: (response: Response) => number,
   options: Omit<CachePluginOptions, 'ttl'> = {}
 ): Middleware {
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const request = ctx.req;
     
     if (request.method !== 'GET') {

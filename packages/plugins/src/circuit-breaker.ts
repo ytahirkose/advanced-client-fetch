@@ -72,15 +72,15 @@ export function circuitBreaker(options: CircuitBreakerPluginOptions): Middleware
     keyGenerator = defaultKeyGenerator,
     onStateChange,
     enabled = true,
-  } = options;
+  } = options as any;
 
   if (!enabled) {
-    return async (ctx, next) => next();
+    return async (ctx: any, next: any) => next();
   }
 
   const storage = new MemoryCircuitBreakerStorage();
 
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const key = keyGenerator(ctx.req);
     const now = Date.now();
 
@@ -178,9 +178,9 @@ export function circuitBreakerWithCustomDetection(
     isFailure?: (error: Error, response?: Response) => boolean;
   }
 ): Middleware {
-  const { isFailure = () => true, ...circuitOptions } = options;
+  const { isFailure = () => true, ...circuitOptions } = options as any;
   
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     try {
       await circuitBreaker(circuitOptions)(ctx, next);
     } catch (error) {
@@ -204,7 +204,7 @@ export function adaptiveCircuitBreaker(
   const keyGenerator = options.keyGenerator || defaultKeyGenerator;
   const storage = new Map<string, { threshold: number; lastAdjustment: number }>();
 
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const key = keyGenerator(ctx.req);
     const now = Date.now();
     

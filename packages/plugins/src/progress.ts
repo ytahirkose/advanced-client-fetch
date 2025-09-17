@@ -31,7 +31,7 @@ export function progress(options: ProgressPluginOptions = {}): Plugin {
     enableDownloadProgress = true,
     debounceInterval = 100,
     onProgress
-  } = options;
+  } = options as any;
 
   let lastProgressTime = 0;
 

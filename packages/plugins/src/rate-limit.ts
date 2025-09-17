@@ -102,15 +102,15 @@ export function rateLimit(options: RateLimitPluginOptions): Middleware {
     keyGenerator = defaultKeyGenerator,
     onLimitReached,
     enabled = true,
-  } = options;
+  } = options as any;
 
   if (!enabled) {
-    return async (ctx, next) => next();
+    return async (ctx: any, next: any) => next();
   }
 
   const storage = new MemoryRateLimitStorage();
 
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const key = keyGenerator(ctx.req);
     const now = Date.now();
     const resetTime = now + window;
@@ -170,7 +170,7 @@ export function tokenBucketRateLimit(
   const keyGenerator = options.keyGenerator || defaultKeyGenerator;
   const storage = new Map<string, { tokens: number; lastRefill: number }>();
 
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const key = keyGenerator(ctx.req);
     const now = Date.now();
     
@@ -213,7 +213,7 @@ export function slidingWindowRateLimit(
   const keyGenerator = options.keyGenerator || defaultKeyGenerator;
   const storage = new Map<string, number[]>();
 
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const key = keyGenerator(ctx.req);
     const now = Date.now();
     const windowStart = now - window;
@@ -250,7 +250,7 @@ export function adaptiveRateLimit(
   const keyGenerator = options.keyGenerator || defaultKeyGenerator;
   const storage = new Map<string, { requests: number; lastAdjustment: number; multiplier: number }>();
 
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const key = keyGenerator(ctx.req);
     const now = Date.now();
     

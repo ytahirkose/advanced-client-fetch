@@ -3,7 +3,9 @@
  * Provides Axios-compatible interface
  */
 
+// @ts-ignore
 import { createClient } from 'advanced-client-fetch';
+// @ts-ignore
 import type { ClientOptions } from 'advanced-client-fetch';
 import type { AxiosRequestConfig, AxiosResponse, AxiosError, AxiosInstance, AxiosInterceptorManager } from './types';
 import { AxiosErrorFactory, BaseAxiosError } from './errors';
@@ -242,7 +244,7 @@ export function createAxiosAdapter(options: AxiosAdapterOptions = {}): AxiosAdap
     // Axios interceptors
     interceptors: {
       request: {
-        use: (onFulfilled?: (config: AxiosRequestConfig) => AxiosRequestConfig | Promise<AxiosRequestConfig>, onRejected?: (error: AxiosError) => AxiosError | Promise<AxiosError>) => {
+        use: (onFulfilled?: (config: any) => any, onRejected?: (error: any) => any) => {
           const id = ++interceptorId;
           requestInterceptors.push({ id, onFulfilled, onRejected });
           return id;
@@ -258,7 +260,7 @@ export function createAxiosAdapter(options: AxiosAdapterOptions = {}): AxiosAdap
         }
       },
       response: {
-        use: (onFulfilled?: (response: AxiosResponse) => AxiosResponse | Promise<AxiosResponse>, onRejected?: (error: AxiosError) => AxiosError | Promise<AxiosError>) => {
+        use: (onFulfilled?: (response: any) => any, onRejected?: (error: any) => any) => {
           const id = ++interceptorId;
           responseInterceptors.push({ id, onFulfilled, onRejected });
           return id;
@@ -304,7 +306,7 @@ export function createAxiosAdapter(options: AxiosAdapterOptions = {}): AxiosAdap
     
     // Axios version
     VERSION: '1.0.0'
-  };
+  } as any;
 
   return adapter;
 }

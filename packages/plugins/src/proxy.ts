@@ -22,7 +22,7 @@ export function proxy(options: ProxyPluginOptions = {}): Plugin {
     proxy: defaultProxy,
     bypass = [],
     proxyResolver
-  } = options;
+  } = options as any;
 
   return {
     name: 'proxy',

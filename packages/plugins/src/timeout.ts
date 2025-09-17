@@ -19,13 +19,13 @@ export interface TimeoutPluginOptions {
  * Create timeout middleware
  */
 export function timeout(options: TimeoutPluginOptions = {}): Middleware {
-  const { timeout: timeoutMs = 30000, enabled = true, message } = options;
+  const { timeout: timeoutMs = 30000, enabled = true, message } = options as any;
   
   if (!enabled || timeoutMs <= 0) {
-    return async (_ctx, next) => next();
+    return async (_ctx: any, next: any) => next();
   }
 
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const { signal, cleanup } = combineTimeoutAndSignal(ctx.signal, timeoutMs);
     
     try {
@@ -72,7 +72,7 @@ export function timeoutForMethods(
   timeoutMs: number,
   methods: string[]
 ): Middleware {
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     if (methods.includes(ctx.req.method)) {
       return timeout({ timeout: timeoutMs })(ctx, next);
     }
@@ -87,7 +87,7 @@ export function timeoutWithBackoff(
   baseTimeout: number,
   maxTimeout: number = baseTimeout * 4
 ): Middleware {
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const attempt = ctx.meta.retryAttempt || 1;
     const timeoutMs = Math.min(baseTimeout * attempt, maxTimeout);
     
@@ -101,7 +101,7 @@ export function timeoutWithBackoff(
 export function timeoutWithRetryAfter(
   defaultTimeout: number
 ): Middleware {
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     let timeoutMs = defaultTimeout;
     
     // Check for Retry-After header in previous response
@@ -129,7 +129,7 @@ export function timeoutWithCircuitBreaker(
   let failures = 0;
   let lastFailureTime = 0;
   
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const now = Date.now();
     
     // Reset failures if enough time has passed
@@ -156,7 +156,7 @@ export function timeoutWithCircuitBreaker(
  * Create per-attempt timeout middleware
  */
 export function timeoutPerAttempt(timeoutMs: number): Middleware {
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const attempt = ctx.meta.retryAttempt || 1;
     const attemptTimeout = timeoutMs * attempt;
     
@@ -168,7 +168,7 @@ export function timeoutPerAttempt(timeoutMs: number): Middleware {
  * Create total timeout middleware
  */
 export function totalTimeout(timeoutMs: number): Middleware {
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const startTime = ctx.meta.startTime || Date.now();
     const elapsed = Date.now() - startTime;
     const remaining = timeoutMs - elapsed;
@@ -185,7 +185,7 @@ export function totalTimeout(timeoutMs: number): Middleware {
  * Create timeout middleware that varies by HTTP method
  */
 export function timeoutByMethod(timeouts: Record<string, number>): Middleware {
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const method = ctx.req.method;
     const timeoutMs = timeouts[method] || timeouts.default || 30000;
     

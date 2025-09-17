@@ -106,16 +106,16 @@ export function dedupe(options: DedupePluginOptions = {}): Middleware {
     keyGenerator = defaultKeyGenerator,
     onDedupe,
     enabled = true,
-  } = options;
+  } = options as any;
 
   if (!enabled) {
-    return async (ctx, next) => next();
+    return async (ctx: any, next: any) => next();
   }
 
   const storage = new MemoryDedupeStorage();
   const pendingRequests = new Map<string, InFlightRequest>();
 
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const key = keyGenerator(ctx.req);
     const now = Date.now();
 

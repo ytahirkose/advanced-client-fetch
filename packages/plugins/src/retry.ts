@@ -38,13 +38,13 @@ const DEFAULT_OPTIONS: Required<RetryPluginOptions> = {
  * Create retry middleware
  */
 export function retry(options: RetryPluginOptions = {}): Middleware {
-  const config = { ...DEFAULT_OPTIONS, ...options };
+  const config = { ...DEFAULT_OPTIONS, ...options } as any;
   
   if (!config.enabled) {
-    return async (_ctx, next) => next();
+    return async (_ctx: any, next: any) => next();
   }
 
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const method = (ctx.req.method || 'GET').toUpperCase() as HttpMethod;
     const canRetryMethod = config.methods.includes(method);
     

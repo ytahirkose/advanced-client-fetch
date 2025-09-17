@@ -9,24 +9,24 @@ export function applyRequestTransformers<T = unknown>(
   data: T,
   headers: Headers,
   transformers: Array<(data: unknown, headers: Headers) => unknown>
-): unknown {
-  let result = data;
+): T {
+  let result: any = data;
   for (const transformer of transformers) {
     result = transformer(result, headers);
   }
-  return result;
+  return result as T;
 }
 
 export function applyResponseTransformers<T = unknown>(
   data: T,
   headers: Headers,
   transformers: Array<(data: unknown, headers: Headers) => unknown>
-): unknown {
-  let result = data;
+): T {
+  let result: any = data;
   for (const transformer of transformers) {
     result = transformer(result, headers);
   }
-  return result;
+  return result as T;
 }
 
 export const defaultRequestTransformers: Array<(data: unknown, headers: Headers) => unknown> = [

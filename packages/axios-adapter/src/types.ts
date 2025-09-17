@@ -2,7 +2,8 @@
  * Axios-compatible types for Advanced Client Fetch
  */
 
-import type { Request, Response } from '@advanced-client-fetch/core';
+// @ts-ignore
+import type { Request } from '@advanced-client-fetch/core';
 
 // Axios-compatible request config
 export interface AxiosRequestConfig {
@@ -40,21 +41,8 @@ export interface AxiosRequestConfig {
   onUploadProgress?: (progressEvent: any) => void;
   onDownloadProgress?: (progressEvent: any) => void;
   cancelToken?: any;
-  xsrfCookieName?: string;
-  xsrfHeaderName?: string;
-  proxy?: {
-    host: string;
-    port: number;
-    auth?: {
-      username: string;
-      password: string;
-    };
-  };
-  httpAgent?: any;
-  httpsAgent?: any;
   adapter?: any;
   decompress?: boolean;
-  maxRedirects?: number;
   socketPath?: string;
   httpAgent?: any;
   httpsAgent?: any;

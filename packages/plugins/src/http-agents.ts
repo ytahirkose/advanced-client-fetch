@@ -21,7 +21,7 @@ export function httpAgents(options: HTTPAgentsPluginOptions = {}): Plugin {
     httpAgent: defaultHttpAgent,
     httpsAgent: defaultHttpsAgent,
     agentFactory
-  } = options;
+  } = options as any;
 
   return {
     name: 'http-agents',

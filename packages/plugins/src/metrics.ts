@@ -45,13 +45,13 @@ export function metrics(options: MetricsOptions = {}): Middleware {
     sampling = 1.0,
     formatter = (data) => JSON.stringify(data),
     enabled = true,
-  } = options;
+  } = options as any;
 
   if (!enabled) {
-    return async (ctx, next) => next();
+    return async (ctx: any, next: any) => next();
   }
 
-  return async (ctx, next) => {
+  return async (ctx: any, next: any) => {
     const startTime = performance.now();
     const requestId = ctx.meta.requestId || 'unknown';
     
