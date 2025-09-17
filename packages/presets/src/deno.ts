@@ -99,7 +99,7 @@ export function createMinimalDenoClient(baseURL?: string, options: DenoPresetOpt
     timeout: false,
     dedupe: false,
     metrics: false,
-  });
+  } as any);
 }
 
 /**
@@ -123,9 +123,9 @@ export function createDenoDeployClient(options: DenoPresetOptions = {}): Client 
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-deno/deploy/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**
@@ -136,9 +136,9 @@ export function createDenoCLIClient(options: DenoPresetOptions = {}): Client {
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-deno/cli/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**
@@ -149,9 +149,9 @@ export function createDenoFreshClient(options: DenoPresetOptions = {}): Client {
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-deno/fresh/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**
@@ -162,9 +162,9 @@ export function createDenoOakClient(options: DenoPresetOptions = {}): Client {
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-deno/oak/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**
@@ -175,9 +175,9 @@ export function createDenoHonoClient(options: DenoPresetOptions = {}): Client {
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-deno/hono/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**

@@ -3,10 +3,8 @@
  * Provides Axios-compatible interface
  */
 
-// @ts-ignore
-import { createClient } from 'advanced-client-fetch';
-// @ts-ignore
-import type { ClientOptions } from 'advanced-client-fetch';
+import { createClient } from '@advanced-client-fetch/core';
+import type { ClientOptions } from '@advanced-client-fetch/core';
 import type { AxiosRequestConfig, AxiosResponse, AxiosError, AxiosInstance, AxiosInterceptorManager } from './types';
 import { AxiosErrorFactory, BaseAxiosError } from './errors';
 
@@ -62,14 +60,14 @@ export function createAxiosAdapter(options: AxiosAdapterOptions = {}): AxiosAdap
   let interceptorId = 0;
 
   // Convert Advanced Client Fetch response to Axios response
-  function convertResponse(response: Response, config: AxiosRequestConfig): AxiosResponse {
+  function convertResponse(response: any, config: AxiosRequestConfig): AxiosResponse {
     return {
-      data: response.body,
+      data: response.data,
       status: response.status,
       statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries()),
+      headers: response.headers || {},
       config,
-      request: response
+      request: response.request
     };
   }
 

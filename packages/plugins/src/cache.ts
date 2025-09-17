@@ -3,7 +3,12 @@
  * Implements RFC 9111 compliant HTTP caching
  */
 
-import type { Middleware, CacheOptions, CacheStorage, Request, Response } from '@advanced-client-fetch/core';
+import type { Middleware, CacheOptions, CacheStorage } from '@advanced-client-fetch/core';
+// @ts-ignore
+declare const Request: any;
+// @ts-ignore
+declare const Response: any;
+// @ts-ignore
 import { isJSONResponse, getContentType, defaultKeyGenerator } from '@advanced-client-fetch/core';
 
 export interface CachePluginOptions extends CacheOptions {
@@ -111,7 +116,7 @@ export function cache(options: CachePluginOptions = {}): Middleware {
   } = options as any;
   
   if (!enabled) {
-    return async (ctx: any, next: any) => next();
+    return async (_ctx: any, next: any) => next();
   }
 
   return async (ctx: any, next: any) => {
@@ -305,7 +310,7 @@ export function cacheWithSWR(options: CachePluginOptions = {}): Middleware {
   } = options as any;
   
   if (!enabled) {
-    return async (ctx: any, next: any) => next();
+    return async (_ctx: any, next: any) => next();
   }
 
   return async (ctx: any, next: any) => {
@@ -337,7 +342,7 @@ export function cacheWithSWR(options: CachePluginOptions = {}): Middleware {
         // Revalidate in background
         Promise.resolve().then(async () => {
           try {
-            const newRequest = new Request(request);
+            const newRequest = new (Request as any)(request);
             const newResponse = await fetch(newRequest);
             if (newResponse.ok) {
               await storage.set(cacheKey, newResponse, ttl);
@@ -359,7 +364,7 @@ export function cacheWithSWR(options: CachePluginOptions = {}): Middleware {
     
     if (ctx.res.ok) {
       // Add timestamp header
-      const responseWithTimestamp = new Response(ctx.res.body, {
+      const responseWithTimestamp = new (Response as any)(ctx.res.body, {
         status: ctx.res.status,
         statusText: ctx.res.statusText,
         headers: {
@@ -427,7 +432,7 @@ export function cacheWithCustomTTL(
     }
     
     const cacheKey = createCacheKeyGenerator()(request);
-    const cachedResponse = await options.storage?.get(cacheKey);
+    const cachedResponse = await (options as any).storage?.get(cacheKey);
     
     if (cachedResponse) {
       ctx.res = cachedResponse;
@@ -442,7 +447,7 @@ export function cacheWithCustomTTL(
     if (ctx.res.ok) {
       const ttl = ttlCalculator(ctx.res);
       if (ttl > 0) {
-        await options.storage?.set(cacheKey, ctx.res, ttl);
+        await (options as any).storage?.set(cacheKey, ctx.res, ttl);
       }
     }
     

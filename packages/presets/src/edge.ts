@@ -164,9 +164,9 @@ export function createCloudflareWorkersClient(
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-edge/cloudflare/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**
@@ -179,9 +179,9 @@ export function createVercelEdgeClient(
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-edge/vercel/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**
@@ -194,9 +194,9 @@ export function createDenoDeployClient(
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-edge/deno/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**
@@ -209,9 +209,9 @@ export function createBunEdgeClient(
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-edge/bun/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**

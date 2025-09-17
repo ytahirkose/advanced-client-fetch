@@ -2,7 +2,7 @@
  * Progress tracking plugin for upload/download progress
  */
 
-import type { Plugin, Context, RequestOptions } from '@advanced-client-fetch/core';
+import type { Plugin, Context } from '@advanced-client-fetch/core';
 
 export interface ProgressPluginOptions {
   /** Enable upload progress tracking */
@@ -119,7 +119,7 @@ export function progress(options: ProgressPluginOptions = {}): Plugin {
             const progressStream = new ReadableStream({
               start(controller) {
                 function pump(): Promise<void> {
-                  return reader.read().then(({ done, value }) => {
+                  return reader.read().then(({ done, value }: { done: boolean; value: Uint8Array }) => {
                     if (done) {
                       controller.close();
                       return;

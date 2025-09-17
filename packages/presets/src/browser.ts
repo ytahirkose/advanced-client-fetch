@@ -100,7 +100,7 @@ export function createMinimalBrowserClient(baseURL?: string, options: BrowserPre
     timeout: false,
     dedupe: false,
     metrics: false,
-  });
+  } as any);
 }
 
 /**
@@ -275,13 +275,13 @@ export function createMobileBrowserClient(
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-browser/mobile/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
     retry: { retries: 2, minDelay: 200, maxDelay: 2000 },
     timeout: 20000,
     dedupe: true,
     metrics: true,
-  });
+  } as any);
 }
 
 /**
@@ -294,13 +294,13 @@ export function createDesktopBrowserClient(
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-browser/desktop/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
     retry: { retries: 3, minDelay: 100, maxDelay: 2000 },
     timeout: 30000,
     dedupe: true,
     metrics: true,
-  });
+  } as any);
 }
 
 /**
@@ -313,13 +313,13 @@ export function createWebWorkerClient(
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-browser/worker/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
     retry: { retries: 2, minDelay: 100, maxDelay: 1000 },
     timeout: 15000,
     dedupe: true,
     metrics: false,
-  });
+  } as any);
 }
 
 /**
@@ -332,13 +332,13 @@ export function createServiceWorkerClient(
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-browser/service-worker/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
     retry: { retries: 1, minDelay: 100, maxDelay: 500 },
     timeout: 10000,
     dedupe: true,
     metrics: false,
-  });
+  } as any);
 }
 
 /**

@@ -53,7 +53,7 @@ export function proxy(options: ProxyPluginOptions = {}): Plugin {
       
       // Check if URL should bypass proxy
       const url = new URL(req.url);
-      const shouldBypass = bypass.some(pattern => {
+      const shouldBypass = bypass.some((pattern: string) => {
         if (pattern.startsWith('*.')) {
           const domain = pattern.slice(2);
           return url.hostname.endsWith(domain);
@@ -79,7 +79,9 @@ async function applyProxy(context: Context, proxyConfig: ProxyConfig): Promise<v
   
   try {
     // Dynamic import for Node.js modules
+    // @ts-ignore
     const { HttpsProxyAgent } = await import('https-proxy-agent');
+    // @ts-ignore
     const { HttpProxyAgent } = await import('http-proxy-agent');
     
     // Build proxy URL

@@ -2,7 +2,7 @@
  * Metrics plugin for Advanced Client Fetch
  */
 
-import type { Middleware, Context, Metrics } from '@advanced-client-fetch/core';
+import type { Middleware, Metrics } from '@advanced-client-fetch/core';
 
 export interface MetricsOptions {
   /** Callback for metrics data */
@@ -43,17 +43,17 @@ export function metrics(options: MetricsOptions = {}): Middleware {
   const {
     onMetrics,
     sampling = 1.0,
-    formatter = (data) => JSON.stringify(data),
+    formatter = (data: any) => JSON.stringify(data),
     enabled = true,
   } = options as any;
 
   if (!enabled) {
-    return async (ctx: any, next: any) => next();
+    return async (_ctx: any, next: any) => next();
   }
 
   return async (ctx: any, next: any) => {
     const startTime = performance.now();
-    const requestId = ctx.meta.requestId || 'unknown';
+    const _requestId = (ctx.meta as any).requestId || 'unknown';
     
     // Skip if sampling
     if (Math.random() > sampling) {

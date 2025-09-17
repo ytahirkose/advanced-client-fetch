@@ -43,7 +43,7 @@ export function xsrf(options: XSRFPluginOptions = {}): Plugin {
     priority: 2000,
     
     async onRequest(context: Context): Promise<void> {
-      const { req, options } = context;
+      const { req, options: _options } = context;
       
       // Only apply XSRF protection to state-changing methods
       const method = req.method?.toUpperCase();
@@ -65,7 +65,7 @@ export function xsrf(options: XSRFPluginOptions = {}): Plugin {
         xsrfToken = tokenGenerator();
         
         // Set XSRF cookie in response headers
-        const cookieValue = buildCookie(cookieName, xsrfToken, {
+        const cookieValue = buildCookie(cookieName, xsrfToken!, {
           domain,
           path,
           secure,
@@ -82,14 +82,14 @@ export function xsrf(options: XSRFPluginOptions = {}): Plugin {
       
       // Add XSRF token to request headers
       const headers = new Headers(req.headers);
-      headers.set(headerName, xsrfToken);
+      headers.set(headerName, xsrfToken!);
       
       context.req = new Request(req, {
         headers
       });
     },
     
-    async onResponse(context: Context): Promise<void> {
+    async onResponse(_context: Context): Promise<void> {
       // XSRF protection is primarily request-side
       // Response handling can be added here if needed
     }

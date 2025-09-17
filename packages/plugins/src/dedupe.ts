@@ -109,7 +109,7 @@ export function dedupe(options: DedupePluginOptions = {}): Middleware {
   } = options as any;
 
   if (!enabled) {
-    return async (ctx: any, next: any) => next();
+    return async (_ctx: any, next: any) => next();
   }
 
   const storage = new MemoryDedupeStorage();
@@ -146,7 +146,9 @@ export function dedupe(options: DedupePluginOptions = {}): Middleware {
     if (pendingRequests.size >= maxPending) {
       // Remove oldest pending request
       const oldestKey = pendingRequests.keys().next().value;
-      pendingRequests.delete(oldestKey);
+      if (oldestKey) {
+        pendingRequests.delete(oldestKey);
+      }
     }
 
     // Create new request
@@ -227,7 +229,7 @@ export function dedupeWithHeaders(
 /**
  * Get deduplication statistics
  */
-export function getDedupeStats(storage: DedupeStorage): Promise<{
+export function getDedupeStats(_storage: DedupeStorage): Promise<{
   totalEntries: number;
   pendingRequests: number;
   cacheHits: number;

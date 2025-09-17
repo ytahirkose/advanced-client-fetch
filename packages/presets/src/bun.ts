@@ -99,7 +99,7 @@ export function createMinimalBunClient(baseURL?: string, options: BunPresetOptio
     timeout: false,
     dedupe: false,
     metrics: false,
-  });
+  } as any);
 }
 
 /**
@@ -123,9 +123,9 @@ export function createBunEdgeClient(options: BunPresetOptions = {}): Client {
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-bun/edge/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**
@@ -136,9 +136,9 @@ export function createBunCLIClient(options: BunPresetOptions = {}): Client {
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-bun/cli/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**
@@ -149,9 +149,9 @@ export function createBunFreshClient(options: BunPresetOptions = {}): Client {
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-bun/fresh/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**
@@ -162,9 +162,9 @@ export function createBunHonoClient(options: BunPresetOptions = {}): Client {
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-bun/hono/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**
@@ -175,9 +175,9 @@ export function createBunElysiaClient(options: BunPresetOptions = {}): Client {
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-bun/elysia/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
-  });
+  } as any);
 }
 
 /**

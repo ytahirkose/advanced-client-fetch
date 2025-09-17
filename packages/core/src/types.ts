@@ -204,7 +204,10 @@ export interface ClientOptions {
   /** Plugin middleware array */
   plugins?: Middleware[];
   /** Request/response interceptors */
-  interceptors?: Interceptor[];
+  interceptors?: {
+    request?: Array<(request: Request) => Request>;
+    response?: Array<(response: any) => any>;
+  };
   /** Query parameter serializer */
   paramsSerializer?: (params: Record<string, any>) => string;
   /** Validate status function */
@@ -213,6 +216,8 @@ export interface ClientOptions {
   maxRedirects?: number;
   /** With credentials */
   withCredentials?: boolean;
+  /** Enable cookie handling */
+  cookies?: boolean;
 }
 
 // Transport and middleware types

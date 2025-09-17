@@ -39,6 +39,8 @@ export function createClient(options: ClientOptions = {}): Client {
     validateStatus = defaultValidateStatus,
     maxRedirects = 5,
     withCredentials = false,
+    interceptors = {},
+    cookies = false,
   } = options;
 
   // Use provided plugins
@@ -67,20 +69,28 @@ export function createClient(options: ClientOptions = {}): Client {
     
     try {
       // Create request
-      const req = new Request(url, {
+      let req = new Request(url, {
         method: requestOptions.method || 'GET',
         headers,
         body,
         signal: combinedSignal,
       });
       
+      // Apply request interceptors
+      if (interceptors.request) {
+        for (const interceptor of interceptors.request) {
+          req = interceptor(req);
+        }
+      }
+      
       // Create context
+      const startTime = performance.now();
       const context: Context = {
         request: req,
         response: undefined,
         error: undefined,
         retryCount: 0,
-        startTime: performance.now(),
+        startTime,
         metadata: {
           requestId,
           ...requestOptions.meta,
@@ -127,7 +137,36 @@ export function createClient(options: ClientOptions = {}): Client {
       }
       
       // Handle response based on responseType
-      return await handleResponse<T>(context.res, context.req, requestOptions.responseType);
+      const data = await handleResponse<T>(context.res, context.req, requestOptions.responseType);
+      
+      // Calculate duration
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      
+      // Create response object
+      let response = {
+        data,
+        status: context.res.status,
+        statusText: context.res.statusText,
+        headers: Object.fromEntries(context.res.headers.entries()),
+        config: context.req,
+        request: context.req,
+        meta: {
+          ...context.meta,
+          duration,
+          startTime,
+          endTime
+        }
+      };
+      
+      // Apply response interceptors
+      if (interceptors.response) {
+        for (const interceptor of interceptors.response) {
+          response = interceptor(response);
+        }
+      }
+      
+      return response as T;
       
     } catch (error) {
       throw transformError(error as Error, requestId);

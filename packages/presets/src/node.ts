@@ -146,7 +146,7 @@ export function createMinimalNodeClient(baseURL?: string, options: NodePresetOpt
     circuitBreaker: false,
     dedupe: false,
     metrics: false,
-  });
+  } as any);
 }
 
 /**
@@ -410,7 +410,7 @@ export function createMicroserviceNodeClient(
     headers: {
       'User-Agent': `advanced-client-fetch-node/${serviceName}/1.0.0`,
       'X-Service-Name': serviceName,
-      ...options.headers,
+      ...(options as any).headers,
     },
     retry: {
       retries: 3,
@@ -449,7 +449,7 @@ export function createAPIGatewayNodeClient(
     ...options,
     headers: {
       'User-Agent': 'advanced-client-fetch-node/api-gateway/1.0.0',
-      ...options.headers,
+      ...(options as any).headers,
     },
     retry: {
       retries: 2,
