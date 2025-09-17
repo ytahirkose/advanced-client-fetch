@@ -41,7 +41,7 @@ export function createEdgeClient(options: EdgePresetOptions = {}): Client {
   // Set default headers
   const defaultHeaders = {
     'User-Agent': 'advanced-client-fetch-edge/1.0.0',
-    ...clientOptions.headers,
+    ...(clientOptions as any).headers,
   };
 
   const edgeMiddleware: Middleware[] = [];
@@ -85,8 +85,8 @@ export function createEdgeClient(options: EdgePresetOptions = {}): Client {
     ...clientOptions,
     headers: defaultHeaders,
     plugins: edgeMiddleware,
-    timeout: clientOptions.timeout || 30000,
-    maxRedirects: clientOptions.maxRedirects || 3,
+    timeout: (clientOptions as any).timeout || 30000,
+    maxRedirects: (clientOptions as any).maxRedirects || 3,
   });
 }
 

@@ -41,7 +41,7 @@ export function createBrowserClient(options: BrowserPresetOptions = {}): Client 
   // Set default headers
   const defaultHeaders = {
     'User-Agent': 'advanced-client-fetch-browser/1.0.0',
-    ...clientOptions.headers,
+    ...((clientOptions as any).headers || {}),
   };
 
   const browserMiddleware: Middleware[] = [];
@@ -85,7 +85,7 @@ export function createBrowserClient(options: BrowserPresetOptions = {}): Client 
     ...clientOptions,
     headers: defaultHeaders,
     plugins: browserMiddleware,
-    withCredentials: clientOptions.withCredentials || false,
+    withCredentials: (clientOptions as any).withCredentials || false,
   });
 }
 

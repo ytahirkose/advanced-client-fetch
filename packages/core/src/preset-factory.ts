@@ -190,7 +190,7 @@ export function createDevelopmentPresetClient<T extends PlatformOptions>(
     dedupe: true,
     metrics: {
       enabled: true,
-      onMetrics: (metrics) => {
+      onMetrics: (metrics: any) => {
         console.log(`[Advanced Client Fetch ${platform}] ${metrics.method} ${metrics.url} - ${metrics.status} (${metrics.duration?.toFixed(2)}ms)`);
       },
     },
