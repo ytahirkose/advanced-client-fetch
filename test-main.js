@@ -1,4 +1,4 @@
-const { createClient } = require('advanced-client-fetch');
+import { createClient } from 'advanced-client-fetch';
 
 console.log("Testing advanced-client-fetch...");
 try {

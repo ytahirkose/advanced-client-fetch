@@ -20,6 +20,9 @@ importers:
       '@typescript-eslint/parser':
         specifier: ^8.44.0
         version: 8.44.0(eslint@8.57.1)(typescript@5.9.2)
+      '@vitest/coverage-v8':
+        specifier: ^1.0.0
+        version: 1.6.1(vitest@1.6.1)
       eslint:
         specifier: ^8.55.0
         version: 8.57.1
@@ -41,9 +44,9 @@ importers:
 
   packages/axios-adapter:
     dependencies:
-      '@advanced-client-fetch/core':
+      advanced-client-fetch:
         specifier: ^1.0.0
-        version: link:../core
+        version: link:../..
     devDependencies:
       '@types/node':
         specifier: ^20.0.0

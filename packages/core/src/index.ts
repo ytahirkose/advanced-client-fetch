@@ -100,6 +100,8 @@ export {
   isConfigurationError,
   isRateLimitError,
   isCircuitBreakerError,
+  // Axios compatibility
+  AxiosError,
 } from './errors';
 
 // Cancel Token exports
@@ -196,3 +198,24 @@ export {
   lazyLoaders,
   createLazyLoader,
 } from './lazy-loading';
+
+// Security exports
+export {
+  isPrivateIP,
+  isLocalhost,
+  validateUrlForSSRF,
+  cleanHopByHopHeaders,
+  blockDangerousHeaders,
+  createSecurityMiddleware,
+  type SecurityViolation,
+} from './security';
+
+// Cookie management exports
+export {
+  parseCookies,
+  formatCookies,
+  parseCookie,
+  formatCookie,
+  createCookieJar,
+  createCookieMiddleware,
+} from './cookie-manager';

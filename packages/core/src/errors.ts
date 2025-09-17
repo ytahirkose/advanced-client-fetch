@@ -389,5 +389,24 @@ export function isCircuitBreakerError(error: any): error is CircuitBreakerError 
   return error instanceof CircuitBreakerError;
 }
 
+/**
+ * Axios-compatible error class
+ */
+export class AxiosError extends BaseError {
+  readonly code = 'AXIOS_ERROR';
+  readonly name = 'AxiosError';
+  public readonly isAxiosError = true;
+  
+  constructor(
+    message: string,
+    public readonly axiosCode?: string,
+    public readonly config?: any,
+    public readonly request?: any,
+    public readonly response?: any
+  ) {
+    super(message);
+  }
+}
+
 // Re-export types for convenience
 // HttpError and AbortError are now defined in this file
